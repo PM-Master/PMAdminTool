@@ -38,9 +38,9 @@ public class MainView extends HorizontalLayout {
         page1.setSizeFull();
 
         Tab tab2 = new Tab("Smart Policy Tool");
-        Component page2 = new GraphEditor();
+        VerticalLayout page2 = new SPTEditor();
+        page2.setSizeFull();
         page2.setVisible(false);
-        tab2.setEnabled(false);
 
         Tab tab3 = new Tab("Import/Export");
         VerticalLayout page3 = new ImportExport();

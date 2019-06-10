@@ -24,32 +24,9 @@ public class SptRuleParser {
 	
 	public ArrayList<PMElement> allowElementsArray;
 	public ArrayList<PMElement> whenElementsArray;
-	
-	
-	///////////// SPT variables
-	
-	
-    /**
-	 * @uml.property  name="myEngine"
-	 * @uml.associationEnd  
-	 */
-    /**
-	 * @uml.property  name="crtToken"
-	 * @uml.associationEnd  
-	 */
     SptToken crtToken;
-    /**
-	 * @uml.property  name="myScanner"
-	 * @uml.associationEnd  
-	 */
     SptRuleScanner myScanner;
-    /**
-	 * @uml.property  name="scriptName"
-	 */
     String scriptName;
-    /**
-	 * @uml.property  name="scriptId"
-	 */
     String scriptId;
     String rule1_pc = "";
     String rule1_ua = "";
@@ -72,7 +49,7 @@ public class SptRuleParser {
             System.exit(-1);
         }
         try {
-        	SptRuleParser ruleParser = new SptRuleParser(args[0]); // removed extra null argument 
+        	SptRuleParser ruleParser = new SptRuleParser(args[0]);
             ruleParser.printTokens();
             
         } catch (Exception e) {
@@ -234,7 +211,7 @@ public class SptRuleParser {
     }
 
     
-    private void semopGeneratePM() throws IOException {
+    public String semopGeneratePM() throws IOException {
     	// generate PM commands based on allowPMElements and whenPMElements. 
     	// Create nodes, create assignments, create associations in correct order!
     	String ngacCommands = "";
@@ -315,7 +292,7 @@ public class SptRuleParser {
     	ngacCommands += "asg|a|" + rule1_ua+ "|s|"+rule1_opset+"\r\n";
     	// assign uattr to opset
     	out.write(ngacCommands.getBytes());
-
+        return ngacCommands;
     }
 
     private String getParentType(String type) {
