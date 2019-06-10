@@ -1,4 +1,4 @@
-package gov.nist.csd.pm.admintool.sptparser;
+package gov.nist.csd.pm.admintool.spt.common;
 
 /**
  * @author gavrila@nist.gov

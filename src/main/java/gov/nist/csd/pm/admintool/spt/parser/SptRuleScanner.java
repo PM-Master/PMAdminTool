@@ -1,4 +1,6 @@
-package gov.nist.csd.pm.admintool.sptparser;
+package gov.nist.csd.pm.admintool.spt.parser;
+
+import gov.nist.csd.pm.admintool.spt.common.SptToken;
 
 import java.io.*;
 import java.util.HashMap;
