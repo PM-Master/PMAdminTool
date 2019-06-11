@@ -37,7 +37,7 @@ public class ImportExport extends VerticalLayout {
 
         exportLayout = new ExportLayout();
         exportLayout.setWidth("50%");
-        importLayout.getStyle().set("height","100vh");
+        exportLayout.getStyle().set("height","100vh");
         layout.add(exportLayout);
     }
 

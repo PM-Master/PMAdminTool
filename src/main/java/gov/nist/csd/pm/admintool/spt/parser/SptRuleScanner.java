@@ -186,7 +186,7 @@ HashMap keywords;
       r = new BufferedReader(new InputStreamReader(fis));
     } catch (Exception e) {
       e.printStackTrace();
-      System.exit(1);
+//      System.exit(1);
     }
     
     st = new StreamTokenizer(r);

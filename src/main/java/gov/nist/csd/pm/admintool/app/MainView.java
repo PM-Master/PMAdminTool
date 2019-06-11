@@ -23,7 +23,7 @@ public class MainView extends HorizontalLayout {
         g = SingletonGraph.getInstance();
 
         VerticalLayout navbar = new VerticalLayout();
-        navbar.setWidth("15%");
+        navbar.setWidth("18%");
         navbar.setJustifyContentMode(JustifyContentMode.START);
         navbar.getStyle()
                 .set("border-right", "1px solid lightgray")

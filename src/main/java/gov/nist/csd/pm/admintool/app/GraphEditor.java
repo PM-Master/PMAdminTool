@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
@@ -25,6 +26,7 @@ import gov.nist.csd.pm.graph.model.nodes.NodeType;
 
 import java.util.*;
 
+@StyleSheet("https://raw.githubusercontent.com/daneden/animate.css/master/animate.css")
 @Tag("graph-editor")
 public class GraphEditor extends VerticalLayout {
     private SingletonGraph g;
@@ -48,6 +50,7 @@ public class GraphEditor extends VerticalLayout {
         setPadding(true);
 
         childNode = new NodeLayout(true);
+        childNode.addClassNames("animated", "infinite", "bounce", "delay-2s");
         childNode.setWidth("40%");
         childNode.getStyle().set("height","100vh");
         layout.add(childNode);
@@ -147,7 +150,7 @@ public class GraphEditor extends VerticalLayout {
             grid.getColumns().forEach(col -> {
                 col.setFlexGrow(1);
             });
-            grid.getColumnByKey("ID").setWidth("15%");
+            grid.getColumnByKey("ID").setWidth("18%");
 
             // Double Click Action: go into current node's children
             grid.addItemDoubleClickListener(evt -> {

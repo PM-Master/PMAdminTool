@@ -16,13 +16,14 @@ import gov.nist.csd.pm.graph.GraphSerializer;
 public class SPTEditor extends VerticalLayout {
     private SingletonGraph g;
     private HorizontalLayout layout;
-    private ImportLayout editorLayout;
-    private ExportLayout JSONLayout;
+    private SPTInput editorLayout;
+    private JSONExport JSONLayout;
 
     public SPTEditor() {
         g = SingletonGraph.getInstance();
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
+        layout.setJustifyContentMode(JustifyContentMode.CENTER);
         add(layout);
         setUpLayout();
     }
@@ -31,66 +32,82 @@ public class SPTEditor extends VerticalLayout {
         setSizeFull();
         setPadding(true);
 
-        editorLayout = new ImportLayout();
-        editorLayout.setWidth("50%");
+        editorLayout = new SPTInput();
+        editorLayout.setWidth("40%");
         editorLayout.getStyle().set("height","100vh");
         layout.add(editorLayout);
 
-        JSONLayout = new ExportLayout();
-        JSONLayout.setWidth("50%");
+
+
+        Button convert = new Button("- to JSON ->");
+        convert.addClickListener((click) -> {
+            JSONLayout.setValue(exportToJSON(editorLayout.getValue()));
+            notify("converted to json");
+        });
+        layout.add(convert);
+
+
+
+        JSONLayout = new JSONExport();
+        JSONLayout.setWidth("40%");
         JSONLayout.getStyle().set("height","100vh");
         layout.add(JSONLayout);
     }
 
-    public void exportToJSON (String sptRule) {
+    public String exportToJSON (String sptRule) {
         try {
             SptRuleParser ruleParser = new SptRuleParser(sptRule);
             String json = ruleParser.semopGeneratePM();
-            add(new Paragraph(json));
+            return json;
         } catch (Exception e) {
             e.printStackTrace();
+            return "";
         }
-
     }
 
-    private class ImportLayout extends VerticalLayout {
-        public ImportLayout () {
+    private class SPTInput extends VerticalLayout {
+        private TextArea inputSpt;
+
+        public SPTInput () {
             setAlignItems(Alignment.STRETCH);
-            TextArea inputJson = new TextArea();
-            inputJson.setValue("script s1\n" +
+            inputSpt = new TextArea();
+            inputSpt.getStyle()
+                    .set("background", "lightblue")
+                    .set("border-radius", "3px")
+                    .set("padding-top", "3px")
+                    .set("padding-bottom", "3px");
+            inputSpt.setValue("script s1\n" +
                     "rule1 \n" +
                     "\twhen user is Doctor in Staff in policy Role\n" +
                     "\tallow user \"File read\", \"File write\" \n" +
                     "\ton object attribute Patients in Ward in Hospital\n");
-            inputJson.setHeight("90vh");
+            inputSpt.setHeight("100vh");
+            add(inputSpt);
+        }
 
-            Button importButton = new Button("Export to JSON", click -> {
-                exportToJSON(inputJson.getValue());
-            });
-            importButton.setHeight("10%");
-            add(inputJson);
-            add(importButton);
+        public String getValue() {
+            return inputSpt.getValue();
         }
     }
 
-    private class ExportLayout extends VerticalLayout {
-        public ExportLayout () {
-            setAlignItems(Alignment.STRETCH);
-            TextArea inputJson = new TextArea();
-            inputJson.setEnabled(false);
-            inputJson.setHeight("90vh");
+    private class JSONExport extends VerticalLayout {
+        private TextArea outputJson;
 
-            Button importButton = new Button("Export JSON", click -> {
-                try {
-                    inputJson.setValue(GraphSerializer.toJson(g));
-                } catch (PMException e) {
-                    e.printStackTrace();
-                    SPTEditor.this.notify(e.getMessage());
-                }
-            });
-            importButton.setHeight("10%");
-            add(inputJson);
-            add(importButton);
+        public JSONExport () {
+            setAlignItems(Alignment.STRETCH);
+            outputJson = new TextArea();
+            outputJson.getStyle()
+                    .set("background", "lightcoral")
+                    .set("border-radius", "5px")
+                    .set("padding-top", "3px")
+                    .set("padding-bottom", "3px");
+            outputJson.setEnabled(false);
+            outputJson.setHeight("100vh");
+            add(outputJson);
+        }
+
+        public void setValue(String value) {
+            outputJson.setValue(value);
         }
     }
 
