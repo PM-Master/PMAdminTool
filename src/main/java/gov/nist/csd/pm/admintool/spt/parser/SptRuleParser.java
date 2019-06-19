@@ -1,29 +1,23 @@
 package gov.nist.csd.pm.admintool.spt.parser;
 
+import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.spt.common.PMElement;
-import gov.nist.csd.pm.admintool.spt.common.PM_NODE;
 import gov.nist.csd.pm.admintool.spt.common.RandomGUID;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
+import gov.nist.csd.pm.graph.GraphSerializer;
+import gov.nist.csd.pm.graph.model.nodes.NodeType;
+import gov.nist.csd.pm.graph.model.nodes.Node;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
-import static gov.nist.csd.pm.admintool.spt.common.GlobalConstants.*;
-
-/**
- * @author gavrila@nist.gov
- * @version $Revision: 1.1 $, $Date: 2008/07/16 17:02:58 $
- * @since 1.5
- */
 public class SptRuleParser {
 
-	
 	///////////// SPT variables
 	
-	public ArrayList<PMElement> allowElementsArray;
-	public ArrayList<PMElement> whenElementsArray;
     SptToken crtToken;
     SptRuleScanner myScanner;
     String scriptName;
@@ -39,8 +33,14 @@ public class SptRuleParser {
 	ArrayList<String> uaWhenElements = new ArrayList<String>();
 	String parent;
 	String parentType;
-	
-	///////////////////// SPT methods ////////////////////////////
+    SingletonGraph g; // = SingletonGraph.getInstance();
+
+    Node associationSource;
+    ArrayList<Node> associationTargets = new ArrayList<Node>();
+    Set<String> associationOperations = new HashSet<>();
+
+    public static Long nodeid = 1L;
+    ///////////////////// SPT methods ////////////////////////////
 
     public static void main(String args[]) {
     	
@@ -57,8 +57,8 @@ public class SptRuleParser {
         }
     }
 
-    public SptRuleParser(String path) {
-        myScanner = new SptRuleScanner(path);
+    public SptRuleParser(String script) {
+        myScanner = new SptRuleScanner(script);
         
     }
 
@@ -88,10 +88,7 @@ public class SptRuleParser {
         crtToken = myScanner.nextToken();
         result = script();
         if (result != null) {
-//            if (ServerConfig.myEngine != null) {
            System.out.println(result);
-               // ServerConfig.myEngine.deleteScriptInternal(scriptId);
-//            }
         }
         return result;
     }
@@ -110,10 +107,11 @@ public class SptRuleParser {
         }
 
         result = rules();
-    	out.close();                 
+    	out.close();
+        String json = GraphSerializer.toJson(g);
 
         traceExit("script");
-        return result;
+        return json;
     }
 
     // <script header> ::= script script_name
@@ -131,7 +129,6 @@ public class SptRuleParser {
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
         }
         traceConsume();
-//        semopScript();
         crtToken = myScanner.nextToken();
 
         traceExit("scriptHeader");
@@ -192,122 +189,22 @@ public class SptRuleParser {
             traceConsume();
             crtToken = myScanner.nextToken();
             semopRule1Init();
-            result = whenClause();
+            result = whenClause1();
             if (result != null) {
             	System.out.println("*********************Exiting due to error **************************" + result);
         		return result;
         	}
 
-            result = allowClause();
+            result = allowClause1();
 
             if (result != null) {
             	System.out.println("*********************Exiting due to error **************************" + result);
         		return result;
         	}
-        	printPMElements();
-        	semopGeneratePM();
-     		return result;
+            return result;
         } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE1);
     }
 
-    
-    public String semopGeneratePM() throws IOException {
-    	// generate PM commands based on allowPMElements and whenPMElements. 
-    	// Create nodes, create assignments, create associations in correct order!
-    	String ngacCommands = "";
-    	System.out.println("Generating whenElements NGACCommands");
-        String type = "";
-        ArrayList<String> in = new ArrayList<String>();
-    	String[][] whats = new String[10][2];
-    	for(PMElement pmEl: whenElementsArray){
-    		type = pmEl.getType();
-            if (type.equals("p")) {
-           		ngacCommands += "add|"+type+"|"+pmEl.getName()+"|c|PM"+"\r\n";
-           		break;
-    		}
-    	}
-    	String inValue;
-    	for(PMElement pmEl: whenElementsArray){
-            inValue = null;
-    		type = pmEl.getType();
-            if (!type.equals("p")) {
-	            in = pmEl.getIn();
-	            if (in != null) {
-	            	inValue = in.get(0);
-	            	rule1_ua = pmEl.getName();
-	            	ngacCommands += "add|"+type+"|"+pmEl.getName()+"|a|"+inValue+"\r\n";
-	            } else {
-	            	ngacCommands += "add|"+type+"|"+pmEl.getName()+"|p|"+rule1_pc+"\r\n";
-	            }
-            }
-        }
-
-    	System.out.println("Generating allowElements NGACCommands");
-    	// get first elements with no parent (these are directly under policy)
-    	for(PMElement pmEl: allowElementsArray){
-        	type = pmEl.getType();
-            
-            if (!type.equals("op")) { 
-	    		in = pmEl.getIn();
-	    		if (in == null || in.size() == 0) {
-	       			parent =  rule1_pc;
-	        		ngacCommands += "add|"+type+"|"+pmEl.getName()+"|p|"+parent+"\r\n";
-	    		}
-            }
-    	}
-    	// get elements with parent (these are under other elements)
-    	int i = 0;
-    	for(PMElement pmEl: allowElementsArray){
-        	type = pmEl.getType();
-            if (!type.equals("op")) { 
-	    		in = pmEl.getIn();
-	    		if (in != null && in.size() > 0) {
-	    			parent = pmEl.getIn().get(0);
-	    			whats[i][0] = pmEl.getName();
-	    			whats[i][1] = type;
-	        		ngacCommands += "add|"+type+"|"+pmEl.getName()+"|"+getParentType(type)+"|"+parent+"\r\n";
-	    		}
-            }
-    	}
-    	String rule1_opset = generateRandomIntegerId().toString();
-    	
-    	// create and assign opset to all the whats
-    	ngacCommands += "add|s|"+rule1_opset+"|oc|Ignored|"+whats[0][1]+"|"+whats[0][0]+"\r\n";
-    	i = 0;
-    	for(String[] what: whats){
-    		if (i==0) continue; 
-    		if (what[0]!=null) {
-    			ngacCommands += "asg|s|"+rule1_opset+"|"+what[1]+"|"+what[0]+"\r\n";
-    		}
-    	}
-    	// add ops under opset
-    	for(PMElement pmEl: allowElementsArray){
-        	type = pmEl.getType();
-            if (type.equals("op")) {
-            	// add op to opset
-            	ngacCommands += "add|op|"+pmEl.getName()+"|s|"+rule1_opset+"\r\n";
-            }
-    	}
-    	
-    	ngacCommands += "asg|a|" + rule1_ua+ "|s|"+rule1_opset+"\r\n";
-    	// assign uattr to opset
-    	out.write(ngacCommands.getBytes());
-        return ngacCommands;
-    }
-
-    private String getParentType(String type) {
-    	String returnString = "";
-    	switch (type){
-			case "u": returnString = "a";
-			case "a": returnString = "a";
-			case "o": returnString = "b";
-			case "b": returnString = "b";
-			case "p": returnString = "c";
-			case "s": returnString = "b";
-    	}
-    	return returnString;
-    }
-    
     // <rule2> ::= rule2 <allow clause> <when clause>
     private String rule2() throws Exception {
     	String result = null;
@@ -316,11 +213,11 @@ public class SptRuleParser {
         if (crtToken.tokenId == SptRuleScanner.PM_RULE2) {
             traceConsume();
             crtToken = myScanner.nextToken();
-            result = allowClause();
+            result = allowClause1();
             if (result != null) {
         		return result;
         	}
-            result = whenClause();
+            result = whenClause1();
      		return result;
         } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE2);
     }         
@@ -333,28 +230,31 @@ public class SptRuleParser {
         if (crtToken.tokenId == SptRuleScanner.PM_RULE3) {
             traceConsume();
             crtToken = myScanner.nextToken();
-            result = allowClause();
+            result = allowClause1();
             if (result != null) {
         		return result;
         	}
-            result = whenClause();
+            result = whenClause1();
+            // create associations between associationSource and associationTargets
+            for (Node target : associationTargets) {
+                g.associate(associationSource.getID(),target.getID(),associationOperations);
+            }
      		return result;
         } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE3);
     }  
     
     // <allow clause> := allow user <access rights> <on Whats> 
-    private String allowClause() throws Exception {
+    private String allowClause1() throws Exception {
     	 String result=null;
-    	 traceEntry("allowClause");
+    	 traceEntry("allowClause1");
     	 if (crtToken.tokenId != SptRuleScanner.PM_ALLOW) {
-    		 traceExit("allowClause");
+    		 traceExit("allowClause1");
     		 return signalError(crtToken.tokenValue, SptRuleScanner.PM_ALLOW); 
     	 }
     	 traceConsume();
     	 crtToken = myScanner.nextToken();
-    	 // user - commented out for now
     	 if (crtToken.tokenId != SptRuleScanner.PM_USER) {
-    		 traceExit("allowClause");
+    		 traceExit("allowClause1");
     		 return signalError(crtToken.tokenValue, SptRuleScanner.PM_USER); 
     	 }
     	 traceConsume();
@@ -362,7 +262,7 @@ public class SptRuleParser {
     	 
     	 result = accessRights();
          if (result != null) {
-             traceExit("allowClause");
+             traceExit("allowClause1");
              return result;
          }
 
@@ -414,59 +314,10 @@ public class SptRuleParser {
         traceExit("accessRight");
         return null;
     }
-    // int id, String name, String type, PMElement[] in
+
     private void semopAnAR() throws Exception{
-        String id="";
-    	System.out.println("About to find node " + crtToken.tokenValue + " in database as type " + PM_NODE.OPERATION.value);
-        if (crtToken.tokenValue.equalsIgnoreCase(PM_FILE_READ)) {
-            id = PM_FILE_READ_VAL;
-        } else if (crtToken.tokenValue.equalsIgnoreCase(PM_FILE_WRITE)) {
-            id = PM_FILE_WRITE_VAL;
-        }
-    	Integer elementId = new Integer(id);
-    	PMElement pmElement = new PMElement(elementId, crtToken.tokenValue, PM_NODE.OPERATION.value, null);
-    	allowElementsArray.add(pmElement);
-    	
+        associationOperations.add(crtToken.tokenValue);
     }
-    
-    private void printPMElements() {
-		System.out.println(" ************* LIST of allow Elements *********** ");
-		
-        for(PMElement pmEl: allowElementsArray){
-            System.out.println("   id : " + pmEl.getId());
-    		System.out.println(" Name : " + pmEl.getName());
-    		System.out.println(" Type : " + pmEl.getType());
-    		ArrayList<String> parents = pmEl.getIn();
-    		if (parents == null) {
-        		System.out.println("   in : null");
-    		} else {
-        		System.out.println("   in : ");
-	    		for (int i = 0; i < parents.size(); i++) {
-	    			System.out.println(" id : " + parents.get(i));
-	    		}
-    		}
-        }
-
-		System.out.println(" ************* LIST of when Elements *********** " + whenElementsArray.size());
-
-        for(PMElement pmEl: whenElementsArray){
-            System.out.println("   id : " + pmEl.getId());
-    		System.out.println(" Name : " + pmEl.getName());
-    		System.out.println(" Type : " + pmEl.getType());
-    		ArrayList<String> parents = pmEl.getIn();
-    		if (parents == null) {
-        		System.out.println("   in : null");
-    		} else {
-        		System.out.println("   in : ");
-	    		for (int i = 0; i < parents.size(); i++) {
-	    			System.out.println(" id : " + parents.get(i));
-	    		}
-    		}
-        }
-
-        System.out.println(" ************* End of PMElements *********** ");    		
-    }
-    
 
     // <on whats> ::= on <what> {, <what> }
     private String onWhats() throws Exception {
@@ -479,17 +330,18 @@ public class SptRuleParser {
    	 	traceConsume();
    	 	crtToken = myScanner.nextToken();
 	   	while (true) {
-	   		result = what();
-	   		if (result != null) {
+                break;
+            }
+            result = what();
+            if (result != null) {
                 traceExit("onWhats");
                 return result;
             }
             if (crtToken.tokenId != SptRuleScanner.PM_COMMA) {
-                break;
-            }
             traceConsume();
             crtToken = myScanner.nextToken();
 	     }
+
 	     traceExit("onWhats");       
         return null;
     }
@@ -541,72 +393,72 @@ public class SptRuleParser {
     }
     
     public void semopUA() throws Exception {
-    	ArrayList<String> in = null;
-    	if (rule1_attrIn != null) {
-    		PMElement pmparent = new PMElement((Integer) null, rule1_attrIn, PM_NODE.UATTR.value, null);
-        	allowElementsArray.add(pmparent);
-    		in = new ArrayList<String>();
-        	in.add(0, rule1_attrIn);
+        Node parent = null;
+        Node ua = null;
+        int i=0;
+        ua = g.createNode(nodeid++, rule1_attr, NodeType.UA, null);
+        associationTargets.add(ua);
+        if (rule1_attrIn != null) {
+            parent = g.createNode(nodeid++, rule1_attrIn, NodeType.UA, null);
+            g.assign(ua.getID(), parent.getID());
     	}
-    	PMElement pmElement = new PMElement((Integer) null, rule1_attr, PM_NODE.UATTR.value, in);
-    	allowElementsArray.add(pmElement);
     }
     
     public void semopOA() throws Exception {
-    	ArrayList<String> in = null;
-    	if (rule1_attrIn != null) { 
-	    	PMElement pmparent = new PMElement((Integer) null, rule1_attrIn, PM_NODE.OATTR.value, null);
-	    	allowElementsArray.add(pmparent);
-	    	in = new ArrayList<String>();
-	    	in.add(0, rule1_attrIn);
+        Node parent = null;
+        int i = 0;
+        Node oa = g.createNode(nodeid++, rule1_attr, NodeType.OA, null);
+        associationTargets.add(oa);
+        if (rule1_attrIn != null) {
+            parent = g.createNode(nodeid++, rule1_attrIn, NodeType.OA, null);
+            g.assign(oa.getID(), parent.getID());
     	}
-    	PMElement pmElement = new PMElement((Integer) null, rule1_attr, PM_NODE.OATTR.value, in);
-    	allowElementsArray.add(pmElement);
     }
         
     // <when clause> ::= when user is ua_name [in ua_name] in policy pc_name
-    private String whenClause() throws Exception {
+    private String whenClause1() throws Exception {
     	String result = null;
-    	traceEntry("whenClause");
+    	traceEntry("whenClause1");
     	
         if (crtToken.tokenId != SptRuleScanner.PM_WHEN) {
-   	 		traceExit("whenClause");
+   	 		traceExit("whenClause1");
    	 		return signalError(crtToken.tokenValue, SptRuleScanner.PM_WHEN); 
    	 	}
         traceConsume();
         crtToken = myScanner.nextToken();
         
         if (crtToken.tokenId != SptRuleScanner.PM_USER) {
-   	 		traceExit("whenClause");
+   	 		traceExit("whenClause1");
    	 		return signalError(crtToken.tokenValue, SptRuleScanner.PM_USER); 
    	 	}
         traceConsume();
         crtToken = myScanner.nextToken();
         
         if (crtToken.tokenId != SptRuleScanner.PM_IS) {
-   	 		traceExit("whenClause");
+   	 		traceExit("whenClause1");
    	 		return signalError(crtToken.tokenValue, SptRuleScanner.PM_IS); 
    	 	}
         traceConsume();
         crtToken = myScanner.nextToken();
         
         if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-   	 		traceExit("whenClause");
+   	 		traceExit("whenClause1");
    	 		return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD); 
    	 	}
         traceConsume();
         int i=0;
+
         uaWhenElements.add(i++, crtToken.tokenValue);
         crtToken = myScanner.nextToken();
         if (crtToken.tokenId != SptRuleScanner.PM_IN) {
-   	 		traceExit("whenClause");
+   	 		traceExit("whenClause1");
    	 		return signalError(crtToken.tokenValue, SptRuleScanner.PM_IN); 
    	 	}
         traceConsume();
         crtToken = myScanner.nextToken();
         while (crtToken.tokenId != SptRuleScanner.PM_POLICY ) {
         	if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-       	 		traceExit("whenClause");
+       	 		traceExit("whenClause1");
        	 		return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD); 
        	 	} 
         	traceConsume();
@@ -614,69 +466,53 @@ public class SptRuleParser {
             crtToken = myScanner.nextToken();
             
             if (crtToken.tokenId != SptRuleScanner.PM_IN) {
-       	 		traceExit("whenClause");
+       	 		traceExit("whenClause1");
        	 		return signalError(crtToken.tokenValue, SptRuleScanner.PM_IN); 
        	 	}
             traceConsume();
             crtToken = myScanner.nextToken();                
         }
         if (crtToken.tokenId != SptRuleScanner.PM_POLICY) {
-   	 		traceExit("whenClause");
+   	 		traceExit("whenClause1");
    	 		return signalError(crtToken.tokenValue, SptRuleScanner.PM_POLICY); 
    	 	}
         traceConsume();
         crtToken = myScanner.nextToken();
         
         if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-   	 		traceExit("whenClause");
+   	 		traceExit("whenClause1");
    	 		return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD); 
    	 	}
         traceConsume();
         uaWhenElements.add(i++, crtToken.tokenValue);
-        printUaWhenElements();
         semopUaInPC();
         crtToken = myScanner.nextToken();
-        
         return result;
     }
 
-    void printUaWhenElements() {
-    	int count = uaWhenElements.size();
-    	System.out.println(" ********** uaWhenElements ****** size = "+ count);
-    	for(int i=0;i<count;i++) {
-    		System.out.println(" element " + i + " = " + uaWhenElements.get(i));
-    	}
-    }
-    
-    
     public void semopUaInPC() throws Exception {
-    	String element="";
-    	String policy;
-    	PMElement pmElement;
-    	PMElement pmparent;
-    	ArrayList<String> in = null;
+    	String uaName="";
+    	Node ua;
     	int count = uaWhenElements.size();
-    	policy = uaWhenElements.get(count-1);
-    	rule1_pc = policy;
-    	pmparent = new PMElement((Integer) null, policy, PM_NODE.POL.value, null);
-    	whenElementsArray.add(pmparent);
+        rule1_pc = uaWhenElements.get(count-1);
+        if (g== null ) {
+            System.out.println("Graph is null");
+        }
+    	Node parent = g.createNode(nodeid++,rule1_pc, NodeType.PC,null);
     	for(int i=count-2; i >= 0 ;i--) {
-    		element = uaWhenElements.get(i);
-    		pmElement = new PMElement((Integer) null, element, PM_NODE.UATTR.value, in);
-	    	whenElementsArray.add(pmElement);
-	    	in = new ArrayList<String>();
-	    	in.add(0, element);
+            uaName = uaWhenElements.get(i);
+    		ua = g.createNode(nodeid++,uaName, NodeType.UA,null);
+            g.assign(ua.getID(), parent.getID());
+            parent = ua;
     	}
+        associationSource = parent;
 	}
 
 
     /////////////////// SPT semantic operator Methods
     private void semopRule1Init() {
         traceSemop("semopRule1Init");
-
-        traceSemact("create the ruleElements with an empty array of elements");
-        allowElementsArray = new ArrayList<PMElement>();
-        whenElementsArray = new ArrayList<PMElement>();
+        g = SingletonGraph.getInstance();
     }
 
     // Utility methods //////////////////////////////////////////////

@@ -5,6 +5,7 @@ import gov.nist.csd.pm.admintool.spt.common.SptToken;
 import java.io.*;
 import java.util.HashMap;
 
+import java.nio.charset.Charset;
 /**
  * @author gavrila@nist.gov
  * @version $Revision: 1.1 $, $Date: 2008/07/16 17:02:58 $
@@ -179,16 +180,44 @@ StreamTokenizer st;
  */
 HashMap keywords;
   
-  public SptRuleScanner(String inputFilename) {
+//  public SptRuleScanner(String inputFilename) {
+//    Reader r = null;
+//    try {
+//      FileInputStream fis = new FileInputStream(inputFilename);
+//      r = new BufferedReader(new InputStreamReader(fis));
+//    } catch (Exception e) {
+//      e.printStackTrace();
+//      System.exit(1);
+//    }
+//
+//    st = new StreamTokenizer(r);
+//    st.resetSyntax();
+//    st.eolIsSignificant(false);
+//    st.lowerCaseMode(false);
+//    st.whitespaceChars(0, ' ');
+//    st.wordChars('0', '9');
+//    st.wordChars('A', 'Z');
+//    st.wordChars('a', 'z');
+//    st.wordChars('_', '_');
+//    st.quoteChar('"');
+//    st.slashSlashComments(true);
+//
+//    keywords = new HashMap();
+//    for (int i = 0; i < sKeywords.length; i++) {
+//      keywords.put(sKeywords[i], Integer.valueOf(i + PM_FIRST_KEYWORD));
+//    }
+//  }
+
+
+  public SptRuleScanner(String script) {
     Reader r = null;
     try {
-      FileInputStream fis = new FileInputStream(inputFilename);
-      r = new BufferedReader(new InputStreamReader(fis));
+      InputStream inputStream = new ByteArrayInputStream(script.getBytes(Charset.forName("UTF-8")));
+      r = new BufferedReader(new InputStreamReader(inputStream));
     } catch (Exception e) {
       e.printStackTrace();
-//      System.exit(1);
     }
-    
+
     st = new StreamTokenizer(r);
     st.resetSyntax();
     st.eolIsSignificant(false);
@@ -200,7 +229,7 @@ HashMap keywords;
     st.wordChars('_', '_');
     st.quoteChar('"');
     st.slashSlashComments(true);
-    
+
     keywords = new HashMap();
     for (int i = 0; i < sKeywords.length; i++) {
       keywords.put(sKeywords[i], Integer.valueOf(i + PM_FIRST_KEYWORD));

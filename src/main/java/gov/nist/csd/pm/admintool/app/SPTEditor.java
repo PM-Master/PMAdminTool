@@ -9,18 +9,17 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.graph.GraphSerializer;
+
 
 @Tag("SPTEditor")
 public class SPTEditor extends VerticalLayout {
-    private SingletonGraph g;
+    public SingletonGraph g;
     private HorizontalLayout layout;
     private SPTInput editorLayout;
     private JSONExport JSONLayout;
 
     public SPTEditor() {
-        g = SingletonGraph.getInstance();
+
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         layout.setJustifyContentMode(JustifyContentMode.CENTER);
@@ -57,7 +56,8 @@ public class SPTEditor extends VerticalLayout {
     public String exportToJSON (String sptRule) {
         try {
             SptRuleParser ruleParser = new SptRuleParser(sptRule);
-            String json = ruleParser.semopGeneratePM();
+            String sResult = ruleParser.parse();
+            String json = null; // ruleParser.semopGeneratePM();
             return json;
         } catch (Exception e) {
             e.printStackTrace();
