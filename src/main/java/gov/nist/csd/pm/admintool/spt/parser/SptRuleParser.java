@@ -96,7 +96,7 @@ public class SptRuleParser {
     // <script> ::= <script header> <rules>
     private String script() throws Exception {
         String result = null;
-    	out = new FileOutputStream("c://pm//conf//commands"+filename+".pm");
+//    	out = new FileOutputStream("c://pm//conf//commands"+filename+".pm");
 
         traceEntry("script");
 
@@ -107,7 +107,7 @@ public class SptRuleParser {
         }
 
         result = rules();
-    	out.close();
+//    	out.close();
         String json = GraphSerializer.toJson(g);
 
         traceExit("script");

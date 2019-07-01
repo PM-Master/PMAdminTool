@@ -24,8 +24,8 @@ public class SingletonGraph extends MemGraph {
                 if (maxId < id) maxId = id;
             }
         }
-        if (maxId == null) {
-            return 0;
+        if (maxId == null || maxId == -1.0) {
+            return 1;
         }
         return maxId + 1;
     }
@@ -40,5 +40,11 @@ public class SingletonGraph extends MemGraph {
     public synchronized static SingletonGraph updateGraph(SingletonGraph graph) {
         g = graph;
         return g;
+    }
+
+    public void reset() {
+        for(Node n: g.getNodes()) {
+            g.deleteNode(n.getID());
+        }
     }
 }

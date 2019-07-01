@@ -9,6 +9,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
+import gov.nist.csd.pm.graph.GraphSerializer;
 
 
 @Tag("SPTEditor")
@@ -19,7 +20,7 @@ public class SPTEditor extends VerticalLayout {
     private JSONExport JSONLayout;
 
     public SPTEditor() {
-
+        g = SingletonGraph.getInstance();
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         layout.setJustifyContentMode(JustifyContentMode.CENTER);
@@ -37,12 +38,13 @@ public class SPTEditor extends VerticalLayout {
         layout.add(editorLayout);
 
 
-
         Button convert = new Button("- to JSON ->");
         convert.addClickListener((click) -> {
+            g.reset();
             JSONLayout.setValue(exportToJSON(editorLayout.getValue()));
             notify("converted to json");
         });
+
         layout.add(convert);
 
 
@@ -57,7 +59,7 @@ public class SPTEditor extends VerticalLayout {
         try {
             SptRuleParser ruleParser = new SptRuleParser(sptRule);
             String sResult = ruleParser.parse();
-            String json = null; // ruleParser.semopGeneratePM();
+            String json = GraphSerializer.toJson(g);
             return json;
         } catch (Exception e) {
             e.printStackTrace();
@@ -101,7 +103,7 @@ public class SPTEditor extends VerticalLayout {
                     .set("border-radius", "5px")
                     .set("padding-top", "3px")
                     .set("padding-bottom", "3px");
-            outputJson.setEnabled(false);
+//            outputJson.setEnabled(false);
             outputJson.setHeight("100vh");
             add(outputJson);
         }

@@ -55,17 +55,57 @@ public class ImportExport extends VerticalLayout {
             setAlignItems(Alignment.STRETCH);
             TextArea inputJson = new TextArea();
             inputJson.setValue("{\n" +
-                    "    \"nodes\":[\n" +
-                    "        {\n" +
-                    "            \"id\":-1,\n" +
-                    "            \"name\":\"Super PC\",\n" +
-                    "            \"type\":\"PC\"\n" +
-                    "        }\n" +
-                    "    ],\n" +
-                    "    \"assignments\":[\n" +
-                    "    ],\n" +
-                    "    \"associations\":[\n" +
-                    "    ]\n" +
+                    "  \"nodes\": [\n" +
+                    "    {\n" +
+                    "      \"id\": -1,\n" +
+                    "      \"name\": \"Super PC\",\n" +
+                    "      \"type\": \"PC\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"id\": 1,\n" +
+                    "      \"name\": \"Bob Home\",\n" +
+                    "      \"type\": \"OA\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"id\": 2,\n" +
+                    "      \"name\": \"Bob Attr\",\n" +
+                    "      \"type\": \"UA\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"id\": 3,\n" +
+                    "      \"name\": \"Bob\",\n" +
+                    "      \"type\": \"U\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"id\": 4,\n" +
+                    "      \"name\": \"Doc\",\n" +
+                    "      \"type\": \"O\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"assignments\": [\n" +
+                    "    {\n" +
+                    "      \"sourceID\": 1,\n" +
+                    "      \"targetID\": -1\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"sourceID\": 3,\n" +
+                    "      \"targetID\": 2\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"sourceID\": 4,\n" +
+                    "      \"targetID\": 1\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"sourceID\": 2,\n" +
+                    "      \"targetID\": -1\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"associations\": []\n" +
                     "}");
             inputJson.setHeight("90vh");
 
@@ -82,7 +122,7 @@ public class ImportExport extends VerticalLayout {
         public ExportLayout () {
             setAlignItems(Alignment.STRETCH);
             TextArea inputJson = new TextArea();
-            inputJson.setEnabled(false);
+//            inputJson.setEnabled(false);
             inputJson.setHeight("90vh");
 
             Button importButton = new Button("Export JSON", click -> {
