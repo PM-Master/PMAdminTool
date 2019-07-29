@@ -665,9 +665,9 @@ public class GraphEditor extends VerticalLayout {
                     g.assign(attrId, parent.getID());
 
                     Set<String> ops = new HashSet<>();
-                    ops.add("r");
-                    ops.add("w");
-                    ops.add("d");
+                    ops.add("read");
+                    ops.add("write");
+                    ops.add("delete");
                     g.associate(attrId, homeId, ops);
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
