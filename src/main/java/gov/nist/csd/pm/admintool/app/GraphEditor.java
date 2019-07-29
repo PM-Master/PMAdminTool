@@ -23,12 +23,11 @@ import gov.nist.csd.pm.admintool.app.blips.AssociationBlip;
 import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.graph.model.nodes.Node;
-import gov.nist.csd.pm.graph.model.nodes.NodeType;
+import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
 import java.util.*;
 
-@StyleSheet("https://raw.githubusercontent.com/daneden/animate.css/master/animate.css")
 @Tag("graph-editor")
 public class GraphEditor extends VerticalLayout {
     private SingletonGraph g;
@@ -38,10 +37,11 @@ public class GraphEditor extends VerticalLayout {
     private Node selectedParentNode;
     private NodeLayout parentNode;
     private GraphButtonGroup buttonGroup;
+    private Random rand;
 
     public GraphEditor() {
+        rand = new Random();
         g = SingletonGraph.getInstance();
-        g.createNode(-1, "Super PC", NodeType.PC, null);
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
@@ -53,7 +53,6 @@ public class GraphEditor extends VerticalLayout {
         setPadding(true);
 
         childNode = new NodeLayout(true);
-        childNode.addClassNames("animated", "infinite", "bounce", "delay-2s");
         childNode.setWidth("40%");
         childNode.getStyle().set("height","100vh");
         layout.add(childNode);
@@ -149,28 +148,29 @@ public class GraphEditor extends VerticalLayout {
             grid.getStyle()
                     .set("border-radius", "2px");
             createContextMenu(); // adds the content-specific context menu
-            currNodes = g.getNodes();
+            try {
+                currNodes = g.getNodes();
+            } catch (PMException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
             grid.setItems(currNodes);
             grid.setColumnReorderingAllowed(true);
             grid.getColumns().forEach(col -> {
                 col.setFlexGrow(1);
             });
-            grid.getColumnByKey("ID").setWidth("18%");
+//            grid.getColumnByKey("ID").setWidth("18%");
+            grid.removeColumnByKey("ID");
 
             // Double Click Action: go into current node's children
             grid.addItemDoubleClickListener(evt -> {
                 Node n = evt.getItem();
                 if(n != null) {
                     try {
-                        Set<Long> childrenIDs = g.getChildren(n.getID());
-                        if (!childrenIDs.isEmpty()) {
-                            ArrayList<Node> nodes = new ArrayList<>();
-                            Iterator<Long> idIter = childrenIDs.iterator();
-                            while(idIter.hasNext()) {
-                                nodes.add(g.getNode(idIter.next()));
-                            }
+                        Set<Node> children = g.getChildren(n.getID());
+                        if (!children.isEmpty()) {
                             prevNodes.push(currNodes);
-                            currNodes = nodes;
+                            currNodes = children;
                             grid.setItems(currNodes);
 
                             prevNodeNames.push(currNodeName.getText());
@@ -272,26 +272,24 @@ public class GraphEditor extends VerticalLayout {
 
                     //TODO: find a more expandable way to do this
 
-                    Iterator<Long> childIdIter = g.getChildren(gridSelecNode.getID()).iterator();
-                    if (!childIdIter.hasNext()) {
+                    Iterator<Node> childIter = g.getChildren(gridSelecNode.getID()).iterator();
+                    if (!childIter.hasNext()) {
                         children.add(new Paragraph("None"));
                     } else {
-                        while (childIdIter.hasNext()) {
-                            long id = childIdIter.next();
-                            Node x = g.getNode(id);
-                            children.add(new NodeDataBlip(id, x.getName(), x.getType()));
+                        while (childIter.hasNext()) {
+                            Node child = childIter.next();
+                            children.add(new NodeDataBlip(child.getID(), child.getName(), child.getType()));
 //                            children.setText(children.getText() + "{" + id + ": " + g.getNode(id).getName() + "},");
                         }
                     }
 
-                    Iterator<Long> parentIdIter = g.getParents(gridSelecNode.getID()).iterator();
-                    if (!parentIdIter.hasNext()) {
+                    Iterator<Node> parentIter = g.getParents(gridSelecNode.getID()).iterator();
+                    if (!parentIter.hasNext()) {
                         parents.add(new Paragraph("None"));
                     } else {
-                        while (parentIdIter.hasNext()) {
-                            long id = parentIdIter.next();
-                            Node x = g.getNode(id);
-                            parents.add(new NodeDataBlip(id, x.getName(), x.getType()));
+                        while (parentIter.hasNext()) {
+                            Node parent = parentIter.next();
+                            parents.add(new NodeDataBlip(parent.getID(), parent.getName(), parent.getType()));
 //                            parents.setText(parents.getText() + "{" + id + ": " + g.getNode(id).getName() + "},");
                         }
                     }
@@ -307,7 +305,12 @@ public class GraphEditor extends VerticalLayout {
         }
 
         public void refreshGraph() {
-            currNodes = g.getNodes();
+            try {
+                currNodes = g.getNodes();
+            } catch (PMException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
             grid.setItems(currNodes);
             grid.deselectAll();
             selectedParentNode = null;
@@ -336,23 +339,25 @@ public class GraphEditor extends VerticalLayout {
     private class GraphButtonGroup extends VerticalLayout {
         private Button addNodeButton, addUserButton, addObjectButton,
                     addAssignmentButton, deleteAssignmentButton,
-                    addAssociationButton, editAssociationButton, deleteAssociationButton;
+                    addAssociationButton, editAssociationButton, deleteAssociationButton,
+                    resetButton;
         private H4 parentNodeText, childNodeText;
         private Component connectorSymbol;
         public GraphButtonGroup() {
-            getStyle().set("background", "#a0ffa0");
+            getStyle().set("background", "#a0ffa0")
+                      .set("overflow-y", "scroll");
             setWidth("20%");
             getStyle().set("height","100vh");
             setAlignItems(Alignment.CENTER);
             setJustifyContentMode(JustifyContentMode.START);
 
             childNodeText = new H4("X");
-            connectorSymbol = new Icon(VaadinIcon.ARROW_DOWN);
+            connectorSymbol = new H6(new Icon(VaadinIcon.ARROW_DOWN));
             parentNodeText = new H4("X");
 
             add(new Paragraph("\n"));
             add(childNodeText, connectorSymbol, parentNodeText);
-            add(new Paragraph("\n"), new Paragraph("\n"), new Paragraph("\n"));
+            add(new Paragraph("\n"), new Paragraph("\n"));
 
             createButtons();
         }
@@ -390,8 +395,6 @@ public class GraphEditor extends VerticalLayout {
 //            deleteNodeButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
 //            add(deleteNodeButton);
             add(new Paragraph("\n"));
-
-
 
             // Assignment Buttons
             addAssignmentButton = new Button("Add Assignment", evt -> {
@@ -446,6 +449,14 @@ public class GraphEditor extends VerticalLayout {
             deleteAssociationButton.setWidthFull();
             add(deleteAssociationButton);
             add(new Paragraph("\n"));
+
+            resetButton = new Button("Reset Graph", evt -> {
+                resetGraph();
+            });
+            resetButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            resetButton.setWidthFull();
+            add(resetButton);
+            add(new Paragraph("\n"));
         }
 
         public void refreshNodeTexts() {
@@ -468,7 +479,6 @@ public class GraphEditor extends VerticalLayout {
 
         public void refreshButtonStates() {
             if (selectedChildNode != null && selectedParentNode != null) {
-
                 NodeType childType = selectedChildNode.getType();
                 NodeType parentType = selectedParentNode.getType();
                 if ((parentType == NodeType.UA && childType == NodeType.U)
@@ -505,19 +515,24 @@ public class GraphEditor extends VerticalLayout {
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(FlexComponent.Alignment.BASELINE);
 
-        NumberField idField = new NumberField("ID");
-        idField.setRequiredIndicatorVisible(true);
-        idField.setValue(g.getNextID() * 1.0);
-        idField.setMin(1);
-        idField.setHasControls(true);
-        form.add(idField);
+//        NumberField idField = new NumberField("ID");
+//        idField.setRequiredIndicatorVisible(true);
+//        idField.setValue(rand.nextLong() * 1.0);
+//        idField.setMin(1);
+//        idField.setHasControls(true);
+//        form.add(idField);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
         nameField.setPlaceholder("Enter Name...");
         form.add(nameField);
 
-        Select<NodeType> typeSelect = new Select<>(NodeType.values());
+        NodeType[] types = new NodeType[4];
+        types[0] = NodeType.U;
+        types[1] = NodeType.UA;
+        types[2] = NodeType.O;
+        types[3] = NodeType.OA;
+        Select<NodeType> typeSelect = new Select<>(types);
         typeSelect.setRequiredIndicatorVisible(true);
         typeSelect.setLabel("Type");
         typeSelect.setPlaceholder("Select Type...");
@@ -528,15 +543,16 @@ public class GraphEditor extends VerticalLayout {
         form.add(propsFeild);
 
         Button button = new Button("Submit", event -> {
-            Long id = idField.getValue().longValue();
+//            Long id = idField.getValue().longValue();
             String name = nameField.getValue();
             NodeType type = typeSelect.getValue();
             String propString = propsFeild.getValue();
             Map<String, String> props = new HashMap<>();
-            if (id == null) {
-                idField.focus();
-                notify("ID is Required");
-            } else if (name == null || name == "") {
+//            if (id == null) {
+//                idField.focus();
+//                notify("ID is Required");
+//            } else
+            if (name == null || name == "") {
                 nameField.focus();
                 notify("Name is Required");
             } else if (type == null) {
@@ -554,12 +570,15 @@ public class GraphEditor extends VerticalLayout {
                     }
                 }
                 try {
-//                    System.out.println(props);
-                    g.createNode(id, name, type, props);
+                    if (type == NodeType.OA || type == NodeType.O) {
+                        g.createNode(g.getSuperOAId(), name, type, props);
+                    } else if (type == NodeType.UA || type == NodeType.U){
+                        g.createNode(g.getSuperUAId(), name, type, props);
+                    }
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
-                } catch (IllegalArgumentException e) {
+                } catch (PMException e) {
                     notify(e.getMessage());
                     e.printStackTrace();
                 }
@@ -582,11 +601,18 @@ public class GraphEditor extends VerticalLayout {
         nameField.setPlaceholder("Enter Name...");
         form.add(nameField);
 
-        Collection<Node> nodeCollection = new HashSet<>(g.getNodes());
+        Collection<Node> nodeCollection;
+        try {
+            nodeCollection = new HashSet<>(g.getNodes());
+        } catch (PMException e) {
+            nodeCollection = new HashSet<>();
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
         Iterator<Node> nodeIterator = nodeCollection.iterator();
         while (nodeIterator.hasNext()) {
             Node curr = nodeIterator.next();
-            if (curr.getType() != NodeType.UA) {
+            if (!(curr.getType() == NodeType.UA || curr.getType() == NodeType.PC)) {
                 nodeIterator.remove();
             }
         }
@@ -597,7 +623,7 @@ public class GraphEditor extends VerticalLayout {
         }
         parentSelect.setRequiredIndicatorVisible(true);
         parentSelect.setLabel("Parent");
-        parentSelect.setPlaceholder("Select UA...");
+        parentSelect.setPlaceholder("Select UA or PC...");
         form.add(parentSelect);
 
         TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
@@ -605,7 +631,6 @@ public class GraphEditor extends VerticalLayout {
         form.add(propsFeild);
 
         Button button = new Button("Submit", event -> {
-
             String name = nameField.getValue();
             Node parent = parentSelect.getValue();
             String propString = propsFeild.getValue();
@@ -628,20 +653,16 @@ public class GraphEditor extends VerticalLayout {
                     }
                 }
                 try {
-                    long id = g.getNextID();
-                    g.createNode(id, name, NodeType.U, props);
+                    Node home = g.createNode(g.getSuperOAId(), name + " Home", NodeType.OA, props);
+                    long homeId = home.getID();
 
-                    long homeId = g.getNextID();
-                    g.createNode(homeId, name + " Home", NodeType.OA, props);
+                    Node attr = g.createNode(g.getSuperUAId(), name + " Attr", NodeType.UA, props);
+                    long attrId = attr.getID();
 
-                    long attrId = g.getNextID();
-                    g.createNode(attrId, name + " Attr", NodeType.UA, props);
+                    Node user = g.createNode(attrId, name, NodeType.U, props);
+                    long id = user.getID();
 
-                    g.assign(id, parent.getID());
-                    g.assign(id, attrId);
-
-                    g.assign(homeId, -1);
-                    g.assign(attrId, -1);
+                    g.assign(attrId, parent.getID());
 
                     Set<String> ops = new HashSet<>();
                     ops.add("r");
@@ -677,7 +698,14 @@ public class GraphEditor extends VerticalLayout {
         nameField.setPlaceholder("Enter Name...");
         form.add(nameField);
 
-        Collection<Node> nodeCollection = new HashSet<>(g.getNodes());
+        Collection<Node> nodeCollection;
+        try {
+            nodeCollection = new HashSet<>(g.getNodes());
+        } catch (PMException e) {
+            nodeCollection = new HashSet<>();
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
         Iterator<Node> nodeIterator = nodeCollection.iterator();
         while (nodeIterator.hasNext()) {
             Node curr = nodeIterator.next();
@@ -724,8 +752,7 @@ public class GraphEditor extends VerticalLayout {
                 }
                 try {
                     long id = g.getNextID();
-                    g.createNode(id, name, NodeType.O, props);
-                    g.assign(id, parent.getID());
+                    g.createNode(parent.getID(), name, NodeType.O, props);
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
@@ -816,7 +843,12 @@ public class GraphEditor extends VerticalLayout {
         form.add(new Paragraph("Are You Sure?"));
 
         Button button = new Button("Delete", event -> {
-            g.deleteNode(n.getID());
+            try {
+                g.deleteNode(n.getID());
+            } catch (PMException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
             childNode.refreshGraph();
             parentNode.refreshGraph();
             dialog.close();
@@ -858,7 +890,12 @@ public class GraphEditor extends VerticalLayout {
             form.add(new Paragraph("Are You Sure?"));
 
             Button button = new Button("Delete", event -> {
-                g.deassign(child.getID(), parent.getID());
+                try {
+                    g.deassign(child.getID(), parent.getID());
+                } catch (PMException e) {
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
+                }
                 childNode.refreshGraph();
                 parentNode.refreshGraph();
                 dialog.close();
@@ -989,7 +1026,12 @@ public class GraphEditor extends VerticalLayout {
         form.add(new Paragraph("Are You Sure?"));
 
         Button button = new Button("Delete", event -> {
-            g.dissociate(selectedParentNode.getID(), selectedChildNode.getID());
+            try {
+                g.dissociate(selectedParentNode.getID(), selectedChildNode.getID());
+            } catch (PMException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
             dialog.close();
         });
         button.addThemeVariants(ButtonVariant.LUMO_ERROR);
@@ -1005,6 +1047,34 @@ public class GraphEditor extends VerticalLayout {
         dialog.open();
     }
 
+    private void resetGraph() {
+        Dialog dialog = new Dialog();
+        HorizontalLayout form = new HorizontalLayout();
+        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+
+        form.add(new Paragraph("Are You Sure?"));
+
+        Button button = new Button("Delete", event -> {
+            try {
+                g.reset();
+            } catch (PMException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
+            dialog.close();
+        });
+        button.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        form.add(button);
+
+        Button cancel = new Button("Cancel", event -> {
+            dialog.close();
+        });
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        form.add(cancel);
+
+        dialog.add(form);
+        dialog.open();
+    }
 
     public void notify(String message){
         Notification notif = new Notification(message, 3000);

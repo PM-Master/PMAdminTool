@@ -3,7 +3,7 @@ package gov.nist.csd.pm.admintool.app.blips;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.dom.Style;
-import gov.nist.csd.pm.graph.model.nodes.NodeType;
+import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
 public class NodeDataBlip extends HorizontalLayout {
     private Long id;
@@ -54,9 +54,9 @@ public class NodeDataBlip extends HorizontalLayout {
         box.setMinWidth("50px");
         box.setMaxWidth("100px");
 
-        Paragraph idText = new Paragraph(id.toString());
-        idText.getStyle().set("font-weight", "bold");
-        box.add(idText);
+        Paragraph typeText = new Paragraph(type.toString());
+        typeText.getStyle().set("font-weight", "bold");
+        box.add(typeText);
 
         Paragraph nameText = new Paragraph(name);
         nameText.getStyle().set("margin-left", "2px");

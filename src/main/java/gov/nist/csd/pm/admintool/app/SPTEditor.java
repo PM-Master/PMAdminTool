@@ -2,14 +2,13 @@ package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
-import gov.nist.csd.pm.graph.GraphSerializer;
+import gov.nist.csd.pm.exceptions.PMException;
 
 
 @Tag("SPTEditor")
@@ -23,7 +22,7 @@ public class SPTEditor extends VerticalLayout {
         g = SingletonGraph.getInstance();
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
-        layout.setJustifyContentMode(JustifyContentMode.CENTER);
+//        layout.setJustifyContentMode(JustifyContentMode.CENTER);
         add(layout);
         setUpLayout();
     }
@@ -33,16 +32,23 @@ public class SPTEditor extends VerticalLayout {
         setPadding(true);
 
         editorLayout = new SPTInput();
-        editorLayout.setWidth("40%");
+        editorLayout.setWidth("44%");
         editorLayout.getStyle().set("height","100vh");
         layout.add(editorLayout);
 
 
-        Button convert = new Button("- to JSON ->");
+        Button convert = new Button("-JSON>");
+        convert.setHeight("99vh");
+
         convert.addClickListener((click) -> {
-            g.reset();
-            JSONLayout.setValue(exportToJSON(editorLayout.getValue()));
-            notify("converted to json");
+            try {
+                g.reset();
+                JSONLayout.setValue(exportToJSON(editorLayout.getValue()));
+                notify("converted to json");
+            } catch (PMException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
         });
 
         layout.add(convert);
@@ -50,7 +56,7 @@ public class SPTEditor extends VerticalLayout {
 
 
         JSONLayout = new JSONExport();
-        JSONLayout.setWidth("40%");
+        JSONLayout.setWidth("44%");
         JSONLayout.getStyle().set("height","100vh");
         layout.add(JSONLayout);
     }
@@ -59,7 +65,8 @@ public class SPTEditor extends VerticalLayout {
         try {
             SptRuleParser ruleParser = new SptRuleParser(sptRule);
             String sResult = ruleParser.parse();
-            String json = GraphSerializer.toJson(g);
+            String json = "";
+//            String json = GraphSerializer.toJson(g);
             return json;
         } catch (Exception e) {
             e.printStackTrace();
@@ -71,10 +78,10 @@ public class SPTEditor extends VerticalLayout {
         private TextArea inputSpt;
 
         public SPTInput () {
+            getStyle().set("background", "lightblue");
             setAlignItems(Alignment.STRETCH);
             inputSpt = new TextArea();
             inputSpt.getStyle()
-                    .set("background", "lightblue")
                     .set("border-radius", "3px")
                     .set("padding-top", "3px")
                     .set("padding-bottom", "3px");
@@ -96,10 +103,10 @@ public class SPTEditor extends VerticalLayout {
         private TextArea outputJson;
 
         public JSONExport () {
+            getStyle().set("background", "lightcoral");
             setAlignItems(Alignment.STRETCH);
             outputJson = new TextArea();
             outputJson.getStyle()
-                    .set("background", "lightcoral")
                     .set("border-radius", "5px")
                     .set("padding-top", "3px")
                     .set("padding-bottom", "3px");
