@@ -7,7 +7,7 @@ import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import java.util.Map;
 import java.util.Set;
 
-public class AssertAssociation extends Test{
+public class AssertAssociation extends Test {
     public AssertAssociation() {
         setName("assertAssociation");
         addParam("uaID", Type.NODETYPE);

@@ -59,6 +59,11 @@ public class Tester extends VerticalLayout {
         unitTests.getElement().getStyle()
                 .set("background", "#a0ffa0");
         unitTests.addThemeVariants(DetailsVariant.FILLED);
+        unitTests.addOpenedChangeListener(e -> {
+            if (e.isOpened()) {
+                unitTester.refreshComponent();
+            }
+        });
         add(unitTests);
     }
 

@@ -1,5 +1,6 @@
 package gov.nist.csd.pm.admintool.graph;
 
+import gov.nist.csd.pm.admintool.tests.Test;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pap.PAP;
 import gov.nist.csd.pm.pdp.*;
@@ -10,6 +11,7 @@ import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import gov.nist.csd.pm.pip.obligations.MemObligations;
 import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -92,7 +94,7 @@ public class SingletonGraph extends PDP {
                     }
                 }
                 superContext = new UserContext(superId, -1);
-//                System.out.println(superPCId);
+                //System.out.println(superPCId);
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -122,7 +124,6 @@ public class SingletonGraph extends PDP {
     public static long getSuperUAId() {
         return superUAId;
     }
-
 
     // wrapped from graph service methods (implies super context) \\
     public void reset() throws PMException {
