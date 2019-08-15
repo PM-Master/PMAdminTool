@@ -17,7 +17,7 @@ public int tokenSubclass;
   /**
  * @uml.property  name="tokenId"
  */
-public int tokenId;
+public static int tokenId;
   /**
  * @uml.property  name="tokenValue"
  */

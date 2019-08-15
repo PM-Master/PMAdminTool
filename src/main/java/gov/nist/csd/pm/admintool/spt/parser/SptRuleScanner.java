@@ -66,9 +66,13 @@ public class SptRuleScanner {
   public static final int PM_RULE2         = 51;
   public static final int PM_RULE3         = 52;
   public static final int PM_IS            = 53;
-  
+  public static final int PM_ASK            = 54;
+  public static final int PM_UA            = 55;
+  public static final int PM_VALUE         = 56;
+  public static final int PM_OA            = 57;
+
   public static final int PM_FIRST_KEYWORD = PM_IF;
-  public static final int PM_LAST_KEYWORD  = PM_IS;
+  public static final int PM_LAST_KEYWORD  = PM_OA;
   
 
   public static final int PM_WORD          = 100;
@@ -79,7 +83,12 @@ public class SptRuleScanner {
   public static final int PM_LPAR          = 203;
   public static final int PM_RPAR          = 204;
   public static final int PM_COLON         = 205;
-  
+  public static final int PM_SEMICOLON     = 206;
+  public static final int PM_LESS_THAN      = 207;
+  public static final int PM_GREATER_THAN   = 208;
+  public static final int PM_LESS_THAN_OR_EQUAL      = 209;
+  public static final int PM_GREATER_THAN_OR_EQUAL   = 210;
+
   public static final int PM_EOF           = 1000;
   public static final int PM_ERROR         = 1001;
   public static final int PM_UNKNOWN       = 1002;
@@ -137,7 +146,13 @@ public class SptRuleScanner {
   public static final String PM_VALUE_RULE2       = "rule2";
   public static final String PM_VALUE_RULE3       = "rule3";
   public static final String PM_VALUE_IS          = "is";
-  
+  public static final String PM_VALUE_ASK         = "ask";
+  public static final String PM_VALUE_UA          = "ua";
+  public static final String PM_VALUE_VALUE       = "value";
+  public static final String PM_VALUE_OA          = "oa";
+
+  // RULE 2 new values ***********************
+
   private static String sKeywords[] =
                       {PM_VALUE_IF, PM_VALUE_THEN, PM_VALUE_ANY,
                        PM_VALUE_USER, PM_VALUE_OF, PM_VALUE_ACTIVE,
@@ -156,7 +171,8 @@ public class SptRuleScanner {
                        PM_VALUE_ASSIGNMENT, PM_VALUE_DELETE, PM_VALUE_RULE,
                        PM_VALUE_SESSION, PM_VALUE_RULES, PM_VALUE_RECORD,
                        PM_VALUE_PROCESS, PM_VALUE_ALLOW, PM_VALUE_RULE1, 
-                       PM_VALUE_RULE2, PM_VALUE_RULE3, PM_VALUE_IS
+                       PM_VALUE_RULE2, PM_VALUE_RULE3, PM_VALUE_IS,
+                       PM_VALUE_ASK,PM_VALUE_UA,PM_VALUE_VALUE,PM_VALUE_OA
   };
 
   private static final String PM_VALUE_ARROW         = "->";
@@ -165,6 +181,13 @@ public class SptRuleScanner {
   private static final String PM_VALUE_LPAR          = "(";
   private static final String PM_VALUE_RPAR          = ")";
   private static final String PM_VALUE_COLON         = ":";
+
+
+  public static final String PM_VALUE_SEMICOLON     = ";";
+  public static final String PM_VALUE_LESS_THAN      = "<";
+  public static final String PM_VALUE_GREATER_THAN   = ">";
+  public static final String PM_VALUE_LESS_THAN_OR_EQUAL      = "<=";
+  public static final String PM_VALUE_GREATER_THAN_OR_EQUAL   = ">=";
 
   private static final String PM_VALUE_WORD          = "word";
 
@@ -298,6 +321,21 @@ HashMap keywords;
       case PM_EOF:
         System.out.println("Eof    : " + token.tokenValue);
         break;
+      case PM_SEMICOLON:
+        System.out.println("Semicolon    : " + token.tokenValue);
+        break;
+      case PM_LESS_THAN:
+        System.out.println("Less than    : " + token.tokenValue);
+        break;
+      case PM_GREATER_THAN:
+        System.out.println("Greater than    : " + token.tokenValue);
+        break;
+      case PM_LESS_THAN_OR_EQUAL:
+        System.out.println("Less than or equal    : " + token.tokenValue);
+        break;
+      case PM_GREATER_THAN_OR_EQUAL:
+        System.out.println("Greater than or equal    : " + token.tokenValue);
+        break;
       default:
         System.out.println("Unknown: " + token.tokenValue);
     }
@@ -340,7 +378,25 @@ HashMap keywords;
           st.pushBack();
           return new SptToken(PM_UNKNOWN, c, st.lineno());
         }
-      } else {
+      } else if (c == ';') {
+        return new SptToken(PM_SEMICOLON, PM_VALUE_SEMICOLON, st.lineno());
+      } else if (c == '<') {
+        d = st.nextToken();
+        if (d == '=') {
+          return new SptToken(PM_LESS_THAN_OR_EQUAL, PM_VALUE_LESS_THAN_OR_EQUAL, st.lineno());
+        } else {
+          st.pushBack();
+          return new SptToken(PM_LESS_THAN, PM_VALUE_LESS_THAN, st.lineno());
+        }
+      } else if (c == '>') {
+        d = st.nextToken();
+        if (d == '=') {
+          return new SptToken(PM_LESS_THAN_OR_EQUAL, PM_VALUE_LESS_THAN_OR_EQUAL, st.lineno());
+        } else {
+          st.pushBack();return new SptToken(PM_GREATER_THAN, PM_VALUE_GREATER_THAN, st.lineno());
+        }
+      }
+      else {
         return new SptToken(PM_UNKNOWN, c, st.lineno());
       }
     } catch (Exception e) {
@@ -360,8 +416,22 @@ HashMap keywords;
         return PM_VALUE_COMMA;
       case PM_EQUAL:
         return PM_VALUE_EQUAL;
+      case PM_LPAR:
+        return PM_VALUE_LPAR;
+      case PM_RPAR:
+        return PM_VALUE_RPAR;
       case PM_WORD:
         return PM_VALUE_WORD;
+      case PM_SEMICOLON:
+        return PM_VALUE_SEMICOLON;
+      case PM_LESS_THAN:
+        return PM_VALUE_LESS_THAN;
+      case PM_GREATER_THAN:
+        return PM_VALUE_GREATER_THAN;
+      case PM_LESS_THAN_OR_EQUAL:
+        return PM_VALUE_LESS_THAN_OR_EQUAL;
+      case PM_GREATER_THAN_OR_EQUAL:
+        return PM_VALUE_GREATER_THAN_OR_EQUAL;
       default:
         return PM_VALUE_UNKNOWN;
     }
