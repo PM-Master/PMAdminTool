@@ -244,12 +244,12 @@ public class GraphEditor extends VerticalLayout {
             parents.add(new Paragraph("None"));
             nodeInfo.add(parents);
 
-            HashSet<String> propoopops = new HashSet<>();
-            propoopops.add("r");
-            propoopops.add("w");
-            propoopops.add("d");
-            nodeInfo.add(new AssociationBlip(1, "John", NodeType.U, true, propoopops));
-            nodeInfo.add(new AssociationBlip(1, "John", NodeType.U, false, propoopops));
+//            HashSet<String> propoopops = new HashSet<>();
+//            propoopops.add("r");
+//            propoopops.add("w");
+//            propoopops.add("d");
+//            nodeInfo.add(new AssociationBlip(1, "John", NodeType.U, true, propoopops));
+//            nodeInfo.add(new AssociationBlip(1, "John", NodeType.U, false, propoopops));
 
             add(nodeInfo);
             ////// End Node Info Section //////
@@ -344,7 +344,7 @@ public class GraphEditor extends VerticalLayout {
         private H4 parentNodeText, childNodeText;
         private Component connectorSymbol;
         public GraphButtonGroup() {
-            getStyle().set("background", "#a0ffa0")
+            getStyle().set("background", "#DADADA") //#A0FFA0
                       .set("overflow-y", "scroll");
             setWidth("20%");
             getStyle().set("height","100vh");
@@ -481,8 +481,8 @@ public class GraphEditor extends VerticalLayout {
             if (selectedChildNode != null && selectedParentNode != null) {
                 NodeType childType = selectedChildNode.getType();
                 NodeType parentType = selectedParentNode.getType();
-                if ((parentType == NodeType.UA && childType == NodeType.U)
-                        || (parentType == NodeType.OA && childType == NodeType.O)
+                if ((parentType == NodeType.UA && (childType == NodeType.U || childType == NodeType.UA))
+                        || (parentType == NodeType.OA && (childType == NodeType.O || childType == NodeType.OA))
                         || (parentType == NodeType.PC && (childType == NodeType.UA || childType == NodeType.OA))) {
                     addAssignmentButton.setEnabled(true);
                     deleteAssignmentButton.setEnabled(true);

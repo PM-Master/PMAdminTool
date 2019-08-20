@@ -2,14 +2,13 @@ package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.GraphSerializer;
 
 @Tag("import-export")
@@ -44,19 +43,23 @@ public class ImportExport extends VerticalLayout {
         layout.add(exportLayout);
     }
 
+    // todo: make sure this works
     public void updateGraph (String json) {
-//        try {
-//            g = SingletonGraph.updateGraph((SingletonGraph)GraphSerializer.fromJson(g.getGraphService(), json));
+        try {
+            g = g.updateGraph(GraphSerializer.fromJson(g.getPAP().getGraphPAP(), json));
 //            add(new Paragraph(g.getGraphService().getNode(userCtx,-1).getName()));
-//        } catch (PMException e) {
-//            e.printStackTrace();
-//        }
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
     }
 
     private class ImportLayout extends VerticalLayout {
         public ImportLayout () {
             getStyle().set("background", "lightblue");
             setAlignItems(Alignment.STRETCH);
+
+            add(new H2("Import:"));
+
             TextArea inputJson = new TextArea();
             inputJson.setValue("{\n" +
                     "  \"nodes\": [\n" +
@@ -126,21 +129,24 @@ public class ImportExport extends VerticalLayout {
         public ExportLayout () {
             getStyle().set("background", "lightcoral");
             setAlignItems(Alignment.STRETCH);
-            TextArea inputJson = new TextArea();
-//            inputJson.setEnabled(false);
-            inputJson.setHeight("90vh");
 
-            Button importButton = new Button("Export JSON", click -> {
-//                try {
-//                    inputJson.setValue(GraphSerializer.toJson(g));
-//                } catch (PMException e) {
-//                    e.printStackTrace();
-//                    ImportExport.this.notify(e.getMessage());
-//                }
+            add(new H2("Export:"));
+
+            TextArea exportJson = new TextArea();
+//            exportJson.setEnabled(false);
+            exportJson.setHeight("90vh");
+
+            Button exportButton = new Button("Export JSON", click -> {
+                try {
+                    exportJson.setValue(GraphSerializer.toJson(g.getPAP().getGraphPAP()));
+                } catch (PMException e) {
+                    e.printStackTrace();
+                    ImportExport.this.notify(e.getMessage());
+                }
             });
-            importButton.setHeight("10%");
-            add(inputJson);
-            add(importButton);
+            exportButton.setHeight("10%");
+            add(exportJson);
+            add(exportButton);
         }
     }
 

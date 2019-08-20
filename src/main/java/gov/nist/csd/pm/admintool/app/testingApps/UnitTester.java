@@ -10,13 +10,15 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
+import gov.nist.csd.pm.admintool.actions.Action;
+import gov.nist.csd.pm.admintool.actions.SingletonActiveActions;
+import gov.nist.csd.pm.admintool.actions.events.AssignEvent;
+import gov.nist.csd.pm.admintool.actions.events.DeassignEvent;
+import gov.nist.csd.pm.admintool.actions.events.DeassignFromEvent;
+import gov.nist.csd.pm.admintool.actions.events.Event;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
-import gov.nist.csd.pm.admintool.tests.AssertAssignment;
-import gov.nist.csd.pm.admintool.tests.AssertAssociation;
-import gov.nist.csd.pm.admintool.tests.SingletonActiveTests;
-import gov.nist.csd.pm.admintool.tests.Test;
+import gov.nist.csd.pm.admintool.actions.tests.*;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 
@@ -24,9 +26,9 @@ import java.util.*;
 
 public class UnitTester extends VerticalLayout {
     private SingletonGraph g;
-    private SingletonActiveTests tests;
+    private SingletonActiveActions actions;
     private ComboBox<String> testSelect;
-    private Test tempTest;
+    private Action tempTest;
     private Accordion results;
     private HorizontalLayout params;
 
@@ -40,12 +42,13 @@ public class UnitTester extends VerticalLayout {
         params = new HorizontalLayout();
 
         g = SingletonGraph.getInstance();
-        tests = SingletonActiveTests.getInstance();
+        actions = SingletonActiveActions.getInstance();
         results = new Accordion();
         refreshListOfTests();
 
         testSelect = new ComboBox<>("Tests");
-        testSelect.setItems("Assert Association", "Assert Assignment");
+        testSelect.setItems("Assert Association", "Assert Assignment", "Check Permission",
+                "Assign Event", "Deassign Event", "Deassign From Event");
         tempTest = null;
 
         addTestSelectForm();
@@ -63,7 +66,7 @@ public class UnitTester extends VerticalLayout {
 
         Button test = new Button("+", event -> {
             if (tempTest != null) {
-                tests.add(tempTest);
+                actions.add(tempTest);
                 refreshComponent();
             } else {
                 notify("test is null");
@@ -85,13 +88,30 @@ public class UnitTester extends VerticalLayout {
                         params.removeAll();
                         tempTest = new AssertAssignment();
                         break;
+                    case "Check Permission":
+                        params.removeAll();
+                        tempTest = new CheckPermission();
+                        break;
+                    case "Assign Event":
+                        params.removeAll();
+                        tempTest = new AssignEvent();
+                        break;
+                    case "Deassign Event":
+                        params.removeAll();
+                        tempTest = new DeassignEvent();
+                        break;
+                    case "Deassign From Event":
+                        params.removeAll();
+                        tempTest = new DeassignFromEvent();
+                        break;
                 }
                 if (tempTest != null) {
                     Map<String, Test.Type> info = tempTest.getParamNameAndType();
                     for (String key : info.keySet()) {
                         switch (info.get(key)) {
                             case NODETYPE:
-                                Select<Node> uaIDSelect = new Select<>();
+                                // todo: get only a certain type of node
+                                ComboBox<Node> uaIDSelect = new ComboBox<>("");
                                 try {
                                     uaIDSelect.setItems(g.getNodes());
                                 } catch (PMException e) {
@@ -109,6 +129,7 @@ public class UnitTester extends VerticalLayout {
                                 params.add(uaIDSelect);
                                 break;
                             case OPERATION:
+                                // todo: get a list of all of the operations
                                 ComboBox<String> opSelect = new ComboBox<>("","read", "write");
                                 opSelect.setLabel(key);
                                 opSelect.setPlaceholder("Select Operation");
@@ -147,7 +168,6 @@ public class UnitTester extends VerticalLayout {
     private void addListOfTests() {
         results.setWidthFull();
         results.getElement().getStyle()
-                .set("background", "#a0ffa0")
                 .set("overflow-y", "scroll");
         add(results);
 
@@ -158,19 +178,45 @@ public class UnitTester extends VerticalLayout {
         results.getChildren().forEach(c -> {
             results.remove(c);
         });
-        for (Test test: tests) {
-            if (test.runTest()) {
-                AccordionPanel disabledPannel = results.add(test.toString(), new Span("Never See This"));
-                disabledPannel.getElement().getStyle()
-                        .set("background", "lightblue");
-                disabledPannel.addThemeVariants(DetailsVariant.FILLED);
-                disabledPannel.setEnabled(false);
+        for (Action action: actions) {
+            String audit = action.explain();
+            VerticalLayout auditLayout = new VerticalLayout();
+            auditLayout.setSizeFull();
+            auditLayout.getStyle()
+                    .set("padding-bottom", "0px");
+            String[] split = audit.split("\n");
+            if (split.length > 1) {
+                for (String line : split) {
+                    Span lineSpan = new Span(line);
+                    int tabs = 0;
+                    while (line.startsWith("\t")) {
+                        tabs++;
+                        line = line.substring(1);
+                    }
+                    lineSpan.getStyle()
+                            .set("margin", "0")
+                            .set("padding-left", ((Integer) (tabs * 25)).toString() + "px")
+                            .set("padding", "0");
+                    auditLayout.add(lineSpan);
+                }
             } else {
-                AccordionPanel regularPannel = results.add(test.toString(), new Span("Audit Goes Here"));
-                regularPannel.getElement().getStyle()
-                        .set("background", "lightcoral");
-                regularPannel.addThemeVariants(DetailsVariant.FILLED);
+                auditLayout.add(new Span(audit));
             }
+            AccordionPanel regularPannel = results.add(action.toString(), auditLayout);
+            if (action instanceof Test) {
+                if (action.run()) { // passed
+                    regularPannel.getElement().getStyle().set("background", "#BEFFB5"); // passed
+                } else { // failed
+                    regularPannel.getElement().getStyle().set("background", "#FFBFB5"); // failed
+                }
+            } else if (action instanceof Event){
+                if (action.run()) { // successful execution
+                    regularPannel.getElement().getStyle().set("background", "#B5BFFF"); // successful execution
+                } else { // unsuccessful execution
+                    regularPannel.getElement().getStyle().set("background", "#ECECEC"); // unsuccessful execution
+                }
+            }
+            regularPannel.addThemeVariants(DetailsVariant.FILLED, DetailsVariant.REVERSE);
             results.close();
         }
     }

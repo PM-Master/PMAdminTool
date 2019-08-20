@@ -1,4 +1,4 @@
-package gov.nist.csd.pm.admintool.tests;
+package gov.nist.csd.pm.admintool.actions.tests;
 
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
@@ -14,7 +14,7 @@ public class AssertAssignment extends Test {
     }
 
     @Override
-    public boolean runTest() {
+    public boolean run() {
         Node child = ((Node)getParams().get("childID").getValue());
         Node parent = ((Node)getParams().get("parentID").getValue());
 
@@ -33,5 +33,28 @@ public class AssertAssignment extends Test {
             }
         }
         return false;
+    }
+
+    @Override
+    public String explain() {
+        Node child = ((Node)getParams().get("childID").getValue());
+        Node parent = ((Node)getParams().get("parentID").getValue());
+        if (child == null) {
+            if (parent == null) {
+                return "Both child and parent are null";
+            } else {
+                return "Child is null";
+            }
+        } else {
+            if (parent == null) {
+                return "Parent is null";
+            } else {
+                if (!run()) {
+                    return "There is no assignment between '" + child.getName() + "' and '" + parent.getName() + "'";
+                } else {
+                    return "There is an assignment between '" + child.getName() + "' and '" + parent.getName() + "'";
+                }
+            }
+        }
     }
 }
