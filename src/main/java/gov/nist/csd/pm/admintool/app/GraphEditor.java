@@ -491,7 +491,9 @@ public class GraphEditor extends VerticalLayout {
                     deleteAssignmentButton.setEnabled(false);
                 }
 
-                if ((childType == NodeType.OA || childType == NodeType.UA) && (parentType == NodeType.UA)) {
+//                if ((childType == NodeType.OA || childType == NodeType.UA) && (parentType == NodeType.UA)) {
+                // Gopi - Commented out previous line to fix the association condition
+                if ((childType == NodeType.UA) && (parentType == NodeType.UA || parentType == NodeType.OA || parentType == NodeType.O)) {
                     addAssociationButton.setEnabled(true);
                     editAssociationButton.setEnabled(true);
                     deleteAssociationButton.setEnabled(true);

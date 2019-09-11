@@ -15,9 +15,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
-public class SptRuleParser {
+public class SptRuleParser{
 
     static SptToken crtToken;
     static SptRuleScanner myScanner;
@@ -138,19 +139,23 @@ public class SptRuleParser {
             Rule1Parser parser = new Rule1Parser();
             result = parser.rule1();
         } else if (crtToken.tokenId == SptRuleScanner.PM_RULE2) {
-            Rule2Parser parser = new Rule2Parser();
-        	result = parser.rule2();
+            synchronized(this) {
+                Rule2Parser parser = new Rule2Parser();
+                parser.rule2();
+            }
         } else if (crtToken.tokenId == SptRuleScanner.PM_RULE3) {
 //        	result = rule3();
-		} else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE1);
+		} else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE);
         return result;
     }
 
     // Utility methods //////////////////////////////////////////////
     
     protected Long generateRandomId() {
-        RandomGUID myGUID = new RandomGUID();
-        return new Long(myGUID.hashCode());
+        Random rand = new Random();
+        return rand.nextLong();
+//        RandomGUID myGUID = new RandomGUID();
+//        return new Long(myGUID.hashCode());
     }
 
     /////////////////////////////////////////////////////////////////////////////

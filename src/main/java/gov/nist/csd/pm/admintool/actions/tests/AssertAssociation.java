@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class AssertAssociation extends Test {
     public AssertAssociation() {
-        setName("assertAssignment");
+        setName("assertAssociation");
         addParam("uaID", Type.NODETYPE);
         addParam("targetID", Type.NODETYPE);
         addParam("op", Type.OPERATION);

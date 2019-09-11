@@ -130,7 +130,7 @@ public class UnitTester extends VerticalLayout {
                                 break;
                             case OPERATION:
                                 // todo: get a list of all of the operations
-                                ComboBox<String> opSelect = new ComboBox<>("","read", "write");
+                                ComboBox<String> opSelect = new ComboBox<>("","read", "write", "create object", "delete object");
                                 opSelect.setLabel(key);
                                 opSelect.setPlaceholder("Select Operation");
                                 opSelect.addValueChangeListener(selectEvent -> {

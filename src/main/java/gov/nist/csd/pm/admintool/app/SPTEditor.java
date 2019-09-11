@@ -9,6 +9,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.pip.graph.GraphSerializer;
 
 
 @Tag("SPTEditor")
@@ -22,7 +23,7 @@ public class SPTEditor extends VerticalLayout {
         g = SingletonGraph.getInstance();
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
-//        layout.setJustifyContentMode(JustifyContentMode.CENTER);
+        layout.setJustifyContentMode(JustifyContentMode.CENTER);
         add(layout);
         setUpLayout();
     }
@@ -37,23 +38,27 @@ public class SPTEditor extends VerticalLayout {
         layout.add(editorLayout);
 
 
-        Button convert = new Button("-JSON>");
-        convert.setHeight("99vh");
+        Button execute = new Button("Execute>", evt -> {
+            executeRule(editorLayout.getValue());
 
+        });
+        execute.setHeight("99vh");
+
+        Button convert = new Button("Export to JSON>", evt -> {
+        });
+        convert.setHeight("99vh");
         convert.addClickListener((click) -> {
             try {
-                g.reset();
-                JSONLayout.setValue(exportToJSON(editorLayout.getValue()));
-                notify("converted to json");
+            String json = GraphSerializer.toJson(g.getPAP().getGraphPAP());
+                JSONLayout.setValue(json);
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
             }
         });
 
+        layout.add(execute);
         layout.add(convert);
-
-
 
         JSONLayout = new JSONExport();
         JSONLayout.setWidth("44%");
@@ -61,16 +66,13 @@ public class SPTEditor extends VerticalLayout {
         layout.add(JSONLayout);
     }
 
-    public String exportToJSON (String sptRule) {
+    public void executeRule (String sptRule) {
         try {
             SptRuleParser ruleParser = new SptRuleParser(sptRule);
-            String sResult = ruleParser.parse();
-            String json = "";
-//            String json = GraphSerializer.toJson(g);
-            return json;
+            ruleParser.parse();
+            notify("Graph updated");
         } catch (Exception e) {
             e.printStackTrace();
-            return "";
         }
     }
 
@@ -86,10 +88,11 @@ public class SPTEditor extends VerticalLayout {
                     .set("padding-top", "3px")
                     .set("padding-bottom", "3px");
             inputSpt.setValue("script s1\n" +
-                    "rule1 \n" +
-                    "\twhen user is Doctor in Staff in policy Role\n" +
-                    "\tallow user \"File read\", \"File write\" \n" +
-                    "\ton object attribute Patients in Ward in Hospital\n");
+                    "rule2 \n" +
+                    "allow teller->staff: rbac; ask ua value: branch\n" +
+                            "        to \"create object\", \"delete object\" \n" +
+                            "        in branchAccounts->accounts: rbac; ask oa value: branch\n" +
+                            "when ua_value = oa_value\n");
             inputSpt.setHeight("100vh");
             add(inputSpt);
         }

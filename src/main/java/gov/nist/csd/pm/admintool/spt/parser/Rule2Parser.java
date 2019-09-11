@@ -17,10 +17,9 @@ import java.util.*;
 import static gov.nist.csd.pm.pip.graph.model.nodes.NodeType.toNodeType;
 
 
-public class Rule2Parser extends SptRuleParser{
+public class Rule2Parser extends SptRuleParser {
 
     // variables for PC1
-//    int ii,j,k,l;
     ArrayList<String> pc1uas = new ArrayList<String>();
     ArrayList<String> pc1oas = new ArrayList<String>();
 
@@ -30,8 +29,8 @@ public class Rule2Parser extends SptRuleParser{
     ArrayList<String> pcs1UA = new ArrayList<String>();
     ArrayList<String> pcs1OA = new ArrayList<String>();
 
-    ArrayList<Node> pc1ListUA = null;
-    ArrayList<Node> pc1ListOA = null;
+    ArrayList<Node> pcsforUA1 = null;
+    ArrayList<Node> pcsforOA1 = null;
 
     // variables for PC2
 
@@ -42,6 +41,7 @@ public class Rule2Parser extends SptRuleParser{
     ArrayList<Node> pc2OaList = null;
 
     String pc2;
+    Node pc2Node;
 
     // Final variables
     ArrayList<Assignment> assignments = null;
@@ -96,17 +96,10 @@ public class Rule2Parser extends SptRuleParser{
             }
 
             result = whenClause();
-            buildPolicy();
-            /* Graph updates
-            0. Reset graph
-            1. create Nodes
-            2. Create Assignments
-            3. Create associations
-             */
+
             if (result != null) {
                 return result;
             }
-//            printElements();
             return result;
         } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE2);
     }
@@ -148,7 +141,7 @@ public class Rule2Parser extends SptRuleParser{
         traceConsume();
         pc1uas.add(crtToken.tokenValue);
         crtToken = myScanner.nextToken();
-        result = _uattrAssign();
+        result = uattrAssign();
 
         if (crtToken.tokenId != SptRuleScanner.PM_COLON) {
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_COLON);
@@ -160,7 +153,7 @@ public class Rule2Parser extends SptRuleParser{
             return result;
         }
         System.out.println("About to call semopUA()");
-        semopUA();
+//        semopUA();
 
         if (crtToken.tokenId != SptRuleScanner.PM_SEMICOLON) {
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_SEMICOLON);
@@ -198,7 +191,7 @@ public class Rule2Parser extends SptRuleParser{
     }
 
     // <uattr assign 2> ::= -> ua_name
-    private String _uattrAssign() {
+    private String uattrAssign() {
         traceEntry("uattrAssign");
         while (true) {
             if (crtToken.tokenId == SptRuleScanner.PM_ARROW) {
@@ -285,7 +278,7 @@ public class Rule2Parser extends SptRuleParser{
         traceConsume();
         crtToken = myScanner.nextToken();
         result = pcListOA();
-        semopOA();
+//        semopOA();
 
         if (result != null) {
             traceExit("oattrClause");
@@ -441,7 +434,7 @@ public class Rule2Parser extends SptRuleParser{
         }
         traceConsume();
         crtToken = myScanner.nextToken();
-        semopDynamicRelations();
+        userDialogue();
         return null;
     }
 
@@ -486,8 +479,8 @@ public class Rule2Parser extends SptRuleParser{
         // create necessary structure to store grammar values
         pc1UaList = new ArrayList<Node>();
         pc1OaList = new ArrayList<Node>();
-        pc1ListUA = new ArrayList<Node>();
-        pc1ListOA = new ArrayList<Node>();
+        pcsforUA1 = new ArrayList<Node>();
+        pcsforOA1 = new ArrayList<Node>();
         pc2UaList = new ArrayList<Node>();
         pc2OaList = new ArrayList<Node>();
         assignments = new ArrayList<Assignment>();
@@ -509,16 +502,16 @@ public class Rule2Parser extends SptRuleParser{
         // Add PCs
         for (int i=0;i<=pcs1UA.size()-1;i++) {
             Node node = new Node(generateRandomId(), pcs1UA.get(i), NodeType.toNodeType("PC"),null);
-            pc1ListUA.add(node);
+            pcsforUA1.add(node);
         }
         // Add Assignments in each PC
-        for (int i=0;i<pc1ListUA.size();i++) {
+        for (int i=0;i<pcsforUA1.size();i++) {
 
             for (int j=0;j<=pc1UaList.size()-2;j++) {
                 assignment = new Assignment(pc1UaList.get(j),pc1UaList.get(j+1));
                 assignments.add(assignment);
             }
-            assignment = new Assignment(pc1UaList.get(pc1UaList.size()-1),pc1ListUA.get(i));
+            assignment = new Assignment(pc1UaList.get(pc1UaList.size()-1),pcsforUA1.get(i));
             assignments.add(assignment);
         }
     }
@@ -536,18 +529,18 @@ public class Rule2Parser extends SptRuleParser{
         }
         for (int i=0;i<=pcs1OA.size()-1;i++) {
             Node node = new Node(generateRandomId(), pcs1OA.get(i), NodeType.toNodeType("PC"),null);
-            pc1ListOA.add(node);
+            pcsforOA1.add(node);
         }
-        for (int i=0;i<pc1ListOA.size();i++) {
+        for (int i=0;i<pcsforOA1.size();i++) {
 
             for (int j=0;j<=pc1OaList.size()-2;j++) {
                 assignment = new Assignment(pc1OaList.get(j),pc1OaList.get(j+1));
                 assignments.add(assignment);
             }
-            assignment = new Assignment(pc1OaList.get(pc1OaList.size()-1),pc1ListOA.get(i));
+            assignment = new Assignment(pc1OaList.get(pc1OaList.size()-1),pcsforOA1.get(i));
             assignments.add(assignment);
         }
-        semopAssociations();
+//        semopAssociations();
     }
     // Add to Associations
     private void semopAssociations() {
@@ -561,7 +554,6 @@ public class Rule2Parser extends SptRuleParser{
         4. Add to Associations
          */
     private void semopDynamicRelations() {
-        userDialogue();
         // add PC first
         Node pc2Node = new Node(generateRandomId(), pc2, NodeType.toNodeType("PC"),null);
         for (int i=0;i<pc2uas.size();i++) {
@@ -582,12 +574,11 @@ public class Rule2Parser extends SptRuleParser{
             association = new Association(pc2UaList.get(i).getID(), pc2OaList.get(i).getID(), associationOperations);
             associations.add(association);
         }
-        System.out.println("Printing FINAL values");
-        printElements();
     }
 
     private void userDialogue() {
         // creating the dialog
+
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout(); // form will hold the text area
         form.setAlignItems(FlexComponent.Alignment.BASELINE);
@@ -608,12 +599,19 @@ public class Rule2Parser extends SptRuleParser{
                         pc2uas.add(attrs[0]);
                         pc2oas.add(attrs[1]);
                     }
-                    printElements();
                     dialog.close();
                 } catch (Exception e) {
                     this.notify("Incorrect Formatting of Attributes");
                     e.printStackTrace();
                 }
+                printElements();
+//                semopDynamicRelations();
+                try {
+                    buildPolicy();
+                } catch (PMException e) {
+                    e.printStackTrace();
+                }
+
             } else {
                 this.notify("Empty Attributes");
             }
@@ -626,8 +624,73 @@ public class Rule2Parser extends SptRuleParser{
         attributesFeild.focus();
     }
 
-    private void buildPolicy(){
+    /* Graph updates
+        0. Reset graph
+        1. create Nodes
+        2. Create Assignments
+        3. Create associations
+    */
+    private void buildPolicy() throws PMException {
+        SingletonGraph graph = SingletonGraph.getInstance();
+        ///// for PC1
+//        graph.reset();
+        long id=generateRandomId();
+        int pc1UASize = pc1uas.size();
+        int pc1OASize = pc1oas.size();
+        System.out.println("Build PCs..." + pcs1UA.size() + " PCs");
+        for (int i=0;i<pcs1UA.size();i++) {
+            pcsforUA1.add(graph.createPolicyClass(pcs1UA.get(0), null));
+        }
 
+        System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getID());
+        // First parent UA
+        Long parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getID(),NodeType.UA);
+        pc1UaList.add(graph.createNode(parentUAId, pc1uas.get(pc1UASize-1), NodeType.UA,null));
+        for (int i=1;i<pcsforUA1.size();i++) {
+            graph.assign(pc1UaList.get(pc1UASize-1).getID(), pcsforUA1.get(i).getID());
+        }
+        // Other UAs
+        for (int i=pc1UASize-2;i>=0;i--) {
+            pc1UaList.add(graph.createNode(pc1UaList.get(pc1UaList.size()-1).getID(), pc1uas.get(i), NodeType.UA,null));
+        }
+        // First parent OA
+        Long parentOAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getID(),NodeType.OA);
+        System.out.println("Build PC 1 OAs ...");
+        pc1OaList.add(graph.createNode(parentOAId, pc1oas.get(pc1OASize-1), NodeType.OA,null));
+        for (int i=1;i<pcsforUA1.size();i++) {
+            graph.assign(pc1OaList.get(pc1OASize-1).getID(), pcsforUA1.get(i).getID());
+        }
+        // Other OAs
+        for (int i=pc1OASize-2;i>=0;i--) {
+            pc1OaList.add(graph.createNode(pc1OaList.get(pc1OaList.size()-1).getID(), pc1oas.get(i), NodeType.OA,null));
+        }
+
+        // Build Associations for PC1
+        graph.associate(pc1UaList.get(0).getID(), pc1OaList.get(0).getID(), associationOperations );
+
+        // for PC2
+
+        System.out.println("Building PC2 ...");
+        // dummy id. PC is created but parent id is ignored
+        Node pc2Node = graph.createPolicyClass(pc2,null);
+        // Build UAs
+        System.out.println("Building PC 2 UAs ...");
+        parentUAId = graph.getPolicyClassDefault(pc2Node.getID(),NodeType.UA);
+        for (int i=0;i<pc2uas.size();i++) {
+            pc2UaList.add(graph.createNode(parentUAId, pc2uas.get(i), NodeType.UA,null));
+        }
+        //Build OAs
+        System.out.println("Building PC 2 OAs ...");
+        parentOAId = graph.getPolicyClassDefault(pc2Node.getID(),NodeType.OA);
+        for (int i=0;i<pc2oas.size();i++) {
+            pc2OaList.add(graph.createNode(parentOAId, pc2oas.get(i), NodeType.OA,null));
+        }
+
+        // Build Associations
+        System.out.println("Building Associations ...");
+        for (int i=0;i<pc2UaList.size();i++) {
+            graph.associate(pc2UaList.get(i).getID(), pc2OaList.get(i).getID(), associationOperations );
+        }
     }
 
     public void notify(String message){

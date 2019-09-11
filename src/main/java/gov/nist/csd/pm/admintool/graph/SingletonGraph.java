@@ -178,12 +178,14 @@ public class SingletonGraph extends PDP {
         }
     }
 
-    public long getPolicyClassDefault(NodeType type) throws PMException {
-        if (superContext != null) {
-            return g.getGraphService().getPolicyClassDefault(superPCId, type);
-        } else {
-            throw new PMException("Super Context is Null");
-        }
+    public long getPolicyClassDefault(long pcId, NodeType type) throws PMException {
+        if (pcId == 0) {
+            if (superContext != null) {
+                return g.getGraphService().getPolicyClassDefault(superPCId, type);
+            } else {
+                throw new PMException("Super Context is Null");
+            }
+        } else return g.getGraphService().getPolicyClassDefault(pcId, type);
     }
 
     public void updateNode(long id, String name, Map<String, String> properties) throws PMException {
