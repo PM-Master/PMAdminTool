@@ -81,7 +81,7 @@ public class Rule2Parser extends SptRuleParser {
     }
 
 
-    // <rule2> ::= rule2 <allow clause 2> <when clause 2>
+    // <rule2> ::= rule2 <allow clause> <when clause>
     protected String rule2() throws Exception {
         String result = null;
         traceEntry("rule2");
@@ -104,7 +104,7 @@ public class Rule2Parser extends SptRuleParser {
         } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE2);
     }
 
-    // <allow clause 2> ::= allow <uattr clause 2> <ops> <oattr clause 2>
+    // <allow clause> ::= allow <uattr clause> <ops> <oattr clause>
     private String allowClause() {
         String result = null;
         traceEntry("allowClause");
@@ -130,7 +130,7 @@ public class Rule2Parser extends SptRuleParser {
         return result;
     }
 
-    // <uattr clause 2> ::= ua_name {< uattr assign 2>}:<pc list>; ask ua value:pc_name
+    // <uattr clause> ::= ua_name {< uattr assign>}:<pc list>; ask ua value:pc_name
     private String uattrClause() {
         String result = null;
         traceEntry("uattrClause");
@@ -190,7 +190,7 @@ public class Rule2Parser extends SptRuleParser {
         return result;
     }
 
-    // <uattr assign 2> ::= -> ua_name
+    // <uattr assign> ::= -> ua_name
     private String uattrAssign() {
         traceEntry("uattrAssign");
         while (true) {
@@ -247,7 +247,7 @@ public class Rule2Parser extends SptRuleParser {
         return null;
     }
 
-    // <oattr clause 2> ::= in oa_name {< oattr assign 2>}:<pc list>; ask oa value:pc_name
+    // <oattr clause> ::= in oa_name {< oattr assign>}:<pc list>; ask oa value:pc_name
     private String oattrClause(){
         String result = null;
         traceEntry("oattrClause");
@@ -328,7 +328,7 @@ public class Rule2Parser extends SptRuleParser {
         return null;
     }
 
-    // <oattr assign 2> ::= -> oa_name
+    // <oattr assign> ::= -> oa_name
     private String oattrAssign() {
         traceEntry("oattrAssign");
         while(true) {
@@ -404,7 +404,7 @@ public class Rule2Parser extends SptRuleParser {
         return null;
     }
 
-    //<when clause 2> ::= when ua_value = oa_value
+    //<when clause> ::= when ua_value = oa_value
     private String whenClause() {
         traceEntry("whenClause");
         if (crtToken.tokenId != SptRuleScanner.PM_WHEN) {
@@ -666,6 +666,7 @@ public class Rule2Parser extends SptRuleParser {
         }
 
         // Build Associations for PC1
+        System.out.println("Building association between " + pc1UaList.get(0).getName() + " and " + pc1OaList.get(0).getName());
         graph.associate(pc1UaList.get(0).getID(), pc1OaList.get(0).getID(), associationOperations );
 
         // for PC2
@@ -688,6 +689,7 @@ public class Rule2Parser extends SptRuleParser {
 
         // Build Associations
         System.out.println("Building Associations ...");
+
         for (int i=0;i<pc2UaList.size();i++) {
             graph.associate(pc2UaList.get(i).getID(), pc2OaList.get(i).getID(), associationOperations );
         }

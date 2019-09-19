@@ -1,29 +1,12 @@
 package gov.nist.csd.pm.admintool.spt.parser;
 
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
-import gov.nist.csd.pm.admintool.spt.common.PMElement;
-import gov.nist.csd.pm.admintool.spt.common.RandomGUID;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
-import gov.nist.csd.pm.common.Operations;
-import gov.nist.csd.pm.pip.graph.GraphSerializer;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
-import gov.nist.csd.pm.pip.graph.model.relationships.Assignment;
-import gov.nist.csd.pm.pip.graph.model.relationships.Association;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
 public class SptRuleParser{
 
     static SptToken crtToken;
     static SptRuleScanner myScanner;
-    String scriptName;
-    String scriptId;
     public SptRuleParser() {
     }
 
@@ -72,11 +55,8 @@ public class SptRuleParser{
         }
 
         result = rules();
-//    	out.close();
-//        String json = GraphSerializer.toJson(g);
-
         traceExit("script");
-        return null;
+        return result;
     }
 
     // <script header> ::= script script_name
@@ -130,7 +110,6 @@ public class SptRuleParser{
     // concatenation of multiple scripts without having to deal with header
     // deletion. All interior script headers are ignored.
 
-    // <rule> ::=  <rule 1> | <rule 2> | <rule 3>
     private String rule() throws Exception {
     	String result = null;
         traceEntry("rule");
@@ -149,18 +128,14 @@ public class SptRuleParser{
         return result;
     }
 
-    // Utility methods //////////////////////////////////////////////
-    
-    protected Long generateRandomId() {
-        Random rand = new Random();
-        return rand.nextLong();
-//        RandomGUID myGUID = new RandomGUID();
-//        return new Long(myGUID.hashCode());
-    }
-
     /////////////////////////////////////////////////////////////////////////////
     ////////////////////////// Utility Methods //////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////
+    protected Long generateRandomId() {
+        Random rand = new Random();
+        return rand.nextLong();
+    }
+
     protected String signalError(String found, int expected) {
         return "2 Error around line " + myScanner.lineno() + ": token \""
                 + SptRuleScanner.getTokenValue(expected) + "\" expected. Found \"" + found + "\"!";
@@ -187,17 +162,6 @@ public class SptRuleParser{
                 + SptRuleScanner.getTokenValue(expected3) + "\" or \""
                 + SptRuleScanner.getTokenValue(expected4) + "\" expected. Found \"" + found + "\"!";
     }
-    /*
-    private String signalError(String found, int expected, int expected2, int expected3,
-    int expected4, int expected5) {
-    return "Error around line " + myScanner.lineno() + ": token \"" +
-    SptRuleScanner.getTokenValue(expected) + "\" or \"" +
-    SptRuleScanner.getTokenValue(expected2) + "\" or \"" +
-    SptRuleScanner.getTokenValue(expected3) + "\" or \"" +
-    SptRuleScanner.getTokenValue(expected4) + "\" or \"" +
-    SptRuleScanner.getTokenValue(expected5) + "\" expected. Found \"" + found + "\"!";
-    }
-     */
 
     private String signalError(String found, int expected, int expected2, int expected3,
                                int expected4, int expected5, int expected6) {

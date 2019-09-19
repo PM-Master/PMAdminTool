@@ -1,336 +1,387 @@
 package gov.nist.csd.pm.admintool.spt.parser;
 
+
+import com.vaadin.flow.component.notification.Notification;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
-import gov.nist.csd.pm.admintool.spt.common.PMElement;
-import gov.nist.csd.pm.admintool.spt.common.RandomGUID;
-import gov.nist.csd.pm.admintool.spt.common.SptToken;
-import gov.nist.csd.pm.common.Operations;
-import gov.nist.csd.pm.pip.graph.GraphSerializer;
+import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
-import gov.nist.csd.pm.pip.graph.model.relationships.Assignment;
 import gov.nist.csd.pm.pip.graph.model.relationships.Association;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
-public class Rule1Parser extends SptRuleParser{
 
-    String rule1_pc = "";
-    String rule1_ua = "";
-    String rule1_attr = "";
-    String rule1_attrIn = "";
-    String uattr = "";
-    String uattrContainer = "";
-    ArrayList<String> uaWhenElements = new ArrayList<String>();
-    String parent;
-    String parentType;
-    SingletonGraph g; // = SingletonGraph.getInstance();
 
-    Node associationSource;
-    ArrayList<Node> associationTargets = new ArrayList<Node>();
-    Set<String> associationOperations = new HashSet<>();
+public class Rule1Parser extends SptRuleParser {
 
-    public static Long nodeid = 1L;
+    // variables for PC1
+    ArrayList<String> pc1uas = new ArrayList<String>();
+    ArrayList<String> pc1oas = new ArrayList<String>();
+
+    ArrayList<Node> pc1UaList = null;
+    ArrayList<Node> pc1OaList = null;
+
+    ArrayList<String> pcs1UA = new ArrayList<String>();
+    ArrayList<String> pcs1OA = new ArrayList<String>();
+
+    ArrayList<Node> pcsforUA1 = null;
+    ArrayList<Node> pcsforOA1 = null;
+
+    // Final variables
+    ArrayList<Assignment> assignments = null;
+    ArrayList<Association> associations = null;
+    Set<String> associationOperations = null;
 
     public Rule1Parser() {
+        super();
     }
 
-    // <rule1> ::= rule1 <when clause> <allow clause>
+    private class Assignment {
+        Node fromNode;
+        Node toNode;
+
+        public Assignment(Node fromNode, Node toNode) {
+            this.fromNode = fromNode;
+            this.toNode = toNode;
+        }
+
+        public Assignment() {
+
+        }
+    }
+
+    private class ruleAssociation {
+        Node fromNode;
+        Node toNode;
+        String[] ops;
+
+        public ruleAssociation() {
+        }
+        public ruleAssociation(Node fromNode, Node toNode, String[] ops) {
+            this.fromNode = fromNode;
+            this.toNode = toNode;
+            this.ops = ops;
+        }
+    }
+
+
+    // <rule1> ::= rule1 allow <uattr clause> <ops> <oattr clause>
     protected String rule1() throws Exception {
         String result = null;
         traceEntry("rule1");
-
-        if (crtToken.tokenId == SptRuleScanner.PM_RULE1) {
+        semopRule1Init();
+        crtToken = myScanner.nextToken();
+        if (crtToken.tokenId == SptRuleScanner.PM_ALLOW) {
             traceConsume();
             crtToken = myScanner.nextToken();
-            semopRule1Init();
-            result = whenClause1();
+            result = uattrClause();
             if (result != null) {
                 return result;
             }
 
-            result = allowClause1();
-
+            result = ops();
             if (result != null) {
                 return result;
             }
-            return result;
-        } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE1);
-    }
 
-    // <allow clause> := allow user <access rights> <on Whats>
-    private String allowClause1() throws Exception {
-        String result=null;
-        traceEntry("allowClause1");
-        if (crtToken.tokenId != SptRuleScanner.PM_ALLOW) {
-            traceExit("allowClause1");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_ALLOW);
-        }
-        traceConsume();
-        crtToken = myScanner.nextToken();
-        if (crtToken.tokenId != SptRuleScanner.PM_USER) {
-            traceExit("allowClause1");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_USER);
-        }
-        traceConsume();
-        crtToken = myScanner.nextToken();
-
-        result = accessRights();
-        if (result != null) {
-            traceExit("allowClause1");
-            return result;
-        }
-
-        result = onWhats();
-        if (result != null) {
-            traceExit("assignAction");
-            return result;
-        }
+            result = oattrClause();
+            if (result != null) {
+                return result;
+            }
+//            printElements();
+            try {
+                buildPolicy();
+            } catch (PMException e) {
+                e.printStackTrace();
+            }
+        } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_ALLOW);
         return result;
     }
 
-    // <access rights> ::= <access right> {, <access right>}
-    private String accessRights() throws Exception {
+    // <uattr clause> ::= ua_name {< uattr assign>}:<pc list>
+    private String uattrClause() {
         String result = null;
+        traceEntry("uattrClause");
 
-        traceEntry("accessRights");
+        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+            return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
+        }
+        traceConsume();
+        pc1uas.add(crtToken.tokenValue);
+        crtToken = myScanner.nextToken();
+        result = uattrAssign();
+
+        if (crtToken.tokenId != SptRuleScanner.PM_COLON) {
+            return signalError(crtToken.tokenValue, SptRuleScanner.PM_COLON);
+        }
+        traceConsume();
+        crtToken = myScanner.nextToken();
+        result = pcListUA();
+        if (result != null) {
+            return result;
+        }
+        System.out.println("About to call semopUA()");
+//        semopUA();
+        return result;
+    }
+
+    // <uattr assign> ::= -> ua_name
+    private String uattrAssign() {
+        traceEntry("uattrAssign");
         while (true) {
-            if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-                traceExit("accessRights");
-                return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
-            }
-            result = accessRight();
-            if (result != null) {
-                traceExit("accessRights");
-                return result;
-            }
+            if (crtToken.tokenId == SptRuleScanner.PM_ARROW) {
+                traceConsume();
+                crtToken = myScanner.nextToken();
+                if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+                    return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
+                }
+                traceConsume();
+                pc1uas.add(crtToken.tokenValue);
+                crtToken = myScanner.nextToken();
+            } // continue with the loop
+            else break;
+        }
+        return null;
+    }
+
+    // <ops> ::= to op_name {, op_name}
+    private String ops() {
+        traceEntry("ops");
+
+        traceEntry("ops");
+        if (crtToken.tokenId != SptRuleScanner.PM_TO) {
+            traceExit("ops");
+            return signalError(crtToken.tokenValue, SptRuleScanner.PM_TO);
+        }
+        traceConsume();
+        crtToken = myScanner.nextToken();
+
+        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+            traceExit("ops");
+            return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
+        }
+        traceConsume();
+        associationOperations.add(crtToken.tokenValue);
+        crtToken = myScanner.nextToken();
+        while (true) {
             if (crtToken.tokenId != SptRuleScanner.PM_COMMA) {
                 break;
             }
             traceConsume();
             crtToken = myScanner.nextToken();
-        }
-        traceExit("accessRights");
-        return null;
-    }
-
-    // <access right> ::= ar_name
-    private String accessRight() throws Exception {
-        traceEntry("accessRight");
-        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-            traceExit("accessRight");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
-        }
-
-        traceConsume();
-        semopAnAR();
-        crtToken = myScanner.nextToken();
-
-        traceExit("accessRight");
-        return null;
-    }
-
-    private void semopAnAR() throws Exception{
-        associationOperations.add(crtToken.tokenValue);
-    }
-
-    // <on whats> ::= on <what> {, <what> }
-    private String onWhats() throws Exception {
-        String result = null;
-        traceEntry("onWhats");
-        if (crtToken.tokenId != SptRuleScanner.PM_ON) {
-            traceExit("onWhats");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_ON);
-        }
-        traceConsume();
-        crtToken = myScanner.nextToken();
-        while (true) {
-            break;
-        }
-        result = what();
-        if (result != null) {
-            traceExit("onWhats");
-            return result;
-        }
-        if (crtToken.tokenId != SptRuleScanner.PM_COMMA) {
-            traceConsume();
-            crtToken = myScanner.nextToken();
-        }
-
-        traceExit("onWhats");
-        return null;
-    }
-
-    // <what> ::= user attribute ua_name [in ua_name] | object attribute oa_name [in oa_name]
-    private String what() throws Exception {
-        boolean ua = true;
-
-        traceEntry("what");
-        if (crtToken.tokenId != SptRuleScanner.PM_USER && crtToken.tokenId != SptRuleScanner.PM_OBJECT) {
-            traceExit("what");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_USER, SptRuleScanner.PM_OBJECT);
-        }
-        traceConsume();
-        if (crtToken.tokenId == SptRuleScanner.PM_USER) {
-            ua = true; 	   // it's a user attribute
-        } else ua = false; // it's an object attribute
-
-        crtToken = myScanner.nextToken();
-        if (crtToken.tokenId != SptRuleScanner.PM_ATTR) {
-            traceExit("what");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_ATTR);
-        }
-        traceConsume();
-        crtToken = myScanner.nextToken();
-
-        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-            traceExit("accessRight");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
-        }
-        traceConsume();
-        rule1_attr = crtToken.tokenValue;
-        crtToken = myScanner.nextToken();
-
-        if (crtToken.tokenId == SptRuleScanner.PM_IN) {
-            traceConsume();
-            crtToken = myScanner.nextToken();
             if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-                traceExit("what");
+                traceExit("ops");
                 return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
             }
             traceConsume();
-            rule1_attrIn = crtToken.tokenValue;
+            associationOperations.add(crtToken.tokenValue);
+            crtToken = myScanner.nextToken();
+
         }
-        if (ua) semopUA();
-        else semopOA();
-        crtToken = myScanner.nextToken();
+        traceExit("ops");
         return null;
     }
 
-    public void semopUA() throws Exception {
-        Node parent = null;
-        Node ua = null;
-        int i=0;
-        ua = g.createNode(nodeid++, rule1_attr, NodeType.UA, null);
-        associationTargets.add(ua);
-        if (rule1_attrIn != null) {
-            parent = g.createNode(nodeid++, rule1_attrIn, NodeType.UA, null);
-            g.assign(ua.getID(), parent.getID());
-        }
-    }
-
-    public void semopOA() throws Exception {
-        Node parent = null;
-        int i = 0;
-        Node oa = g.createNode(nodeid++, rule1_attr, NodeType.OA, null);
-        associationTargets.add(oa);
-        if (rule1_attrIn != null) {
-            parent = g.createNode(nodeid++, rule1_attrIn, NodeType.OA, null);
-            g.assign(oa.getID(), parent.getID());
-        }
-    }
-
-    // <when clause> ::= when user is ua_name [in ua_name] in policy pc_name
-    private String whenClause1() throws Exception {
+    // <oattr clause> ::= in oa_name {< oattr assign>}:<pc list>
+    private String oattrClause(){
         String result = null;
-        traceEntry("whenClause1");
+        traceEntry("oattrClause");
 
-        if (crtToken.tokenId != SptRuleScanner.PM_WHEN) {
-            traceExit("whenClause1");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_WHEN);
-        }
-        traceConsume();
-        crtToken = myScanner.nextToken();
-
-        if (crtToken.tokenId != SptRuleScanner.PM_USER) {
-            traceExit("whenClause1");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_USER);
-        }
-        traceConsume();
-        crtToken = myScanner.nextToken();
-
-        if (crtToken.tokenId != SptRuleScanner.PM_IS) {
-            traceExit("whenClause1");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_IS);
-        }
-        traceConsume();
-        crtToken = myScanner.nextToken();
-
-        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-            traceExit("whenClause1");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
-        }
-        traceConsume();
-        int i=0;
-
-        uaWhenElements.add(i++, crtToken.tokenValue);
-        crtToken = myScanner.nextToken();
         if (crtToken.tokenId != SptRuleScanner.PM_IN) {
-            traceExit("whenClause1");
+            traceExit("oattrClause");
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_IN);
         }
         traceConsume();
         crtToken = myScanner.nextToken();
-        while (crtToken.tokenId != SptRuleScanner.PM_POLICY ) {
-            if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-                traceExit("whenClause1");
-                return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
-            }
-            traceConsume();
-            uaWhenElements.add(i++, crtToken.tokenValue);
-            crtToken = myScanner.nextToken();
-
-            if (crtToken.tokenId != SptRuleScanner.PM_IN) {
-                traceExit("whenClause1");
-                return signalError(crtToken.tokenValue, SptRuleScanner.PM_IN);
-            }
-            traceConsume();
-            crtToken = myScanner.nextToken();
-        }
-        if (crtToken.tokenId != SptRuleScanner.PM_POLICY) {
-            traceExit("whenClause1");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_POLICY);
-        }
-        traceConsume();
-        crtToken = myScanner.nextToken();
 
         if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
-            traceExit("whenClause1");
+            traceExit("oattrClause");
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
         }
         traceConsume();
-        uaWhenElements.add(i++, crtToken.tokenValue);
-        semopUaInPC();
+        pc1oas.add(crtToken.tokenValue);
         crtToken = myScanner.nextToken();
-        return result;
+        result = oattrAssign();
+        if (result != null) {
+            traceExit("oattrClause");
+            return result;
+        }
+        if (crtToken.tokenId != SptRuleScanner.PM_COLON) {
+            traceExit("oattrClause");
+            return signalError(crtToken.tokenValue, SptRuleScanner.PM_COLON);
+        }
+        traceConsume();
+        crtToken = myScanner.nextToken();
+        result = pcListOA();
+//        semopOA();
+
+        if (result != null) {
+            traceExit("oattrClause");
+            return result;
+        }
+        return null;
     }
 
-    public void semopUaInPC() throws Exception {
-        String uaName="";
-        Node ua;
-        int count = uaWhenElements.size();
-        rule1_pc = uaWhenElements.get(count-1);
-        if (g== null ) {
-            System.out.println("Graph is null");
+    // <oattr assign> ::= -> oa_name
+    private String oattrAssign() {
+        traceEntry("oattrAssign");
+        while(true) {
+            if (crtToken.tokenId == SptRuleScanner.PM_ARROW) {
+                traceConsume();
+                crtToken = myScanner.nextToken();
+                if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+                    return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
+                }
+                traceConsume();
+                pc1oas.add(crtToken.tokenValue);
+                crtToken = myScanner.nextToken();
+            } else break;
         }
-        Node parent = g.createNode(nodeid++,rule1_pc, NodeType.PC,null);
-        for(int i=count-2; i >= 0 ;i--) {
-            uaName = uaWhenElements.get(i);
-            ua = g.createNode(nodeid++,uaName, NodeType.UA,null);
-            g.assign(ua.getID(), parent.getID());
-            parent = ua;
-        }
-        associationSource = parent;
+        return null;
     }
 
+    // <pc list> ::= pc_name {, pc_name}
+    private String pcListUA() {
+        traceEntry("pcListUA");
 
-    /////////////////// SPT semantic operator Methods
+        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+            traceExit("pcListUA");
+            return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
+        }
+        traceConsume();
+        pcs1UA.add(crtToken.tokenValue);
+        crtToken = myScanner.nextToken();
+        while (true) {
+            if (crtToken.tokenId != SptRuleScanner.PM_COMMA) {
+                break;
+            }
+            traceConsume();
+            crtToken = myScanner.nextToken();
+            if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+                traceExit("pcList");
+                return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
+            }
+            traceConsume();
+            pcs1UA.add(crtToken.tokenValue);
+            crtToken = myScanner.nextToken();
+        }
+        traceExit("pcList");
+        return null;
+    }
+
+    // <pc list> ::= pc_name {, pc_name}
+    private String pcListOA() {
+        traceEntry("pcList");
+
+        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+            traceExit("pcList");
+            return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
+        }
+        traceConsume();
+        pcs1OA.add(crtToken.tokenValue);
+        crtToken = myScanner.nextToken();
+        while (true) {
+            if (crtToken.tokenId != SptRuleScanner.PM_COMMA) {
+                break;
+            }
+            traceConsume();
+            crtToken = myScanner.nextToken();
+            if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+                traceExit("pcList");
+                return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
+            }
+            traceConsume();
+            pcs1OA.add(crtToken.tokenValue);
+            crtToken = myScanner.nextToken();
+        }
+        traceExit("pcList");
+        return null;
+    }
+
+    private void printElements() {
+        System.out.println("=======================================================================================");
+        System.out.println("PC 1 UAs are ...");
+        for (int i=0;i<pc1UaList.size();i++) {
+            System.out.println(pc1UaList.get(i).getName());
+        }
+        System.out.println("PC 1 OAs are ...");
+        for (int i=0;i<pc1OaList.size();i++) {
+            System.out.println(pc1OaList.get(i).getName());
+        }
+        System.out.println("Assignments are ...");
+        for (int i=0;i<assignments.size();i++) {
+            System.out.println(assignments.get(i).fromNode.getName()+"-"+assignments.get(i).toNode.getName());
+        }
+        System.out.println("Associations are ...");
+        for (int i=0;i<associations.size();i++) {
+            System.out.println(associations.get(i).getSourceID()+"-"+associations.get(i).getTargetID());
+        }
+
+        System.out.println("Operations are ...");
+        Iterator<String> it = associationOperations.iterator();
+        while(it.hasNext()){
+            System.out.println(it.next());
+        }
+        System.out.println("=======================================================================================");
+    }
+
+    // semop methds
     private void semopRule1Init() {
-        traceSemop("semopRule1Init");
-        g = SingletonGraph.getInstance();
+        // create necessary structure to store grammar values
+        pc1UaList = new ArrayList<Node>();
+        pc1OaList = new ArrayList<Node>();
+        pcsforUA1 = new ArrayList<Node>();
+        pcsforOA1 = new ArrayList<Node>();
+        associations = new ArrayList<Association>();
+        associationOperations = new HashSet<>();
+    }
+
+    /* Graph updates
+        0. Reset graph
+        1. create Nodes
+        2. Create Assignments
+        3. Create associations
+    */
+    private void buildPolicy() throws PMException {
+        SingletonGraph graph = SingletonGraph.getInstance();
+//        graph.reset();
+        int pc1UASize = pc1uas.size();
+        int pc1OASize = pc1oas.size();
+        System.out.println("Build PCs..." + pcs1UA.size() + " PCs");
+        for (int i=0;i<pcs1UA.size();i++) {
+            pcsforUA1.add(graph.createPolicyClass(pcs1UA.get(0), null));
+        }
+
+        System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getID());
+        // First parent UA
+        Long parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getID(),NodeType.UA);
+        pc1UaList.add(graph.createNode(parentUAId, pc1uas.get(pc1UASize-1), NodeType.UA,null));
+        for (int i=1;i<pcsforUA1.size();i++) {
+            graph.assign(pc1UaList.get(pc1UASize-1).getID(), pcsforUA1.get(i).getID());
+        }
+        // Other UAs
+        for (int i=pc1UASize-2;i>=0;i--) {
+            pc1UaList.add(graph.createNode(pc1UaList.get(pc1UaList.size()-1).getID(), pc1uas.get(i), NodeType.UA,null));
+        }
+        // First parent OA
+        Long parentOAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getID(),NodeType.OA);
+        System.out.println("Build PC 1 OAs ...");
+        pc1OaList.add(graph.createNode(parentOAId, pc1oas.get(pc1OASize-1), NodeType.OA,null));
+        for (int i=1;i<pcsforUA1.size();i++) {
+            graph.assign(pc1OaList.get(pc1OASize-1).getID(), pcsforUA1.get(i).getID());
+        }
+        // Other OAs
+        for (int i=pc1OASize-2;i>=0;i--) {
+            pc1OaList.add(graph.createNode(pc1OaList.get(pc1OaList.size()-1).getID(), pc1oas.get(i), NodeType.OA,null));
+        }
+
+        // Build Associations
+        System.out.println("Building association between " + pc1UaList.get(pc1UASize-1).getName() + " and " + pc1OaList.get(pc1OASize-1).getName());
+        graph.associate(pc1UaList.get(pc1UASize-1).getID(), pc1OaList.get(pc1OASize-1).getID(), associationOperations );
+    }
+
+    public void notify(String message){
+        Notification notif = new Notification(message, 3000);
+        notif.open();
     }
 }
