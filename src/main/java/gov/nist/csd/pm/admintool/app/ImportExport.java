@@ -42,12 +42,13 @@ public class ImportExport extends VerticalLayout {
         exportLayout.getStyle().set("height","100vh");
         layout.add(exportLayout);
     }
-
+    //            add(new Paragraph(g.getGraphService().getNode(userCtx,-1).getName()));
     // todo: make sure this works
     public void updateGraph (String json) {
+        System.out.println("Importing following JSON now ........................... ");
+        System.out.println(json);
         try {
             g = g.updateGraph(GraphSerializer.fromJson(g.getPAP().getGraphPAP(), json));
-//            add(new Paragraph(g.getGraphService().getNode(userCtx,-1).getName()));
         } catch (PMException e) {
             e.printStackTrace();
         }

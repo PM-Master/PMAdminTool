@@ -97,7 +97,12 @@ public class Rule1Parser extends SptRuleParser {
         } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_ALLOW);
         return result;
     }
+    public boolean testPolicy() {
+        // 1. Create a user under UA
+        // 2. Get permission ops on the OA and compare with the all the operations in the rule. If they match, return true else false
 
+        return true;
+    }
     // <uattr clause> ::= ua_name {< uattr assign>}:<pc list>
     private String uattrClause() {
         String result = null;

@@ -13,10 +13,16 @@ public class SptRuleParser{
     public static void main(String args[]) {
     	
         try {
-            String rule = "allow teller: rbac,dac; ask ua value: branch\n" +
-                    "        to \"Create Object\", \"Delete Object\" \n" +
-                    "        in accounts: rbac,dac; ask oa value: branch\n" +
-                    "when ua_value = oa_value\n";
+            String rule = "rule1 \n" +
+                    "allow teller->staff: rbac\n" +
+                    "        to \"create object\", \"delete object\" \n" +
+                    "        in branchAccounts->accounts\n" +
+                    "\n" +
+                    "rule2 \n" +
+                    "allow teller->staff: rbac; ask ua value: branch\n" +
+                    "        to \"create object\", \"delete object\" \n" +
+                    "        in branchAccounts->accounts: rbac; ask oa value: branch\n" +
+                    "when ua_value = oa_value";
         	SptRuleParser ruleParser = new SptRuleParser(rule);
             ruleParser.printTokens();
 
@@ -45,6 +51,10 @@ public class SptRuleParser{
     // <script> ::= <script header> <rules>
     private String script() throws Exception {
         String result = null;
+        if (crtToken.tokenId != SptRuleScanner.PM_SCRIPT) {
+            traceExit("scriptHeader");
+            return signalError(crtToken.tokenValue, SptRuleScanner.PM_SCRIPT);
+        }
 
         traceEntry("script");
 
@@ -56,6 +66,7 @@ public class SptRuleParser{
 
         result = rules();
         traceExit("script");
+
         return result;
     }
 
@@ -63,10 +74,6 @@ public class SptRuleParser{
     private String scriptHeader() {
         traceEntry("scriptHeader");
 
-        if (crtToken.tokenId != SptRuleScanner.PM_SCRIPT) {
-            traceExit("scriptHeader");
-            return signalError(crtToken.tokenValue, SptRuleScanner.PM_SCRIPT);
-        }
         traceConsume();
         crtToken = myScanner.nextToken();
         if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
@@ -113,18 +120,19 @@ public class SptRuleParser{
     private String rule() throws Exception {
     	String result = null;
         traceEntry("rule");
-
-        if (crtToken.tokenId == SptRuleScanner.PM_RULE1) {
-            Rule1Parser parser = new Rule1Parser();
-            result = parser.rule1();
-        } else if (crtToken.tokenId == SptRuleScanner.PM_RULE2) {
-            synchronized(this) {
-                Rule2Parser parser = new Rule2Parser();
-                parser.rule2();
-            }
-        } else if (crtToken.tokenId == SptRuleScanner.PM_RULE3) {
+        while (crtToken.tokenId == SptRuleScanner.PM_RULE1 || crtToken.tokenId == SptRuleScanner.PM_RULE2){
+            if (crtToken.tokenId == SptRuleScanner.PM_RULE1) {
+                Rule1Parser parser = new Rule1Parser();
+                result = parser.rule1();
+            } else if (crtToken.tokenId == SptRuleScanner.PM_RULE2) {
+                synchronized (this) {
+                    Rule2Parser parser = new Rule2Parser();
+                    parser.rule2();
+                }
+//            } else if (crtToken.tokenId == SptRuleScanner.PM_RULE3) {
 //        	result = rule3();
-		} else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE);
+            } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE);
+        }
         return result;
     }
 

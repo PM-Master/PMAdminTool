@@ -666,8 +666,8 @@ public class Rule2Parser extends SptRuleParser {
         }
 
         // Build Associations for PC1
-        System.out.println("Building association between " + pc1UaList.get(0).getName() + " and " + pc1OaList.get(0).getName());
-        graph.associate(pc1UaList.get(0).getID(), pc1OaList.get(0).getID(), associationOperations );
+        System.out.println("Building association between " + pc1UaList.get(pc1UASize-1).getName() + " and " + pc1OaList.get(pc1OASize-1).getName());
+        graph.associate(pc1UaList.get(pc1UASize-1).getID(), pc1OaList.get(pc1OASize-1).getID(), associationOperations );
 
         // for PC2
 

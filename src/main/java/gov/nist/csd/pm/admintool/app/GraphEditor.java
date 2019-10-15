@@ -945,7 +945,7 @@ public class GraphEditor extends VerticalLayout {
                 }
                 try {
 //                    System.out.println(props);
-                    g.associate(selectedParentNode.getID(), selectedChildNode.getID(), ops);
+                    g.associate(selectedChildNode.getID(), selectedParentNode.getID(), ops);
                     notify("Association Created");
                     dialog.close();
                 } catch (Exception e) {
@@ -1029,7 +1029,8 @@ public class GraphEditor extends VerticalLayout {
 
         Button button = new Button("Delete", event -> {
             try {
-                g.dissociate(selectedParentNode.getID(), selectedChildNode.getID());
+                System.out.println("Deleting association between " + selectedChildNode.getName() + "-" + selectedChildNode.getType()+ " AND " + selectedParentNode.getName());
+                g.dissociate(selectedChildNode.getID(), selectedParentNode.getID());
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
