@@ -67,7 +67,7 @@ public abstract class Action {
     public abstract String explain();
 
     public enum Type {
-        NODETYPE, OPERATION, STRING;
+        NODETYPE, OPERATION, STRING
     }
 
     protected class Element<K> {

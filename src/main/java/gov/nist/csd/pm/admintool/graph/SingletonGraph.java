@@ -3,7 +3,7 @@ package gov.nist.csd.pm.admintool.graph;
 import gov.nist.csd.pm.epp.events.EventContext;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pap.PAP;
-import gov.nist.csd.pm.pdp.*;
+import gov.nist.csd.pm.pdp.PDP;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.Graph;
 import gov.nist.csd.pm.pip.graph.MemGraph;
@@ -11,7 +11,6 @@ import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import gov.nist.csd.pm.pip.obligations.MemObligations;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
-import gov.nist.csd.pm.pip.obligations.model.PolicyClass;
 import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
 
 import java.util.*;
@@ -31,7 +30,7 @@ public class SingletonGraph extends PDP {
     private static Random rand;
     private static Set<PolicyClassWithActive> activePCs;
 
-    private SingletonGraph(PAP pap) {
+    private SingletonGraph(PAP pap) throws PMException {
         super(pap);
 //        try {
 //            getGraphService().createNode(new UserContext(-1, -1),
@@ -319,7 +318,7 @@ public class SingletonGraph extends PDP {
     // obligation service methods
     public void addObl(Obligation obligation) throws PMException {
         if (superContext != null) {
-            g.getObligationsService().add(superContext, obligation);
+            g.getObligationsService().add(superContext, obligation, true);
         } else {
             throw new PMException("Super Context is Null");
         }

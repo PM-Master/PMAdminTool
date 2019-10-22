@@ -3,12 +3,16 @@ package gov.nist.csd.pm.admintool.spt.parser;
 
 import com.vaadin.flow.component.notification.Notification;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.spt.common.SptToken;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import gov.nist.csd.pm.pip.graph.model.relationships.Association;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 
 
@@ -71,7 +75,7 @@ public class Rule1Parser extends SptRuleParser {
         traceEntry("rule1");
         semopRule1Init();
         crtToken = myScanner.nextToken();
-        if (crtToken.tokenId == SptRuleScanner.PM_ALLOW) {
+        if (SptToken.tokenId == SptRuleScanner.PM_ALLOW) {
             traceConsume();
             crtToken = myScanner.nextToken();
             result = uattrClause();
@@ -108,7 +112,7 @@ public class Rule1Parser extends SptRuleParser {
         String result = null;
         traceEntry("uattrClause");
 
-        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+        if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
         }
         traceConsume();
@@ -116,7 +120,7 @@ public class Rule1Parser extends SptRuleParser {
         crtToken = myScanner.nextToken();
         result = uattrAssign();
 
-        if (crtToken.tokenId != SptRuleScanner.PM_COLON) {
+        if (SptToken.tokenId != SptRuleScanner.PM_COLON) {
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_COLON);
         }
         traceConsume();
@@ -134,10 +138,10 @@ public class Rule1Parser extends SptRuleParser {
     private String uattrAssign() {
         traceEntry("uattrAssign");
         while (true) {
-            if (crtToken.tokenId == SptRuleScanner.PM_ARROW) {
+            if (SptToken.tokenId == SptRuleScanner.PM_ARROW) {
                 traceConsume();
                 crtToken = myScanner.nextToken();
-                if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+                if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
                     return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
                 }
                 traceConsume();
@@ -154,14 +158,14 @@ public class Rule1Parser extends SptRuleParser {
         traceEntry("ops");
 
         traceEntry("ops");
-        if (crtToken.tokenId != SptRuleScanner.PM_TO) {
+        if (SptToken.tokenId != SptRuleScanner.PM_TO) {
             traceExit("ops");
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_TO);
         }
         traceConsume();
         crtToken = myScanner.nextToken();
 
-        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+        if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
             traceExit("ops");
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
         }
@@ -169,12 +173,12 @@ public class Rule1Parser extends SptRuleParser {
         associationOperations.add(crtToken.tokenValue);
         crtToken = myScanner.nextToken();
         while (true) {
-            if (crtToken.tokenId != SptRuleScanner.PM_COMMA) {
+            if (SptToken.tokenId != SptRuleScanner.PM_COMMA) {
                 break;
             }
             traceConsume();
             crtToken = myScanner.nextToken();
-            if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+            if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
                 traceExit("ops");
                 return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
             }
@@ -192,14 +196,14 @@ public class Rule1Parser extends SptRuleParser {
         String result = null;
         traceEntry("oattrClause");
 
-        if (crtToken.tokenId != SptRuleScanner.PM_IN) {
+        if (SptToken.tokenId != SptRuleScanner.PM_IN) {
             traceExit("oattrClause");
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_IN);
         }
         traceConsume();
         crtToken = myScanner.nextToken();
 
-        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+        if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
             traceExit("oattrClause");
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
         }
@@ -211,7 +215,7 @@ public class Rule1Parser extends SptRuleParser {
             traceExit("oattrClause");
             return result;
         }
-        if (crtToken.tokenId != SptRuleScanner.PM_COLON) {
+        if (SptToken.tokenId != SptRuleScanner.PM_COLON) {
             traceExit("oattrClause");
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_COLON);
         }
@@ -231,10 +235,10 @@ public class Rule1Parser extends SptRuleParser {
     private String oattrAssign() {
         traceEntry("oattrAssign");
         while(true) {
-            if (crtToken.tokenId == SptRuleScanner.PM_ARROW) {
+            if (SptToken.tokenId == SptRuleScanner.PM_ARROW) {
                 traceConsume();
                 crtToken = myScanner.nextToken();
-                if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+                if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
                     return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
                 }
                 traceConsume();
@@ -249,7 +253,7 @@ public class Rule1Parser extends SptRuleParser {
     private String pcListUA() {
         traceEntry("pcListUA");
 
-        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+        if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
             traceExit("pcListUA");
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
         }
@@ -257,12 +261,12 @@ public class Rule1Parser extends SptRuleParser {
         pcs1UA.add(crtToken.tokenValue);
         crtToken = myScanner.nextToken();
         while (true) {
-            if (crtToken.tokenId != SptRuleScanner.PM_COMMA) {
+            if (SptToken.tokenId != SptRuleScanner.PM_COMMA) {
                 break;
             }
             traceConsume();
             crtToken = myScanner.nextToken();
-            if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+            if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
                 traceExit("pcList");
                 return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
             }
@@ -278,7 +282,7 @@ public class Rule1Parser extends SptRuleParser {
     private String pcListOA() {
         traceEntry("pcList");
 
-        if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+        if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
             traceExit("pcList");
             return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
         }
@@ -286,12 +290,12 @@ public class Rule1Parser extends SptRuleParser {
         pcs1OA.add(crtToken.tokenValue);
         crtToken = myScanner.nextToken();
         while (true) {
-            if (crtToken.tokenId != SptRuleScanner.PM_COMMA) {
+            if (SptToken.tokenId != SptRuleScanner.PM_COMMA) {
                 break;
             }
             traceConsume();
             crtToken = myScanner.nextToken();
-            if (crtToken.tokenId != SptRuleScanner.PM_WORD) {
+            if (SptToken.tokenId != SptRuleScanner.PM_WORD) {
                 traceExit("pcList");
                 return signalError(crtToken.tokenValue, SptRuleScanner.PM_WORD);
             }

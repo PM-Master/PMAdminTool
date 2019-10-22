@@ -68,20 +68,20 @@ public class GlobalConstants {
 	public static final String PM_CLASS_SESSION_ID = "14";
 	public static final String PM_CLASS_CREATE_CLASS = "Class create class";
 	public static final String PM_CLASS_DELETE_CLASS = "Class delete class";
-	/**
-	 * @uml.property  name="sClassOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sClassOps[] = {PM_CLASS_CREATE_CLASS, PM_CLASS_DELETE_CLASS};
+    /**
+     * @uml.property name="sClassOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sClassOps = {PM_CLASS_CREATE_CLASS, PM_CLASS_DELETE_CLASS};
 	public static final String PM_DIR_MODIFY = "Dir modify";
 	public static final String PM_DIR_READEXEC = "Dir read and execute";
 	public static final String PM_DIR_LIST = "Dir list contents";
 	public static final String PM_DIR_READ = "Dir read";
 	public static final String PM_DIR_WRITE = "Dir write";
-	/**
-	 * @uml.property  name="sDirOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sDirOps[] = {PM_DIR_MODIFY, PM_DIR_READEXEC, PM_DIR_LIST,
-			PM_DIR_READ, PM_DIR_WRITE};
+    /**
+     * @uml.property name="sDirOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sDirOps = {PM_DIR_MODIFY, PM_DIR_READEXEC, PM_DIR_LIST,
+            PM_DIR_READ, PM_DIR_WRITE};
 	public static final String PM_FILE_MODIFY = "File modify";
 	public static final String PM_FILE_READEXEC = "File read and execute";
 	public static final String PM_FILE_READ = "File read";
@@ -93,21 +93,21 @@ public class GlobalConstants {
 	public static final String PM_FILE_READ_VAL = "6";
 	public static final String PM_FILE_WRITE_VAL = "7";
 
-	/**
-	 * @uml.property  name="sFileOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sFileOps[] = {PM_FILE_MODIFY, PM_FILE_READEXEC,
-			PM_FILE_READ, PM_FILE_WRITE};
+    /**
+     * @uml.property name="sFileOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sFileOps = {PM_FILE_MODIFY, PM_FILE_READEXEC,
+            PM_FILE_READ, PM_FILE_WRITE};
 	public static final String PM_ENTITY_REPRESENT = "Entity represent";
 	public static final String PM_USER_CREATE_UATTR = "User create user attribute";
 	public static final String PM_USER_ASSIGN = "User assign";
 	public static final String PM_USER_DELETE = "User delete";
 	public static final String PM_USER_DELETE_ASSIGN = "User delete assign";
-	/**
-	 * @uml.property  name="sUserOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sUserOps[] = {PM_USER_CREATE_UATTR, PM_USER_ASSIGN,
-			PM_USER_DELETE, PM_USER_DELETE_ASSIGN, PM_ENTITY_REPRESENT};
+    /**
+     * @uml.property name="sUserOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sUserOps = {PM_USER_CREATE_UATTR, PM_USER_ASSIGN,
+            PM_USER_DELETE, PM_USER_DELETE_ASSIGN, PM_ENTITY_REPRESENT};
 	public static final String PM_UATTR_CREATE_UATTR = "User attribute create user attribute";
 	public static final String PM_UATTR_CREATE_USER = "User attribute create user";
 	public static final String PM_UATTR_DELETE_USER = "User attribute delete user";
@@ -118,19 +118,19 @@ public class GlobalConstants {
 	public static final String PM_UATTR_DELETE = "User attribute delete";
 	public static final String PM_UATTR_DELETE_ASSIGN = "User attribute delete assign";
 	public static final String PM_UATTR_DELETE_ASSIGN_TO = "User attribute delete assign to";
-	/**
-	 * @uml.property  name="sUattrOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sUattrOps[] = {PM_UATTR_CREATE_UATTR, PM_UATTR_CREATE_USER,
-			PM_UATTR_DELETE_USER, PM_UATTR_CREATE_OPSET,
-			PM_UATTR_ASSIGN_TO_OPSET, PM_UATTR_ASSIGN, PM_UATTR_ASSIGN_TO,
-			PM_UATTR_DELETE, PM_UATTR_DELETE_ASSIGN, PM_UATTR_DELETE_ASSIGN_TO,
-			PM_ENTITY_REPRESENT};
+    /**
+     * @uml.property name="sUattrOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sUattrOps = {PM_UATTR_CREATE_UATTR, PM_UATTR_CREATE_USER,
+            PM_UATTR_DELETE_USER, PM_UATTR_CREATE_OPSET,
+            PM_UATTR_ASSIGN_TO_OPSET, PM_UATTR_ASSIGN, PM_UATTR_ASSIGN_TO,
+            PM_UATTR_DELETE, PM_UATTR_DELETE_ASSIGN, PM_UATTR_DELETE_ASSIGN_TO,
+            PM_ENTITY_REPRESENT};
 	public static final String PM_OBJ_DELETE = "Object delete";
-	/**
-	 * @uml.property  name="sObjOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sObjOps[] = {PM_OBJ_DELETE};
+    /**
+     * @uml.property name="sObjOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sObjOps = {PM_OBJ_DELETE};
 	public static final String PM_OATTR_CREATE_OBJ = "Object attribute create object";
 	public static final String PM_OATTR_DELETE_OBJ = "Object attribute delete object";
 	public static final String PM_OATTR_CREATE_OATTR = "Object attribute create object attribute";
@@ -141,14 +141,14 @@ public class GlobalConstants {
 	public static final String PM_OATTR_DELETE = "Object attribute delete";
 	public static final String PM_OATTR_DELETE_ASSIGN = "Object attribute delete assign";
 	public static final String PM_OATTR_DELETE_ASSIGN_TO = "Object attribute delete assign to";
-	/**
-	 * @uml.property  name="sOattrOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sOattrOps[] = {PM_OATTR_CREATE_OBJ, PM_OATTR_DELETE_OBJ,
-			PM_OATTR_CREATE_OATTR, PM_OATTR_DELETE_OATTR,
-			PM_OATTR_CREATE_OPSET, PM_OATTR_ASSIGN, PM_OATTR_ASSIGN_TO,
-			PM_OATTR_DELETE, PM_OATTR_DELETE_ASSIGN, PM_OATTR_DELETE_ASSIGN_TO,
-			PM_ENTITY_REPRESENT};
+    /**
+     * @uml.property name="sOattrOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sOattrOps = {PM_OATTR_CREATE_OBJ, PM_OATTR_DELETE_OBJ,
+            PM_OATTR_CREATE_OATTR, PM_OATTR_DELETE_OATTR,
+            PM_OATTR_CREATE_OPSET, PM_OATTR_ASSIGN, PM_OATTR_ASSIGN_TO,
+            PM_OATTR_DELETE, PM_OATTR_DELETE_ASSIGN, PM_OATTR_DELETE_ASSIGN_TO,
+            PM_ENTITY_REPRESENT};
 	public static final String PM_POL_CREATE_UATTR = "Policy class create user attribute";
 	public static final String PM_POL_DELETE_UATTR = "Policy class delete user attribute";
 	public static final String PM_POL_CREATE_OATTR = "Policy class create object attribute";
@@ -159,24 +159,24 @@ public class GlobalConstants {
 	public static final String PM_POL_DELETE = "Policy class delete";
 	public static final String PM_POL_DELETE_ASSIGN = "Policy class delete assign";
 	public static final String PM_POL_DELETE_ASSIGN_TO = "Policy class delete assign to";
-	/**
-	 * @uml.property  name="sPolOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sPolOps[] = {PM_POL_CREATE_UATTR, PM_POL_DELETE_UATTR,
-			PM_POL_CREATE_OATTR, PM_POL_DELETE_OATTR, PM_POL_CREATE_OBJ,
-			PM_POL_ASSIGN, PM_POL_ASSIGN_TO, PM_POL_DELETE,
-			PM_POL_DELETE_ASSIGN, PM_POL_DELETE_ASSIGN_TO, PM_ENTITY_REPRESENT};
+    /**
+     * @uml.property name="sPolOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sPolOps = {PM_POL_CREATE_UATTR, PM_POL_DELETE_UATTR,
+            PM_POL_CREATE_OATTR, PM_POL_DELETE_OATTR, PM_POL_CREATE_OBJ,
+            PM_POL_ASSIGN, PM_POL_ASSIGN_TO, PM_POL_DELETE,
+            PM_POL_DELETE_ASSIGN, PM_POL_DELETE_ASSIGN_TO, PM_ENTITY_REPRESENT};
 	public static final String PM_OPSET_ASSIGN = "Operation set assign";
 	public static final String PM_OPSET_ASSIGN_TO = "Operation set assign to";
 	public static final String PM_OPSET_DELETE = "Operation set delete";
 	public static final String PM_OPSET_DELETE_ASSIGN = "Operation set delete assign";
 	public static final String PM_OPSET_DELETE_ASSIGN_TO = "Operation set delete assign to";
-	/**
-	 * @uml.property  name="sOpsetOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sOpsetOps[] = {PM_OPSET_ASSIGN, PM_OPSET_ASSIGN_TO,
-			PM_OPSET_DELETE, PM_OPSET_DELETE_ASSIGN, PM_OPSET_DELETE_ASSIGN_TO,
-			PM_ENTITY_REPRESENT};
+    /**
+     * @uml.property name="sOpsetOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sOpsetOps = {PM_OPSET_ASSIGN, PM_OPSET_ASSIGN_TO,
+            PM_OPSET_DELETE, PM_OPSET_DELETE_ASSIGN, PM_OPSET_DELETE_ASSIGN_TO,
+            PM_ENTITY_REPRESENT};
 	public static final String PM_CONN_CREATE_POL = "Connector create policy class";
 	public static final String PM_CONN_DELETE_POL = "Connector delete policy class";
 	public static final String PM_CONN_CREATE_USER = "Connector create user";
@@ -189,19 +189,19 @@ public class GlobalConstants {
 	public static final String PM_CONN_CREATE_OPSET = "Connector create operation set";
 	public static final String PM_CONN_ASSIGN_TO = "Connector assign to";
 	public static final String PM_CONN_DELETE_ASSIGN_TO = "Connector delete assign to";
-	/**
-	 * @uml.property  name="sConnOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sConnOps[] = {PM_CONN_CREATE_POL, PM_CONN_DELETE_POL,
-			PM_CONN_CREATE_USER, PM_CONN_DELETE_USER, PM_CONN_CREATE_UATTR,
-			PM_CONN_DELETE_UATTR, PM_CONN_CREATE_OATTR, PM_CONN_DELETE_OATTR,
-			PM_CONN_CREATE_OBJ, PM_CONN_CREATE_OPSET, PM_CONN_ASSIGN_TO,
-			PM_CONN_DELETE_ASSIGN_TO, PM_ENTITY_REPRESENT};
+    /**
+     * @uml.property name="sConnOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sConnOps = {PM_CONN_CREATE_POL, PM_CONN_DELETE_POL,
+            PM_CONN_CREATE_USER, PM_CONN_DELETE_USER, PM_CONN_CREATE_UATTR,
+            PM_CONN_DELETE_UATTR, PM_CONN_CREATE_OATTR, PM_CONN_DELETE_OATTR,
+            PM_CONN_CREATE_OBJ, PM_CONN_CREATE_OPSET, PM_CONN_ASSIGN_TO,
+            PM_CONN_DELETE_ASSIGN_TO, PM_ENTITY_REPRESENT};
 	public static final String PM_ANY_ANY = "*";
-	/**
-	 * @uml.property  name="sAnyOps" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sAnyOps[] = {PM_ANY_ANY};
+    /**
+     * @uml.property name="sAnyOps" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sAnyOps = {PM_ANY_ANY};
 	public static final String PM_GRAPH_UATTR = "ua";
 	public static final String PM_GRAPH_CAPS = "ca";
 	public static final String PM_GRAPH_OATTR = "oa";
@@ -260,14 +260,14 @@ public class GlobalConstants {
 	public static final String PM_EVENT_SESSION_CREATE = "Session create";
 	public static final String PM_EVENT_SESSION_DELETE = "Session delete";
 	public static final String PM_EVENT_OBJECT_SEND = "Object send";
-	/**
-	 * @uml.property  name="sEventNames" multiplicity="(0 -1)" dimension="1"
-	 */
-	public static final  String sEventNames[] = {PM_EVENT_OBJECT_CREATE,
-			PM_EVENT_OBJECT_DELETE, PM_EVENT_OBJECT_READ,
-			PM_EVENT_OBJECT_WRITE, PM_EVENT_USER_CREATE,
-			PM_EVENT_SESSION_CREATE, PM_EVENT_SESSION_DELETE,
-			PM_EVENT_OBJECT_SEND};
+    /**
+     * @uml.property name="sEventNames" multiplicity="(0 -1)" dimension="1"
+     */
+    public static final String[] sEventNames = {PM_EVENT_OBJECT_CREATE,
+            PM_EVENT_OBJECT_DELETE, PM_EVENT_OBJECT_READ,
+            PM_EVENT_OBJECT_WRITE, PM_EVENT_USER_CREATE,
+            PM_EVENT_SESSION_CREATE, PM_EVENT_SESSION_DELETE,
+            PM_EVENT_OBJECT_SEND};
 	// Requested information about events and their processing.
 	public static final String PM_INFO_USER_SELECTS_CONTAINERS = "User selects containers";
 	public static final String PM_SELECTION_MULTIPLE = "multiple";

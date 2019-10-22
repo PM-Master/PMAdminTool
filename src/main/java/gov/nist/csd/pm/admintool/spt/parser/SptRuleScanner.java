@@ -153,27 +153,27 @@ public class SptRuleScanner {
 
   // RULE 2 new values ***********************
 
-  private static String sKeywords[] =
-                      {PM_VALUE_IF, PM_VALUE_THEN, PM_VALUE_ANY,
-                       PM_VALUE_USER, PM_VALUE_OF, PM_VALUE_ACTIVE,
-                       PM_VALUE_IN, PM_VALUE_ALL, PM_VALUE_PERFORMS,
-                       PM_VALUE_ON, PM_VALUE_CLASS, PM_VALUE_ASSIGN,
-                       PM_VALUE_NEW, PM_VALUE_OBJECT, PM_VALUE_TO,
-                       PM_VALUE_LIKE, PM_VALUE_CHOICE, PM_VALUE_GRANT,
-                       PM_VALUE_DENY, PM_VALUE_OPS, PM_VALUE_NAME,
-                       PM_VALUE_ATTR, PM_VALUE_POLICY, PM_VALUE_EACH,
-                       PM_VALUE_OP, PM_VALUE_AS, PM_VALUE_BASE,
-                       PM_VALUE_SCRIPT, PM_VALUE_CREATE, PM_VALUE_WITH,
-                       PM_VALUE_PROPERTY, PM_VALUE_REPR, PM_VALUE_AND,
-                       PM_VALUE_ASCS, PM_VALUE_WHEN, PM_VALUE_DO,
-                       PM_VALUE_NOT, PM_VALUE_EXISTS, PM_VALUE_INTRA,
-                       PM_VALUE_COMPLEMENT, PM_VALUE_INTERSECTION,
-                       PM_VALUE_ASSIGNMENT, PM_VALUE_DELETE, PM_VALUE_RULE,
-                       PM_VALUE_SESSION, PM_VALUE_RULES, PM_VALUE_RECORD,
-                       PM_VALUE_PROCESS, PM_VALUE_ALLOW, PM_VALUE_RULE1, 
-                       PM_VALUE_RULE2, PM_VALUE_RULE3, PM_VALUE_IS,
-                       PM_VALUE_ASK,PM_VALUE_UA,PM_VALUE_VALUE,PM_VALUE_OA
-  };
+    private static String[] sKeywords =
+            {PM_VALUE_IF, PM_VALUE_THEN, PM_VALUE_ANY,
+                    PM_VALUE_USER, PM_VALUE_OF, PM_VALUE_ACTIVE,
+                    PM_VALUE_IN, PM_VALUE_ALL, PM_VALUE_PERFORMS,
+                    PM_VALUE_ON, PM_VALUE_CLASS, PM_VALUE_ASSIGN,
+                    PM_VALUE_NEW, PM_VALUE_OBJECT, PM_VALUE_TO,
+                    PM_VALUE_LIKE, PM_VALUE_CHOICE, PM_VALUE_GRANT,
+                    PM_VALUE_DENY, PM_VALUE_OPS, PM_VALUE_NAME,
+                    PM_VALUE_ATTR, PM_VALUE_POLICY, PM_VALUE_EACH,
+                    PM_VALUE_OP, PM_VALUE_AS, PM_VALUE_BASE,
+                    PM_VALUE_SCRIPT, PM_VALUE_CREATE, PM_VALUE_WITH,
+                    PM_VALUE_PROPERTY, PM_VALUE_REPR, PM_VALUE_AND,
+                    PM_VALUE_ASCS, PM_VALUE_WHEN, PM_VALUE_DO,
+                    PM_VALUE_NOT, PM_VALUE_EXISTS, PM_VALUE_INTRA,
+                    PM_VALUE_COMPLEMENT, PM_VALUE_INTERSECTION,
+                    PM_VALUE_ASSIGNMENT, PM_VALUE_DELETE, PM_VALUE_RULE,
+                    PM_VALUE_SESSION, PM_VALUE_RULES, PM_VALUE_RECORD,
+                    PM_VALUE_PROCESS, PM_VALUE_ALLOW, PM_VALUE_RULE1,
+                    PM_VALUE_RULE2, PM_VALUE_RULE3, PM_VALUE_IS,
+                    PM_VALUE_ASK, PM_VALUE_UA, PM_VALUE_VALUE, PM_VALUE_OA
+            };
 
   private static final String PM_VALUE_ARROW         = "->";
   private static final String PM_VALUE_EQUAL         = "=";
@@ -288,9 +288,9 @@ HashMap keywords;
   }
   
   public static void printToken(SptToken token) {
-    if (token.tokenId >= PM_FIRST_KEYWORD && token.tokenId <= PM_LAST_KEYWORD)
+    if (SptToken.tokenId >= PM_FIRST_KEYWORD && SptToken.tokenId <= PM_LAST_KEYWORD)
       System.out.println(  "Keyword  : " + token.tokenValue);
-    else switch (token.tokenId) {
+    else switch (SptToken.tokenId) {
       case PM_WORD:
         System.out.println("Word     : " + token.tokenValue);
         break;

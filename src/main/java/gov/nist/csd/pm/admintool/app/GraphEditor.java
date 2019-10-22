@@ -4,7 +4,6 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
@@ -19,7 +18,6 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
-import gov.nist.csd.pm.admintool.app.blips.AssociationBlip;
 import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
@@ -573,9 +571,9 @@ public class GraphEditor extends VerticalLayout {
                 }
                 try {
                     if (type == NodeType.OA || type == NodeType.O) {
-                        g.createNode(g.getSuperOAId(), name, type, props);
+                        g.createNode(SingletonGraph.getSuperOAId(), name, type, props);
                     } else if (type == NodeType.UA || type == NodeType.U){
-                        g.createNode(g.getSuperUAId(), name, type, props);
+                        g.createNode(SingletonGraph.getSuperUAId(), name, type, props);
                     }
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
@@ -618,7 +616,7 @@ public class GraphEditor extends VerticalLayout {
                 nodeIterator.remove();
             }
         }
-        Node nodes[] = nodeCollection.toArray(new Node[nodeCollection.size()]);
+        Node[] nodes = nodeCollection.toArray(new Node[nodeCollection.size()]);
         Select<Node> parentSelect = new Select<>(nodes);
         if (nodeCollection.size() == 0) {
             parentSelect.setEnabled(false);
@@ -655,10 +653,10 @@ public class GraphEditor extends VerticalLayout {
                     }
                 }
                 try {
-                    Node home = g.createNode(g.getSuperOAId(), name + " Home", NodeType.OA, props);
+                    Node home = g.createNode(SingletonGraph.getSuperOAId(), name + " Home", NodeType.OA, props);
                     long homeId = home.getID();
 
-                    Node attr = g.createNode(g.getSuperUAId(), name + " Attr", NodeType.UA, props);
+                    Node attr = g.createNode(SingletonGraph.getSuperUAId(), name + " Attr", NodeType.UA, props);
                     long attrId = attr.getID();
 
                     Node user = g.createNode(attrId, name, NodeType.U, props);
@@ -715,7 +713,7 @@ public class GraphEditor extends VerticalLayout {
                 nodeIterator.remove();
             }
         }
-        Node nodes[] = nodeCollection.toArray(new Node[nodeCollection.size()]);
+        Node[] nodes = nodeCollection.toArray(new Node[nodeCollection.size()]);
         Select<Node> parentSelect = new Select<>(nodes);
         if (nodeCollection.size() == 0) {
             parentSelect.setEnabled(false);
@@ -1060,6 +1058,8 @@ public class GraphEditor extends VerticalLayout {
         Button button = new Button("Delete", event -> {
             try {
                 g.reset();
+                childNode.refreshGraph();
+                parentNode.refreshGraph();
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -1077,11 +1077,13 @@ public class GraphEditor extends VerticalLayout {
 
         dialog.add(form);
         dialog.open();
+
     }
 
     public void notify(String message){
         Notification notif = new Notification(message, 3000);
         notif.open();
     }
+
 
 }

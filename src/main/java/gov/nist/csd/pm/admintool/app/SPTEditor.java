@@ -8,25 +8,23 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.pip.graph.GraphSerializer;
 
 
 @Tag("SPTEditor")
-public class SPTEditor extends VerticalLayout {
-    public SingletonGraph g;
-    private HorizontalLayout layout;
-    private SPTInput editorLayout;
-    private JSONExport JSONLayout;
+    public class SPTEditor extends VerticalLayout {
+        public SingletonGraph g;
+        private HorizontalLayout layout;
+        private SPTInput editorLayout;
+        private RuleAnalysis ruleAnalysis;
 
-    public SPTEditor() {
-        g = SingletonGraph.getInstance();
-        layout = new HorizontalLayout();
-        layout.setFlexGrow(1.0);
-        layout.setJustifyContentMode(JustifyContentMode.CENTER);
-        add(layout);
-        setUpLayout();
-    }
+        public SPTEditor() {
+            g = SingletonGraph.getInstance();
+            layout = new HorizontalLayout();
+            layout.setFlexGrow(1.0);
+            layout.setJustifyContentMode(JustifyContentMode.CENTER);
+            add(layout);
+            setUpLayout();
+        }
 
     private void setUpLayout() {
         setSizeFull();
@@ -37,33 +35,31 @@ public class SPTEditor extends VerticalLayout {
         editorLayout.getStyle().set("height","100vh");
         layout.add(editorLayout);
 
-
         Button execute = new Button("Execute>", evt -> {
             executeRule(editorLayout.getValue());
-
         });
         execute.setHeight("99vh");
-
-        Button convert = new Button("Export to JSON>", evt -> {
-        });
-        convert.setHeight("99vh");
-        convert.addClickListener((click) -> {
-            try {
-            String json = GraphSerializer.toJson(g.getPAP().getGraphPAP());
-                JSONLayout.setValue(json);
-            } catch (PMException e) {
-                System.out.println(e.getMessage());
-                e.printStackTrace();
-            }
-        });
-
         layout.add(execute);
-        layout.add(convert);
 
-        JSONLayout = new JSONExport();
-        JSONLayout.setWidth("44%");
-        JSONLayout.getStyle().set("height","100vh");
-        layout.add(JSONLayout);
+//        Button convert = new Button("Export to JSON>", evt -> {
+//        });
+//        convert.setHeight("99vh");
+//        convert.addClickListener((click) -> {
+//            try {
+//            String json = GraphSerializer.toJson(g.getPAP().getGraphPAP());
+//                JSONLayout.setValue(json);
+//            } catch (PMException e) {
+//                System.out.println(e.getMessage());
+//                e.printStackTrace();
+//            }
+//        });
+//
+//        layout.add(convert);
+
+        ruleAnalysis = new RuleAnalysis();
+        ruleAnalysis.setWidth("44%");
+        ruleAnalysis.getStyle().set("height","100vh");
+        layout.add(ruleAnalysis);
     }
 
     public void executeRule (String sptRule) {
@@ -71,6 +67,12 @@ public class SPTEditor extends VerticalLayout {
             SptRuleParser ruleParser = new SptRuleParser(sptRule);
             ruleParser.parse();
             notify("Graph updated");
+            // analyseScript();
+            // This rule should Go through each rule that was created -
+            // 1. Find purpose in each to list UAs->OPS->OAs
+            // 2. Test - create a dummy user under UAs to check if user really has given permission on each OA in the list.
+            // 3. For unfulfilled purpose, recommend assignments/associations with guided text/dropdowns/buttons
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -102,10 +104,10 @@ public class SPTEditor extends VerticalLayout {
         }
     }
 
-    private class JSONExport extends VerticalLayout {
+    private class RuleAnalysis extends VerticalLayout {
         private TextArea outputJson;
 
-        public JSONExport () {
+        public RuleAnalysis () {
             getStyle().set("background", "lightcoral");
             setAlignItems(Alignment.STRETCH);
             outputJson = new TextArea();

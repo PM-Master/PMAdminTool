@@ -169,9 +169,9 @@ public class RandomGUID  {
 	    // of guessing the contents of the file!
 	    sbValueBeforeMD5.append(id.toString());
 	    sbValueBeforeMD5.append(":");
-	    sbValueBeforeMD5.append(Long.toString(time));
+	    sbValueBeforeMD5.append(time);
 	    sbValueBeforeMD5.append(":");
-	    sbValueBeforeMD5.append(Long.toString(rand));
+	    sbValueBeforeMD5.append(rand);
 
 	    valueBeforeMD5 = sbValueBeforeMD5.toString();
 	    md5.update(valueBeforeMD5.getBytes());
@@ -203,13 +203,13 @@ public class RandomGUID  {
     public String toString() {
 	String raw = valueAfterMD5.toUpperCase();
 	StringBuffer sb = new StringBuffer();
-	sb.append(raw.substring(0,8));
+	sb.append(raw, 0, 8);
 	sb.append("-");
-	sb.append(raw.substring(8,12));
+	sb.append(raw, 8, 12);
 	sb.append("-");
-	sb.append(raw.substring(12,16));
+	sb.append(raw, 12, 16);
 	sb.append("-");
-	sb.append(raw.substring(16,20));
+	sb.append(raw, 16, 20);
 	sb.append("-");
 	sb.append(raw.substring(20));
 
@@ -219,7 +219,7 @@ public class RandomGUID  {
     /*
      * Demonstraton and self test of class
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
 	RandomGUID myGUID = new RandomGUID();
 	System.out.println("Seeding String=" + myGUID.valueBeforeMD5);
 	System.out.println("rawGUID=" + myGUID.toStringNoDashes());

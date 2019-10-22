@@ -1,12 +1,13 @@
 package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Route;
@@ -46,6 +47,7 @@ public class MainView extends HorizontalLayout {
         Tab tab1 = new Tab("Graph Editor");
         VerticalLayout page1 = new GraphEditor();
         page1.setSizeFull();
+
 
         Tab tab2 = new Tab("PC Editor");
         VerticalLayout page2 = new PolicyClassEditor();
@@ -91,15 +93,16 @@ public class MainView extends HorizontalLayout {
 
         Set<Component> pagesShown = Stream.of(page1)
                 .collect(Collectors.toSet());
-
         tabs.addSelectedChangeListener(event -> {
             pagesShown.forEach(page -> page.setVisible(false));
             pagesShown.clear();
             Component selectedPage = tabsToPages.get(tabs.getSelectedTab());
             selectedPage.setVisible(true);
             pagesShown.add(selectedPage);
+            if (tabs.getSelectedTab().equals(tab1)) {
+                UI.getCurrent().getPage().reload();
+            }
         });
-
         testResults.getStyle()
                 .set("overflow-y", "scroll")
                 .set("position", "absolute")

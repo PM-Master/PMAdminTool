@@ -105,7 +105,7 @@ public class ACLTester extends VerticalLayout {
                 nodeIterator.remove();
             }
         }
-        Node nodes[] = nodeCollection.toArray(new Node[nodeCollection.size()]);
+        Node[] nodes = nodeCollection.toArray(new Node[nodeCollection.size()]);
         return nodes;
     }
 

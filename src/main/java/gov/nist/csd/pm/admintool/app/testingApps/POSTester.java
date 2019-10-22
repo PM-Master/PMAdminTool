@@ -74,6 +74,18 @@ public class POSTester extends VerticalLayout {
         });
         form.add(submit);
 
+        // Analyse button
+        Button analyse = new Button("Analyse POS", event -> {
+            Node selectedUser = userSelect.getValue();
+            if (selectedUser == null) {
+                notify("User is required!");
+            } else {
+                user = selectedUser;
+//                AnalyseGraph();
+            }
+        });
+        form.add(analyse);
+
         add(form);
     }
 
@@ -172,7 +184,7 @@ public class POSTester extends VerticalLayout {
                 nodeIterator.remove();
             }
         }
-        Node nodes[] = nodeCollection.toArray(new Node[nodeCollection.size()]);
+        Node[] nodes = nodeCollection.toArray(new Node[nodeCollection.size()]);
         return nodes;
     }
 
