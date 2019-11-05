@@ -208,6 +208,11 @@ public class POSTester extends VerticalLayout {
         }
     }
 
+    private void anaylizePOS() {
+        // This function should display more detailed analysis
+        // List of objects that user has access to with the path from user to each object
+    }
+
     private void editNode(Node n) {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();

@@ -67,15 +67,20 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
             SptRuleParser ruleParser = new SptRuleParser(sptRule);
             ruleParser.parse();
             notify("Graph updated");
-            // analyseScript();
-            // This rule should Go through each rule that was created -
-            // 1. Find purpose in each to list UAs->OPS->OAs
-            // 2. Test - create a dummy user under UAs to check if user really has given permission on each OA in the list.
-            // 3. For unfulfilled purpose, recommend assignments/associations with guided text/dropdowns/buttons
-
+            analyseScript();
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public String analyseScript() {
+        // This method should go through current rule and then all previous rules in the same script
+        // 1. Find purpose in each to list UAs->OPS->OAs
+        // 2. Test - create a dummy user under UAs
+        // 3. Check if user really has given permission on each OA in the list.
+        // 4. For unfulfilled purpose, recommend assignments/associations with guided text/dropdowns/buttons
+
+        return "Test";
     }
 
     private class SPTInput extends VerticalLayout {

@@ -21,12 +21,16 @@ import java.util.Set;
 
 public class Rule2Parser extends SptRuleParser {
 
-    // variables for PC1
+    // UAs, OAs for PC1
     ArrayList<String> pc1uas = new ArrayList<String>();
     ArrayList<String> pc1oas = new ArrayList<String>();
 
     ArrayList<Node> pc1UaList = null;
     ArrayList<Node> pc1OaList = null;
+
+    // PCs for UA clause and OA clause as they could be different
+    String pc2;
+    Node pc2Node;
 
     ArrayList<String> pcs1UA = new ArrayList<String>();
     ArrayList<String> pcs1OA = new ArrayList<String>();
@@ -34,16 +38,12 @@ public class Rule2Parser extends SptRuleParser {
     ArrayList<Node> pcsforUA1 = null;
     ArrayList<Node> pcsforOA1 = null;
 
-    // variables for PC2
-
+    // UAs, OAs for PC2
     ArrayList<String> pc2uas = new ArrayList<String>();
     ArrayList<String> pc2oas = new ArrayList<String>();
 
     ArrayList<Node> pc2UaList = null;
     ArrayList<Node> pc2OaList = null;
-
-    String pc2;
-    Node pc2Node;
 
     // Final variables
     ArrayList<Assignment> assignments = null;
@@ -68,19 +68,19 @@ public class Rule2Parser extends SptRuleParser {
         }
     }
 
-    private class ruleAssociation {
-        Node fromNode;
-        Node toNode;
-        String[] ops;
-
-        public ruleAssociation() {
-        }
-        public ruleAssociation(Node fromNode, Node toNode, String[] ops) {
-            this.fromNode = fromNode;
-            this.toNode = toNode;
-            this.ops = ops;
-        }
-    }
+//    private class ruleAssociation {
+//        Node fromNode;
+//        Node toNode;
+//        String[] ops;
+//
+//        public ruleAssociation() {
+//        }
+//        public ruleAssociation(Node fromNode, Node toNode, String[] ops) {
+//            this.fromNode = fromNode;
+//            this.toNode = toNode;
+//            this.ops = ops;
+//        }
+//    }
 
 
     // <rule2> ::= rule2 <allow clause> <when clause>
