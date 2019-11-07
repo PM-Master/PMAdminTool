@@ -1,7 +1,17 @@
 package gov.nist.csd.pm.admintool.spt.parser;
 
+import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
-import java.util.Random;
+import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.pdp.audit.model.Explain;
+import gov.nist.csd.pm.pdp.audit.model.Path;
+import gov.nist.csd.pm.pdp.audit.model.PolicyClass;
+import gov.nist.csd.pm.pdp.services.UserContext;
+import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
+
+import javax.xml.crypto.KeySelector;
+import java.util.*;
 
 public class SptRuleParser{
 
@@ -119,19 +129,68 @@ public class SptRuleParser{
 
     private String rule() throws Exception {
     	String result = null;
+        ArrayList<Rule1Parser> rule1Parsers = new ArrayList<Rule1Parser>();
+        ArrayList<Rule2Parser> rule2Parsers = new ArrayList<Rule2Parser>();;
+
+        Rule1Parser parser1 = null;
+        Rule2Parser parser2 = null;
+
         traceEntry("rule");
         while (SptToken.tokenId == SptRuleScanner.PM_RULE1 || SptToken.tokenId == SptRuleScanner.PM_RULE2){
             if (SptToken.tokenId == SptRuleScanner.PM_RULE1) {
-                Rule1Parser parser = new Rule1Parser();
-                result = parser.rule1();
+                parser1 = new Rule1Parser();
+                result = parser1.rule1();
+                rule1Parsers.add(parser1);
             } else if (SptToken.tokenId == SptRuleScanner.PM_RULE2) {
                 synchronized (this) {
-                    Rule2Parser parser = new Rule2Parser();
-                    parser.rule2();
+                    parser2 = new Rule2Parser();
+                    parser2.rule2();
+                    rule2Parsers.add(parser2);
                 }
-//            } else if (crtToken.tokenId == SptRuleScanner.PM_RULE3) {
-//        	result = rule3();
             } else return signalError(crtToken.tokenValue, SptRuleScanner.PM_RULE);
+        }
+        /* Test
+        * 1. loop through each rule in script
+        * 2. loop through each triplet in purpose of the current rule
+        * 3. add/assign a dummy user to the UA and add/assign a dummy object to the OA
+        * 4. Test if the purpose is solved
+        * 4. If not, call Analyse() to see the paths and equate it with purpose,
+        *    then make smart decision to fix it so that purpose
+        *    and go back to the first rule again to test from beginning
+        * 5. Once the current rule purpose succeed, move on to the next rule.*/
+
+        for (Rule1Parser rp: rule1Parsers) {
+
+        }
+        for (Rule2Parser rp: rule2Parsers) {
+            // add a dummy user
+            Node dummyUser = rp.graph.createNode(0, "dummyUA", NodeType.UA,null);
+            // add a dummy object
+            Node dummyObject = rp.graph.createNode(0, "dummyOA", NodeType.OA,null);
+            for (Rule2Parser.Purpose p:rp.purpose) {
+                // assign the dummy user to p.fromNode
+                rp.graph.assign(dummyUser.getID(), p.fromNode.getID());
+                // assign the dummy user to p.toNode
+                rp.graph.assign(dummyObject.getID(), p.toNode.getID());
+                // Check permissions for (dummyUser, ,dummyObject
+                if (dummyUser != null && dummyObject != null && rp.associationOperations != null) {
+                    SingletonGraph g = SingletonGraph.getInstance();
+                    try {
+                        Set<String> perms = g.getAnalyticsService().getPermissions(new UserContext(dummyUser.getID(), -1), dummyObject.getID());
+                        if (!perms.containsAll(rp.associationOperations)) {
+                            rp.analyze(p);
+                            perms = g.getAnalyticsService().getPermissions(new UserContext(dummyUser.getID(), -1), dummyObject.getID());
+                            if (!perms.containsAll(rp.associationOperations)) {
+                                // return notifying "The policy can not be impmented for an unknown reason. Return all the paths.
+                            }
+
+                        }
+                    } catch (PMException e) {
+                        e.printStackTrace();
+                        System.out.println(e.getMessage());
+                    }
+                }
+            }
         }
         return result;
     }
@@ -214,4 +273,81 @@ public class SptRuleParser{
         System.out.println("                                    - Semantic action: " + semAct);
     }
 
+    public String explain(Node user, Node target) {
+        if (user != null && target != null) {
+            SingletonGraph g = SingletonGraph.getInstance();
+            Explain explain = null;
+
+            try {
+                explain = g.getAnalyticsService().explain(user.getID(), target.getID());
+            } catch (PMException e) {
+                e.printStackTrace();
+                System.out.println(e.getMessage());
+            }
+
+            if (explain != null) {
+                String ret = "";
+                // Explain returns two things:
+                //  1. The permissions the user has on the target
+                //  2. A breakdown of permissions per policy class and paths in each policy class
+                ret += "'" + user.getName() + "' has the following permissions on the target '" + target.getName() + "': \n";
+                Set<String> permissions = explain.getPermissions();
+                for (String perm : permissions) {
+                    ret += "\t- " + perm + "\n";
+                }
+                ret += "\n";
+
+
+                // policyClasses maps the name of a policy class node to a Policy Class object
+                // a policy class object contains the permissions the user has on the target node
+                //   in that policy class
+                ret += "The following section shows a more detailed permission breakdown from the perspective of each policy class:\n";
+                Map<String, PolicyClass> policyClasses = explain.getPolicyClasses();
+                int i = 1;
+                for (String pcName : policyClasses.keySet()) {
+                    ret += "\t" + i + ". '" + pcName + "':\n";
+                    PolicyClass policyClass = policyClasses.get(pcName);
+
+                    // the operations available to the user on the target under this policy class
+                    Set<String> operations = policyClass.getOperations();
+                    ret += "\t\t- Permissions (Given by this PC):\n";
+                    for (String op : operations) {
+                        ret += "\t\t\t- " + op + "\n";
+                    }
+                    // the paths from the user to the target
+                    // A Path object contains the path and the permissions the path provides
+                    // the path is just a list of nodes starting at the user and ending at the target node
+                    // example: u1 -> ua1 -> oa1 -> o1 [read]
+                    //   the association ua1 -> oa1 has the permission [read]
+                    ret += "\t\t- Paths (How each permission is found):\n";
+                    List<Path> paths = policyClass.getPaths();
+                    for (Path path : paths) {
+                        ret += "\t\t\t";
+                        // this is just a list of nodes -> [u1, ua1, oa1, o1]
+                        List<Node> nodes = path.getNodes();
+                        for (Node n : nodes) {
+                            ret += "'" + n.getName() + "'";
+                            if (!nodes.get(nodes.size() - 1).equals(n)) { // not final node
+                                ret += " > ";
+                            }
+                        }
+
+                        // this is the operations in the association between ua1 and oa1
+                        Set<String> pathOps = path.getOperations();
+                        ret += " " + pathOps;
+                        // This is the string representation of the path (i.e. "u1-ua1-oa1-o1 ops=[r, w]")
+                        String pathString = path.toString();
+                        ret += "\n";
+                    }
+                    i++;
+                }
+
+                return ret;
+            } else {
+                return "Returned Audit was null";
+            }
+        } else {
+            return "Either User ID or Target ID are null";
+        }
+    }
 }

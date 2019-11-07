@@ -50,6 +50,8 @@ public class Rule2Parser extends SptRuleParser {
     ArrayList<Association> associations = null;
     Set<String> associationOperations = null;
 
+    ArrayList<Purpose> purpose = null;
+
     public Rule2Parser() {
         super();
     }
@@ -68,14 +70,16 @@ public class Rule2Parser extends SptRuleParser {
         }
     }
 
-    private class ruleAssociation {
+    SingletonGraph graph = SingletonGraph.getInstance();
+
+    public class Purpose {
         Node fromNode;
         Node toNode;
-        String[] ops;
+        Set<String> ops;
 
-        public ruleAssociation() {
+        public Purpose() {
         }
-        public ruleAssociation(Node fromNode, Node toNode, String[] ops) {
+        public Purpose(Node fromNode, Set<String> ops, Node toNode) {
             this.fromNode = fromNode;
             this.toNode = toNode;
             this.ops = ops;
@@ -633,7 +637,7 @@ public class Rule2Parser extends SptRuleParser {
         3. Create associations
     */
     private void buildPolicy() throws PMException {
-        SingletonGraph graph = SingletonGraph.getInstance();
+
         ///// for PC1
 //        graph.reset();
         long id=generateRandomId();
@@ -695,8 +699,37 @@ public class Rule2Parser extends SptRuleParser {
         for (int i=0;i<pc2UaList.size();i++) {
             graph.associate(pc2UaList.get(i).getID(), pc2OaList.get(i).getID(), associationOperations );
         }
+        buildPurpose();
     }
 
+    public void buildPurpose() {
+        Purpose p;
+        for (Node n1: pc1UaList)    {
+            for (Node n2: pc1OaList) {
+                p = new Purpose(n1, associationOperations, n2);
+                purpose.add(p);
+            }
+        }
+
+        for (Node n1: pc2UaList)    {
+            for (Node n2: pc2OaList) {
+                p = new Purpose(n1, associationOperations, n2);
+                purpose.add(p);
+            }
+        }
+    }
+
+    public void analyze(Purpose p) {
+        // Analyze the permissions
+        String paths = explain(p.fromNode, p.toNode);
+        System.out.println(paths);
+        // fix the policy dynamically
+        fixPolicyDynamically();
+    }
+
+    public void fixPolicyDynamically() {
+
+    }
     public void notify(String message){
         Notification notif = new Notification(message, 3000);
         notif.open();
