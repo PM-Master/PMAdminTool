@@ -21,7 +21,7 @@ import java.util.Set;
 
 public class Rule2Parser extends SptRuleParser {
 
-    // variables for PC1
+    // UAs, OAs for PC1
     ArrayList<String> pc1uas = new ArrayList<String>();
     ArrayList<String> pc1oas = new ArrayList<String>();
 
@@ -34,8 +34,7 @@ public class Rule2Parser extends SptRuleParser {
     ArrayList<Node> pcsforUA1 = null;
     ArrayList<Node> pcsforOA1 = null;
 
-    // variables for PC2
-
+    // UAs, OAs for PC2
     ArrayList<String> pc2uas = new ArrayList<String>();
     ArrayList<String> pc2oas = new ArrayList<String>();
 
@@ -637,7 +636,7 @@ public class Rule2Parser extends SptRuleParser {
         3. Create associations
     */
     private void buildPolicy() throws PMException {
-
+        SingletonGraph graph = SingletonGraph.getInstance();
         ///// for PC1
 //        graph.reset();
         long id=generateRandomId();
