@@ -49,7 +49,7 @@ public class Rule2Parser extends SptRuleParser {
     ArrayList<Association> associations = null;
     Set<String> associationOperations = null;
 
-    ArrayList<Purpose> purpose = null;
+    ArrayList<Purpose> purpose = new ArrayList<Purpose>();
 
     public Rule2Parser() {
         super();
@@ -706,14 +706,18 @@ public class Rule2Parser extends SptRuleParser {
         for (Node n1: pc1UaList)    {
             for (Node n2: pc1OaList) {
                 p = new Purpose(n1, associationOperations, n2);
-                purpose.add(p);
+                if (p != null) {
+                    purpose.add(p);
+                }
             }
         }
 
         for (Node n1: pc2UaList)    {
             for (Node n2: pc2OaList) {
                 p = new Purpose(n1, associationOperations, n2);
-                purpose.add(p);
+                if (p != null) {
+                    purpose.add(p);
+                }
             }
         }
     }

@@ -164,9 +164,9 @@ public class SptRuleParser{
         }
         for (Rule2Parser rp: rule2Parsers) {
             // add a dummy user
-            Node dummyUser = rp.graph.createNode(0, "dummyUA", NodeType.UA,null);
+            Node dummyUser = rp.graph.createNode(rp.purpose.get(0).fromNode.getID(), "dummyUA", NodeType.UA,null);
             // add a dummy object
-            Node dummyObject = rp.graph.createNode(0, "dummyOA", NodeType.OA,null);
+            Node dummyObject = rp.graph.createNode(rp.purpose.get(0).toNode.getID(), "dummyOA", NodeType.OA,null);
             for (Rule2Parser.Purpose p:rp.purpose) {
                 // assign the dummy user to p.fromNode
                 rp.graph.assign(dummyUser.getID(), p.fromNode.getID());
