@@ -6,14 +6,12 @@ import com.vaadin.flow.dom.Style;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
 public class NodeDataBlip extends HorizontalLayout {
-    private Long id;
     private String name;
     private NodeType type;
 
     private HorizontalLayout box;
 
-    public NodeDataBlip(long id, String name, NodeType type) {
-        this.id = id;
+    public NodeDataBlip(String name, NodeType type) {
         this.name = name;
         this.type = type;
         box = new HorizontalLayout();

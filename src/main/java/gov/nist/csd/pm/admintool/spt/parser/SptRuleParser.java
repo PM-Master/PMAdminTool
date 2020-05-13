@@ -164,22 +164,22 @@ public class SptRuleParser{
         }
         for (Rule2Parser rp: rule2Parsers) {
             // add a dummy user
-            Node dummyUser = rp.graph.createNode(rp.purpose.get(0).fromNode.getID(), "dummyUA", NodeType.UA,null);
+            Node dummyUser = rp.graph.createNode("dummyUA", NodeType.UA,null, rp.purpose.get(0).fromNode.getName());
             // add a dummy object
-            Node dummyObject = rp.graph.createNode(rp.purpose.get(0).toNode.getID(), "dummyOA", NodeType.OA,null);
+            Node dummyObject = rp.graph.createNode("dummyOA", NodeType.OA,null,rp.purpose.get(0).toNode.getName());
             for (Rule2Parser.Purpose p:rp.purpose) {
                 // assign the dummy user to p.fromNode
-                rp.graph.assign(dummyUser.getID(), p.fromNode.getID());
+                rp.graph.assign(dummyUser.getName(), p.fromNode.getName());
                 // assign the dummy user to p.toNode
-                rp.graph.assign(dummyObject.getID(), p.toNode.getID());
+                rp.graph.assign(dummyObject.getName(), p.toNode.getName());
                 // Check permissions for (dummyUser, ,dummyObject
                 if (dummyUser != null && dummyObject != null && rp.associationOperations != null) {
                     SingletonGraph g = SingletonGraph.getInstance();
                     try {
-                        Set<String> perms = g.getAnalyticsService().getPermissions(new UserContext(dummyUser.getID(), -1), dummyObject.getID());
+                        Set<String> perms = g.getAnalyticsService(new UserContext(String.valueOf(dummyUser.getId()), "-1")).getPermissions(String.valueOf(dummyObject.getId()));
                         if (!perms.containsAll(rp.associationOperations)) {
                             rp.analyze(p);
-                            perms = g.getAnalyticsService().getPermissions(new UserContext(dummyUser.getID(), -1), dummyObject.getID());
+                            perms = g.getAnalyticsService(new UserContext(String.valueOf(dummyUser.getId()), "-1")).getPermissions(String.valueOf(dummyObject.getId()));
                             if (!perms.containsAll(rp.associationOperations)) {
                                 // return notifying "The policy can not be impmented for an unknown reason. Return all the paths.
                             }
@@ -279,7 +279,7 @@ public class SptRuleParser{
             Explain explain = null;
 
             try {
-                explain = g.getAnalyticsService().explain(user.getID(), target.getID());
+                explain = g.getAnalyticsService((new UserContext(String.valueOf(user.getId()), "-1"))).explain(String.valueOf(user.getId()), String.valueOf(target.getId()));
             } catch (PMException e) {
                 e.printStackTrace();
                 System.out.println(e.getMessage());

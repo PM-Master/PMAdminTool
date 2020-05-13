@@ -47,11 +47,12 @@ public class ImportExport extends VerticalLayout {
     public void updateGraph (String json) {
         System.out.println("Importing following JSON now ........................... ");
         System.out.println(json);
-        try {
-            g = g.updateGraph(GraphSerializer.fromJson(g.getPAP().getGraphPAP(), json));
+
+/*        try {
+            //g = g.updateGraph(GraphSerializer.fromJson(g.getPAP().getGraphPAP(), json));
         } catch (PMException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     private class ImportLayout extends VerticalLayout {

@@ -34,7 +34,7 @@ public class MainView extends HorizontalLayout {
         actions = SingletonActiveActions.getInstance();
 
         navbar = new VerticalLayout();
-        navbar.setWidth("18%");
+        navbar.setWidth("16%");
         navbar.setJustifyContentMode(JustifyContentMode.START);
         navbar.getStyle()
                 .set("border-right", "1px solid #FFF3D3")
@@ -47,7 +47,6 @@ public class MainView extends HorizontalLayout {
         Tab tab1 = new Tab("Graph Editor");
         VerticalLayout page1 = new GraphEditor();
         page1.setSizeFull();
-
 
         Tab tab2 = new Tab("PC Editor");
         VerticalLayout page2 = new PolicyClassEditor();

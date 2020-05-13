@@ -9,6 +9,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import gov.nist.csd.pm.pip.graph.model.relationships.Association;
@@ -22,21 +23,21 @@ import java.util.Set;
 public class Rule2Parser extends SptRuleParser {
 
     // UAs, OAs for PC1
-    ArrayList<String> pc1uas = new ArrayList<String>();
-    ArrayList<String> pc1oas = new ArrayList<String>();
+    ArrayList<String> pc1uas = new ArrayList<>();
+    ArrayList<String> pc1oas = new ArrayList<>();
 
     ArrayList<Node> pc1UaList = null;
     ArrayList<Node> pc1OaList = null;
 
-    ArrayList<String> pcs1UA = new ArrayList<String>();
-    ArrayList<String> pcs1OA = new ArrayList<String>();
+    ArrayList<String> pcs1UA = new ArrayList<>();
+    ArrayList<String> pcs1OA = new ArrayList<>();
 
     ArrayList<Node> pcsforUA1 = null;
     ArrayList<Node> pcsforOA1 = null;
 
     // UAs, OAs for PC2
-    ArrayList<String> pc2uas = new ArrayList<String>();
-    ArrayList<String> pc2oas = new ArrayList<String>();
+    ArrayList<String> pc2uas = new ArrayList<>();
+    ArrayList<String> pc2oas = new ArrayList<>();
 
     ArrayList<Node> pc2UaList = null;
     ArrayList<Node> pc2OaList = null;
@@ -47,9 +48,9 @@ public class Rule2Parser extends SptRuleParser {
     // Final variables
     ArrayList<Assignment> assignments = null;
     ArrayList<Association> associations = null;
-    Set<String> associationOperations = null;
+    OperationSet associationOperations = null;
 
-    ArrayList<Purpose> purpose = new ArrayList<Purpose>();
+    ArrayList<Purpose> purpose = new ArrayList<>();
 
     public Rule2Parser() {
         super();
@@ -468,7 +469,7 @@ public class Rule2Parser extends SptRuleParser {
         }
         System.out.println("Associations are ...");
         for (int i=0;i<associations.size();i++) {
-            System.out.println(associations.get(i).getSourceID()+"-"+associations.get(i).getTargetID());
+            System.out.println(associations.get(i).getSource()+"-"+associations.get(i).getTarget());
         }
 
         System.out.println("Operations are ...");
@@ -482,15 +483,15 @@ public class Rule2Parser extends SptRuleParser {
     // semop methds
     private void semopRule2Init() {
         // create necessary structure to store grammar values
-        pc1UaList = new ArrayList<Node>();
-        pc1OaList = new ArrayList<Node>();
-        pcsforUA1 = new ArrayList<Node>();
-        pcsforOA1 = new ArrayList<Node>();
-        pc2UaList = new ArrayList<Node>();
-        pc2OaList = new ArrayList<Node>();
-        assignments = new ArrayList<Assignment>();
-        associations = new ArrayList<Association>();
-        associationOperations = new HashSet<>();
+        pc1UaList = new ArrayList<>();
+        pc1OaList = new ArrayList<>();
+        pcsforUA1 = new ArrayList<>();
+        pcsforOA1 = new ArrayList<>();
+        pc2UaList = new ArrayList<>();
+        pc2OaList = new ArrayList<>();
+        assignments = new ArrayList<>();
+        associations = new ArrayList<>();
+        associationOperations = new OperationSet();
     }
 
     /* semopUA() - Add from uas to Nodes
@@ -549,7 +550,7 @@ public class Rule2Parser extends SptRuleParser {
     }
     // Add to Associations
     private void semopAssociations() {
-        Association association = new Association(pc1UaList.get(0).getID(),pc1OaList.get(0).getID(),associationOperations);
+        Association association = new Association(String.valueOf(pc1UaList.get(0).getId()),String.valueOf(pc1OaList.get(0).getId()), (OperationSet) associationOperations);
         associations.add(association);
     }
     /*
@@ -576,7 +577,7 @@ public class Rule2Parser extends SptRuleParser {
         }
         Association association;
         for (int i=0;i<pc2UaList.size();i++) {
-            association = new Association(pc2UaList.get(i).getID(), pc2OaList.get(i).getID(), associationOperations);
+            association = new Association(String.valueOf(pc2UaList.get(i).getId()), String.valueOf(pc2OaList.get(i).getId()), (OperationSet) associationOperations);
             associations.add(association);
         }
     }
@@ -647,32 +648,32 @@ public class Rule2Parser extends SptRuleParser {
             pcsforUA1.add(graph.createPolicyClass(pcs1UA.get(0), null));
         }
 
-        System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getID());
+        System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getId());
         // First parent UA
-        Long parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getID(),NodeType.UA);
-        pc1UaList.add(graph.createNode(parentUAId, pc1uas.get(pc1UASize-1), NodeType.UA,null));
+        String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getId(),NodeType.UA);
+        pc1UaList.add(graph.createNode(pc1uas.get(pc1UASize-1), NodeType.UA,null, parentUAId));
         for (int i=1;i<pcsforUA1.size();i++) {
-            graph.assign(pc1UaList.get(pc1UASize-1).getID(), pcsforUA1.get(i).getID());
+            graph.assign(pc1UaList.get(pc1UASize-1).getName(), pcsforUA1.get(i).getName());
         }
         // Other UAs
         for (int i=pc1UASize-2;i>=0;i--) {
-            pc1UaList.add(graph.createNode(pc1UaList.get(pc1UaList.size()-1).getID(), pc1uas.get(i), NodeType.UA,null));
+            pc1UaList.add(graph.createNode(pc1uas.get(i), NodeType.UA,null, pc1UaList.get(pc1UaList.size()-1).getName()));
         }
         // First parent OA
-        Long parentOAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getID(),NodeType.OA);
+        String parentOAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getId(),NodeType.OA);
         System.out.println("Build PC 1 OAs ...");
-        pc1OaList.add(graph.createNode(parentOAId, pc1oas.get(pc1OASize-1), NodeType.OA,null));
+        pc1OaList.add(graph.createNode(pc1oas.get(pc1OASize-1), NodeType.OA,null, parentOAId));
         for (int i=1;i<pcsforUA1.size();i++) {
-            graph.assign(pc1OaList.get(pc1OASize-1).getID(), pcsforUA1.get(i).getID());
+            graph.assign(pc1OaList.get(pc1OASize-1).getName(), pcsforUA1.get(i).getName());
         }
         // Other OAs
         for (int i=pc1OASize-2;i>=0;i--) {
-            pc1OaList.add(graph.createNode(pc1OaList.get(pc1OaList.size()-1).getID(), pc1oas.get(i), NodeType.OA,null));
+            pc1OaList.add(graph.createNode(pc1oas.get(i), NodeType.OA,null, pc1OaList.get(pc1OaList.size()-1).getName()));
         }
 
         // Build Associations for PC1
         System.out.println("Building association between " + pc1UaList.get(pc1UASize-1).getName() + " and " + pc1OaList.get(pc1OASize-1).getName());
-        graph.associate(pc1UaList.get(pc1UASize-1).getID(), pc1OaList.get(pc1OASize-1).getID(), associationOperations );
+        graph.associate(pc1UaList.get(pc1UASize-1).getName(), pc1OaList.get(pc1OASize-1).getName(), associationOperations );
 
         // for PC2
 
@@ -681,22 +682,22 @@ public class Rule2Parser extends SptRuleParser {
         Node pc2Node = graph.createPolicyClass(pc2,null);
         // Build UAs
         System.out.println("Building PC 2 UAs ...");
-        parentUAId = graph.getPolicyClassDefault(pc2Node.getID(),NodeType.UA);
+        parentUAId = graph.getPolicyClassDefault(pc2Node.getId(),NodeType.UA);
         for (int i=0;i<pc2uas.size();i++) {
-            pc2UaList.add(graph.createNode(parentUAId, pc2uas.get(i), NodeType.UA,null));
+            pc2UaList.add(graph.createNode(pc2uas.get(i), NodeType.UA,null, parentUAId));
         }
         //Build OAs
         System.out.println("Building PC 2 OAs ...");
-        parentOAId = graph.getPolicyClassDefault(pc2Node.getID(),NodeType.OA);
+        parentOAId = graph.getPolicyClassDefault(pc2Node.getId(),NodeType.OA);
         for (int i=0;i<pc2oas.size();i++) {
-            pc2OaList.add(graph.createNode(parentOAId, pc2oas.get(i), NodeType.OA,null));
+            pc2OaList.add(graph.createNode(pc2oas.get(i), NodeType.OA,null, parentOAId));
         }
 
         // Build Associations
         System.out.println("Building Associations ...");
 
         for (int i=0;i<pc2UaList.size();i++) {
-            graph.associate(pc2UaList.get(i).getID(), pc2OaList.get(i).getID(), associationOperations );
+            graph.associate(pc2UaList.get(i).getName(), pc2OaList.get(i).getName(), associationOperations );
         }
         buildPurpose();
     }

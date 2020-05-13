@@ -145,7 +145,7 @@ public class PolicyClassEditor extends VerticalLayout {
                         refreshGrid();
                         dialog.close();
                     } catch (PMException e) {
-                        PolicyClassEditor.notify(e.getMessage());
+                        //PolicyClassEditor.notify(e.getMessage());
                         e.printStackTrace();
                     }
                 }

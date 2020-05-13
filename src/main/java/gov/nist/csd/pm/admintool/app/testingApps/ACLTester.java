@@ -10,10 +10,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
-import java.io.Serializable;
 import java.util.*;
 
 public class ACLTester extends VerticalLayout {
@@ -82,7 +82,7 @@ public class ACLTester extends VerticalLayout {
             col.setFlexGrow(1);
         });
 
-        grid.removeColumnByKey("ID");
+        //grid.removeColumnByKey("ID");
         grid.removeColumnByKey("properties");
 
         add(grid);
@@ -119,8 +119,8 @@ public class ACLTester extends VerticalLayout {
         if (attr != null) {
             Set<NodeAndPermissions> currNodes = new HashSet<>();
             try {
-                Map<Long, Set<String>> targetAssociations = g.getTargetAssociations(attr.getID());
-                for (long id: targetAssociations.keySet()) {
+                Map<String, OperationSet> targetAssociations = g.getTargetAssociations(attr.getName());
+                for (String id: targetAssociations.keySet()) {
                     updateGraphRecursiveHelper(g.getNode(id), targetAssociations.get(id), targetAssociations, currNodes);
 //                    currNodes.add(new NodeAndPermissions(g.getNode(id), targetAssociations.get(id)));
 //                    for (Node n: g.getChildren(id)) {
@@ -137,18 +137,18 @@ public class ACLTester extends VerticalLayout {
         }
     }
 
-    private void updateGraphRecursiveHelper(Node n, Set<String> perms, Map<Long, Set<String>> targetAssociations, Set<NodeAndPermissions> nodes) throws PMException{
+    private void updateGraphRecursiveHelper(Node n, Set<String> perms, Map<String, OperationSet> targetAssociations, Set<NodeAndPermissions> nodes) throws PMException{
         NodeAndPermissions currNodeAndPermissions = new NodeAndPermissions(n, perms);
         if (!nodes.contains(currNodeAndPermissions)) {
             nodes.add(currNodeAndPermissions);
-            for (Node child: g.getChildren(currNodeAndPermissions.getID())) {
+            for (String child: g.getChildren(currNodeAndPermissions.getName())) {
                 HashSet<String> childPerms = new HashSet<>();
                 childPerms.addAll(perms);
-                Set<String> fromAssoc = targetAssociations.get(child.getID());
+                Set<String> fromAssoc = targetAssociations.get(child);
                 if (fromAssoc != null) {
                     childPerms.addAll(fromAssoc);
                 }
-                updateGraphRecursiveHelper(child, childPerms, targetAssociations, nodes);
+                updateGraphRecursiveHelper(g.getNode(child), childPerms, targetAssociations, nodes);
             }
         }
     }
@@ -162,7 +162,7 @@ public class ACLTester extends VerticalLayout {
         private Set<String> permissions;
 
         public NodeAndPermissions(Node node, Set<String> perms) {
-            super (node.getID(), node.getName(), node.getType(), node.getProperties());
+            super (node.getId(), node.getName(), node.getType(), node.getProperties());
             permissions = perms;
         }
 

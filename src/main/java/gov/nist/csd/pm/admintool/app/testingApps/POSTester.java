@@ -116,7 +116,7 @@ public class POSTester extends VerticalLayout {
             col.setFlexGrow(1);
         });
 
-        grid.removeColumnByKey("ID");
+        //grid.removeColumnByKey("ID");
 
         // Double Click Action: go into current node's children
 //        grid.addItemDoubleClickListener(evt -> {
@@ -196,8 +196,8 @@ public class POSTester extends VerticalLayout {
         if (user != null) {
             Set<Node> currNodes = new HashSet<>();
             try {
-                UserContext userContext = new UserContext(user.getID(), -1);
-                currNodes = g.getGraphService().getNodes(userContext);
+                UserContext userContext = new UserContext(user.getName(), "-1");
+                currNodes = g.getGraphService(userContext).getNodes();
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -220,7 +220,7 @@ public class POSTester extends VerticalLayout {
 
         NumberField idField = new NumberField("ID");
         idField.setRequiredIndicatorVisible(true);
-        idField.setValue(((double) n.getID()));
+        idField.setValue(((double) n.getId()));
         idField.setMin(1);
         idField.setHasControls(true);
         form.add(idField);
@@ -260,7 +260,7 @@ public class POSTester extends VerticalLayout {
                 }
                 try {
 //                    System.out.println(props);
-                    g.updateNode(id, name, props);
+                    g.updateNode(name, props);
                     updateGraph();
                     dialog.close();
                 } catch (Exception e) {
@@ -284,7 +284,7 @@ public class POSTester extends VerticalLayout {
 
         Button button = new Button("Delete", event -> {
             try {
-                g.deleteNode(n.getID());
+                g.deleteNode(n.getName());
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
