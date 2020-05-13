@@ -21,9 +21,9 @@ public class AssertAssignment extends Test {
         if (child != null && parent != null) {
             SingletonGraph g = SingletonGraph.getInstance();
             try {
-                Set<String> children = g.getChildren(String.valueOf(parent.getId()));
+                Set<String> children = g.getChildren(parent.getName());
                 for (String childNode: children){
-                    if (childNode.equalsIgnoreCase(String.valueOf(child.getId()))) {
+                    if (childNode.equalsIgnoreCase(child.getName())) {
                         return true;
                     }
                 }

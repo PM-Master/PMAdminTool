@@ -658,11 +658,11 @@ public class GraphEditor extends VerticalLayout {
                     }
                 }
                 try {
-                    Node home = g.createNode(name + " Home", NodeType.OA, props, parent.getName());
-                    Node attr = g.createNode(name + " Attr", NodeType.UA, props, parent.getName());
+                    Node home = g.createNode(name + " Home", NodeType.OA, props, SingletonGraph.getSuperOAId());
+                    Node attr = g.createNode(name + " Attr", NodeType.UA, props, SingletonGraph.getSuperUAId());
 
-                    Node user = g.createNode(name, NodeType.U, props, attr.getName());
-                    //g.assign(attr.getName(), parent.getName());
+                    Node user = g.createNode(name, NodeType.U, props, parent.getName());
+                    g.assign(attr.getName(), parent.getName());
 
                     OperationSet ops = new OperationSet();
                     ops.add("read");
