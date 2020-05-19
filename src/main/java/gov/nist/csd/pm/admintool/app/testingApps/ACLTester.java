@@ -91,7 +91,7 @@ public class ACLTester extends VerticalLayout {
     public Node[] getAttrs() {
         Collection<Node> nodeCollection;
         try {
-            nodeCollection = new HashSet<>(g.getNodes());
+            nodeCollection = new HashSet<>(g.getPAP().getGraphPAP().getNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
             System.out.println(e.getMessage());

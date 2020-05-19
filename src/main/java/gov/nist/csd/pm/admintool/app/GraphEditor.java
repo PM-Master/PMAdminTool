@@ -166,10 +166,10 @@ public class GraphEditor extends VerticalLayout {
                 Node n = evt.getItem();
                 if(n != null) {
                     try {
-                        Set<String> children = g.getChildren(n.getName());
+                        Set<String> children = g.getPAP().getGraphPAP().getChildren(n.getName());
                         if (!children.isEmpty()) {
                             prevNodes.push(currNodes);
-                            currNodes = g.getNodes().stream()
+                            currNodes = g.getPAP().getGraphPAP().getNodes().stream()
                                         .filter(node_k -> children.contains(node_k.getName())).collect(Collectors.toList());
                             grid.setItems(currNodes);
 
@@ -308,7 +308,7 @@ public class GraphEditor extends VerticalLayout {
 
         public void refreshGraph() {
             try {
-                currNodes = g.getNodes();
+                currNodes = g.getPAP().getGraphPAP().getNodes();
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -542,6 +542,29 @@ public class GraphEditor extends VerticalLayout {
         typeSelect.setPlaceholder("Select Type...");
         form.add(typeSelect);
 
+        Collection<Node> nodeCollection;
+        try {
+            nodeCollection = new HashSet<>(g.getPAP().getGraphPAP().getNodes());
+        } catch (PMException e) {
+            nodeCollection = new HashSet<>();
+            e.printStackTrace();
+        }
+        Collection<Node> finalNodeCollection = nodeCollection;
+        typeSelect.addValueChangeListener(event -> {
+            System.out.println(event.getValue());
+            System.out.println(finalNodeCollection);
+            finalNodeCollection.removeIf(curr -> !(curr.getType() == event.getValue()));
+        });
+
+        Select<Node> parentSelect = new Select<>();
+        parentSelect.setRequiredIndicatorVisible(true);
+        parentSelect.setLabel("Parent");
+        parentSelect.setPlaceholder("Select a parent node...");
+        parentSelect.setItemLabelGenerator(Node::getName);
+        parentSelect.setItems(finalNodeCollection);
+
+        form.add(parentSelect);
+
         TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
         propsFeild.setPlaceholder("Enter Properties...");
         form.add(propsFeild);
@@ -550,6 +573,7 @@ public class GraphEditor extends VerticalLayout {
 //            Long id = idField.getValue().longValue();
             String name = nameField.getValue();
             NodeType type = typeSelect.getValue();
+            Node parent = parentSelect.getValue();
             String propString = propsFeild.getValue();
             Map<String, String> props = new HashMap<>();
 //            if (id == null) {
@@ -575,12 +599,13 @@ public class GraphEditor extends VerticalLayout {
                 }
                 try {
 
-                    if (type == NodeType.OA || type == NodeType.O) {
+                    /*if (type == NodeType.OA || type == NodeType.O) {
                         System.out.println(SingletonGraph.getSuperOAId());
                         g.createNode(name, type, props, SingletonGraph.getSuperOAId());
                     } else if (type == NodeType.UA || type == NodeType.U){
                         g.createNode(name, type, props, SingletonGraph.getSuperUAId());
-                    }
+                    }*/
+                    g.createNode(name, type, props, parent.getName());
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
@@ -658,17 +683,18 @@ public class GraphEditor extends VerticalLayout {
                     }
                 }
                 try {
-                    Node home = g.createNode(name + " Home", NodeType.OA, props, SingletonGraph.getSuperOAId());
-                    Node attr = g.createNode(name + " Attr", NodeType.UA, props, SingletonGraph.getSuperUAId());
-
-                    Node user = g.createNode(name, NodeType.U, props, parent.getName());
-                    g.assign(attr.getName(), parent.getName());
+                    //Node home = g.createNode(name + " Home", NodeType.OA, props, SingletonGraph.getSuperOAId());
+                    //Node attr = g.createNode(name + " Attr", NodeType.UA, props, SingletonGraph.getSuperUAId());
+                    // What are those nodes used for ?
+                    Node user = g.getPAP().getGraphPAP().createNode(name, NodeType.U, props, parent.getName());
+                    //g.assign(attr.getName(), parent.getName());
 
                     OperationSet ops = new OperationSet();
                     ops.add("read");
                     ops.add("write");
                     ops.add("delete");
-                    g.associate(attr.getName(), home.getName(), ops);
+                    //Is there a need to associate them ?
+                    //g.associate(attr.getName(), home.getName(), ops);
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
@@ -745,7 +771,7 @@ public class GraphEditor extends VerticalLayout {
                     }
                 }
                 try {
-                    g.createNode(name, NodeType.O, props, parent.getName());
+                    g.getPAP().getGraphPAP().createNode(name, NodeType.O, props, parent.getName());
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
@@ -837,7 +863,7 @@ public class GraphEditor extends VerticalLayout {
 
         Button button = new Button("Delete", event -> {
             try {
-                g.deleteNode(n.getName());
+                g.getPAP().getGraphPAP().deleteNode(n.getName());
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -862,7 +888,7 @@ public class GraphEditor extends VerticalLayout {
     private void addAssignment(Node child, Node parent) {
         if (child != null && parent != null) {
             try {
-                g.assign(child.getName(), parent.getName());
+                g.getPAP().getGraphPAP().assign(child.getName(), parent.getName());
                 notify(child.getName() + " assigned to " + parent.getName());
             } catch (PMException e) {
                 e.printStackTrace();
@@ -883,7 +909,7 @@ public class GraphEditor extends VerticalLayout {
 
             Button button = new Button("Delete", event -> {
                 try {
-                    g.deassign(child.getName(), parent.getName());
+                    g.getPAP().getGraphPAP().deassign(child.getName(), parent.getName());
                 } catch (PMException e) {
                     System.out.println(e.getMessage());
                     e.printStackTrace();
@@ -958,7 +984,7 @@ public class GraphEditor extends VerticalLayout {
         TextArea opsFeild = new TextArea("Operations (Op1, Op2, ...)");
         String sourceToTargetOpsString = "";
         try {
-            Map<String, OperationSet> sourceOps = g.getSourceAssociations(selectedParentNode.getName());
+            Map<String, OperationSet> sourceOps = g.getPAP().getGraphPAP().getSourceAssociations(selectedParentNode.getName());
             Set<String> sourceToTargetOps = new HashSet<>();
             sourceOps.forEach((targetId, targetOps) -> {
                 if (targetId.equalsIgnoreCase(String.valueOf(selectedChildNode.getId()))) {
@@ -993,7 +1019,7 @@ public class GraphEditor extends VerticalLayout {
                 }
                 try {
 //                    System.out.println(props);
-                    g.associate(selectedParentNode.getName(), selectedChildNode.getName(), ops);
+                    g.getPAP().getGraphPAP().associate(selectedParentNode.getName(), selectedChildNode.getName(), ops);
                     notify("Association Created");
                     dialog.close();
                 } catch (Exception e) {

@@ -28,6 +28,8 @@ public class POSTester extends VerticalLayout {
     private Grid<Node> grid;
     private Node user;
     private SingletonGraph g;
+    private static Random rand;
+
 
     public POSTester () {
         setPadding(false);
@@ -170,7 +172,7 @@ public class POSTester extends VerticalLayout {
     public Node[] getUsers() {
         Collection<Node> nodeCollection;
         try {
-            nodeCollection = new HashSet<>(g.getNodes());
+            nodeCollection = new HashSet<>(g.getPAP().getGraphPAP().getNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
             System.out.println(e.getMessage());
@@ -196,7 +198,7 @@ public class POSTester extends VerticalLayout {
         if (user != null) {
             Set<Node> currNodes = new HashSet<>();
             try {
-                UserContext userContext = new UserContext(user.getName(), "-1");
+                UserContext userContext = new UserContext(user.getName(), rand.toString());
                 currNodes = g.getGraphService(userContext).getNodes();
             } catch (PMException e) {
                 System.out.println(e.getMessage());

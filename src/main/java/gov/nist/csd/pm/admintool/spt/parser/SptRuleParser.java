@@ -17,6 +17,7 @@ public class SptRuleParser{
 
     static SptToken crtToken;
     static SptRuleScanner myScanner;
+    private static Random rand;
     public SptRuleParser() {
     }
 
@@ -176,10 +177,10 @@ public class SptRuleParser{
                 if (dummyUser != null && dummyObject != null && rp.associationOperations != null) {
                     SingletonGraph g = SingletonGraph.getInstance();
                     try {
-                        Set<String> perms = g.getAnalyticsService(new UserContext(String.valueOf(dummyUser.getId()), "-1")).getPermissions(String.valueOf(dummyObject.getId()));
+                        Set<String> perms = g.getAnalyticsService(new UserContext(dummyUser.getName(),rand.toString() )).getPermissions(dummyObject.getName());
                         if (!perms.containsAll(rp.associationOperations)) {
                             rp.analyze(p);
-                            perms = g.getAnalyticsService(new UserContext(String.valueOf(dummyUser.getId()), "-1")).getPermissions(String.valueOf(dummyObject.getId()));
+                            perms = g.getAnalyticsService(new UserContext(dummyUser.getName(), rand.toString())).getPermissions(dummyObject.getName());
                             if (!perms.containsAll(rp.associationOperations)) {
                                 // return notifying "The policy can not be impmented for an unknown reason. Return all the paths.
                             }
@@ -279,7 +280,7 @@ public class SptRuleParser{
             Explain explain = null;
 
             try {
-                explain = g.getAnalyticsService((new UserContext(String.valueOf(user.getId()), "-1"))).explain(String.valueOf(user.getId()), String.valueOf(target.getId()));
+                explain = g.getAnalyticsService((new UserContext(user.getName(), rand.toString()))).explain(user.getName(), target.getName());
             } catch (PMException e) {
                 e.printStackTrace();
                 System.out.println(e.getMessage());

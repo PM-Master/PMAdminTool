@@ -8,14 +8,12 @@ import gov.nist.csd.pm.pdp.PDP;
 import gov.nist.csd.pm.pdp.services.GraphService;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.Graph;
-import gov.nist.csd.pm.pip.graph.MemGraph;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import gov.nist.csd.pm.pip.graph.mysql.MySQLConnection;
 import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
 import gov.nist.csd.pm.pip.obligations.MemObligations;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
-import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
 import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 
 import java.util.*;
@@ -74,8 +72,7 @@ public class SingletonGraph extends PDP {
             activePCs = new HashSet<>();
             String superId;
             for (Node n : g.getPAP().getGraphPAP().getNodes()) {
-/*                if (n.getProperties().get("namespace") != null) {
-                    if (n.getProperties().get("namespace").equals("super")) {*/
+                    if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
                         switch (n.getType()) {
                             case OA:
                                 System.out.println("Super OA: " + n.getName());
@@ -96,8 +93,7 @@ public class SingletonGraph extends PDP {
                                 System.out.println("Super PC: " + n.getName());
                                 superPCId = n.getName();
                                 break;
-/*                        }
-                    }*/
+                    }
                }
 
                 if (n.getType().equals(NodeType.PC)) {
@@ -152,6 +148,7 @@ public class SingletonGraph extends PDP {
 
     public Node createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
         if (superContext != null) {
+            System.out.println("create node within singleton " + superContext.getUser());
             return g.getGraphService(superContext).createNode(name, type, properties, parent );
         } else {
             throw new PMException("Super Context is Null");
@@ -242,6 +239,11 @@ public class SingletonGraph extends PDP {
 
     public void associate(String ua, String target, OperationSet operations) throws PMException {
         if (superContext != null) {
+            System.out.println("====================== new super context : =================");
+            System.out.println(superContext.getUser());
+            System.out.println(superContext.getProcess());
+            System.out.println("====================== new super context : =================");
+
             g.getGraphService(superContext).associate(ua, target, operations);
         } else {
             throw new PMException("Super Context is Null");

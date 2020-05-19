@@ -10,9 +10,12 @@ import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 public class CheckPermission extends Test {
+    private static Random rand;
+
     public CheckPermission() {
         setName("checkPermission");
         addParam("uID", Type.NODETYPE);
@@ -29,7 +32,7 @@ public class CheckPermission extends Test {
         if (uID != null && targetID != null && permission != null) {
             SingletonGraph g = SingletonGraph.getInstance();
             try {
-                Set<String> perms = g.getAnalyticsService(new UserContext(uID.getName(), "-1")).getPermissions(targetID.getName());
+                Set<String> perms = g.getAnalyticsService(new UserContext(uID.getName(), rand.toString())).getPermissions(targetID.getName());
                 for (String perm: perms) {
                     if (perm.equals(permission)) {
                         return true;
@@ -53,7 +56,7 @@ public class CheckPermission extends Test {
             Explain explain = null;
 
             try {
-                explain = g.getAnalyticsService(new UserContext(user.getName(), "-1")).explain(user.getName(), target.getName());
+                explain = g.getAnalyticsService(new UserContext(user.getName(), rand.toString())).explain(user.getName(), target.getName());
             } catch (PMException e) {
                 e.printStackTrace();
                 System.out.println(e.getMessage());
