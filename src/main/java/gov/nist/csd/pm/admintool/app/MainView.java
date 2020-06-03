@@ -102,6 +102,7 @@ public class MainView extends HorizontalLayout {
                 UI.getCurrent().getPage().reload();
             }
         });
+
         testResults.getStyle()
                 .set("overflow-y", "scroll")
                 .set("position", "absolute")
