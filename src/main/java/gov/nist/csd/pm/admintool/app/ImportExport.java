@@ -1,6 +1,7 @@
 package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
@@ -9,7 +10,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.pip.graph.GraphSerializer;
+import gov.nist.csd.pm.pip.graph.MemGraph;
+import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
 
 @Tag("import-export")
 public class ImportExport extends VerticalLayout {
@@ -21,7 +23,6 @@ public class ImportExport extends VerticalLayout {
 
     public ImportExport() {
         g = SingletonGraph.getInstance();
-//        userCtx = new UserContext(, -1);
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
@@ -66,64 +67,88 @@ public class ImportExport extends VerticalLayout {
             inputJson.setValue("{\n" +
                     "  \"nodes\": [\n" +
                     "    {\n" +
-                    "      \"id\": -1,\n" +
                     "      \"name\": \"Super PC\",\n" +
                     "      \"type\": \"PC\",\n" +
                     "      \"properties\": {}\n" +
                     "    },\n" +
                     "    {\n" +
-                    "      \"id\": 1,\n" +
                     "      \"name\": \"Bob Home\",\n" +
                     "      \"type\": \"OA\",\n" +
                     "      \"properties\": {}\n" +
                     "    },\n" +
                     "    {\n" +
-                    "      \"id\": 2,\n" +
                     "      \"name\": \"Bob Attr\",\n" +
                     "      \"type\": \"UA\",\n" +
                     "      \"properties\": {}\n" +
                     "    },\n" +
                     "    {\n" +
-                    "      \"id\": 3,\n" +
                     "      \"name\": \"Bob\",\n" +
                     "      \"type\": \"U\",\n" +
                     "      \"properties\": {}\n" +
                     "    },\n" +
                     "    {\n" +
-                    "      \"id\": 4,\n" +
                     "      \"name\": \"Doc\",\n" +
                     "      \"type\": \"O\",\n" +
                     "      \"properties\": {}\n" +
                     "    }\n" +
                     "  ],\n" +
                     "  \"assignments\": [\n" +
-                    "    {\n" +
-                    "      \"sourceID\": 1,\n" +
-                    "      \"targetID\": -1\n" +
-                    "    },\n" +
-                    "    {\n" +
-                    "      \"sourceID\": 3,\n" +
-                    "      \"targetID\": 2\n" +
-                    "    },\n" +
-                    "    {\n" +
-                    "      \"sourceID\": 4,\n" +
-                    "      \"targetID\": 1\n" +
-                    "    },\n" +
-                    "    {\n" +
-                    "      \"sourceID\": 2,\n" +
-                    "      \"targetID\": -1\n" +
-                    "    }\n" +
+                    "    [\n" +
+                    "      \"Bob Home\",\n" +
+                    "      \"Super PC\"\n" +
+                    "    ],\n" +
+                    "    [\n" +
+                    "      \"Bob\",\n" +
+                    "      \"Bob Attr\"\n" +
+                    "    ]\n," +
+                    "    [\n" +
+                    "      \"Doc\",\n" +
+                    "      \"Bob Home\"\n" +
+                    "    ],\n" +
+                    "    [\n" +
+                    "      \"Bob Attr\",\n" +
+                    "      \"Super PC\"\n" +
+                    "    ]\n" +
                     "  ],\n" +
                     "  \"associations\": []\n" +
                     "}");
+
+
             inputJson.setHeight("90vh");
 
             Button importButton = new Button("Import JSON", click -> {
-                updateGraph(inputJson.getValue());
+                //todo toggle which graph to import export with settings value
+                System.out.println("g : " + g.getMysql());
+                if (g.getMysql()) {
+                    //MySQLGraph graph = (MySQLGraph) SingletonGraph.getInstance().getPAP().getGraphPAP();
+                    try {
+                        SingletonGraph.getInstance().getPAP().getGraphPAP().fromJson(inputJson.getValue());
+                        notify("The Json has been imported");
+                        UI.getCurrent().getPage().reload();
+                    } catch (PMException e) {
+                        e.printStackTrace();
+                        notify(e.getMessage());
+                    }
+                } else {
+                    try {
+                        SingletonGraph.getInstance().getPAP().getGraphPAP().fromJson(inputJson.getValue());
+                        notify("The Json has been imported");
+                        UI.getCurrent().getPage().reload();
+                    } catch (PMException e) {
+                        notify("error : " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+                //updateGraph(inputJson.getValue());
             });
             importButton.setHeight("10%");
             add(inputJson);
             add(importButton);
+        }
+
+        public void notify(String message){
+            Notification notif = new Notification(message, 3000);
+            notif.open();
         }
     }
 
@@ -139,16 +164,35 @@ public class ImportExport extends VerticalLayout {
             exportJson.setHeight("90vh");
 
             Button exportButton = new Button("Export JSON", click -> {
-                try {
-                    exportJson.setValue(GraphSerializer.toJson(g.getPAP().getGraphPAP()));
-                } catch (PMException e) {
-                    e.printStackTrace();
-                    ImportExport.this.notify(e.getMessage());
+                System.out.println("g: " + g.getMysql());
+                if (g.getMysql()) {
+                    try {
+                        MySQLGraph graph = (MySQLGraph) SingletonGraph.getInstance().getPAP().getGraphPAP();
+                        exportJson.setValue(graph.toJson());
+                        notify("The graph has been exported into a JSON");
+                    } catch (PMException e) {
+                        e.printStackTrace();
+                        notify("error : " + e.getMessage());
+                    }
+                } else {
+                    try {
+                        MemGraph graph = (MemGraph) SingletonGraph.getInstance().getPAP().getGraphPAP();
+                        exportJson.setValue(graph.toJson());
+                        notify("The graph has been exported into a JSON");
+                    } catch (PMException e) {
+                        e.printStackTrace();
+                        notify("error : " + e.getMessage());
+                    }
                 }
             });
             exportButton.setHeight("10%");
             add(exportJson);
             add(exportButton);
+        }
+
+        public void notify(String message){
+            Notification notif = new Notification(message, 3000);
+            notif.open();
         }
     }
 

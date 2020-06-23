@@ -648,9 +648,9 @@ public class Rule2Parser extends SptRuleParser {
             pcsforUA1.add(graph.createPolicyClass(pcs1UA.get(0), null));
         }
 
-        System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getId());
+        System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getType());
         // First parent UA
-        String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getId(),NodeType.UA);
+        String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(),NodeType.UA);
         pc1UaList.add(graph.createNode(pc1uas.get(pc1UASize-1), NodeType.UA,null, parentUAId));
         for (int i=1;i<pcsforUA1.size();i++) {
             graph.assign(pc1UaList.get(pc1UASize-1).getName(), pcsforUA1.get(i).getName());
@@ -660,7 +660,7 @@ public class Rule2Parser extends SptRuleParser {
             pc1UaList.add(graph.createNode(pc1uas.get(i), NodeType.UA,null, pc1UaList.get(pc1UaList.size()-1).getName()));
         }
         // First parent OA
-        String parentOAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getId(),NodeType.OA);
+        String parentOAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(),NodeType.OA);
         System.out.println("Build PC 1 OAs ...");
         pc1OaList.add(graph.createNode(pc1oas.get(pc1OASize-1), NodeType.OA,null, parentOAId));
         for (int i=1;i<pcsforUA1.size();i++) {
@@ -682,13 +682,13 @@ public class Rule2Parser extends SptRuleParser {
         Node pc2Node = graph.createPolicyClass(pc2,null);
         // Build UAs
         System.out.println("Building PC 2 UAs ...");
-        parentUAId = graph.getPolicyClassDefault(pc2Node.getId(),NodeType.UA);
+        parentUAId = graph.getPolicyClassDefault(pc2Node.getName(),NodeType.UA);
         for (int i=0;i<pc2uas.size();i++) {
             pc2UaList.add(graph.createNode(pc2uas.get(i), NodeType.UA,null, parentUAId));
         }
         //Build OAs
         System.out.println("Building PC 2 OAs ...");
-        parentOAId = graph.getPolicyClassDefault(pc2Node.getId(),NodeType.OA);
+        parentOAId = graph.getPolicyClassDefault(pc2Node.getName(),NodeType.OA);
         for (int i=0;i<pc2oas.size();i++) {
             pc2OaList.add(graph.createNode(pc2oas.get(i), NodeType.OA,null, parentOAId));
         }

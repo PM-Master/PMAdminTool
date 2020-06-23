@@ -1,5 +1,6 @@
 package gov.nist.csd.pm.admintool.graph;
 
+import gov.nist.csd.pm.epp.EPPOptions;
 import gov.nist.csd.pm.epp.events.EventContext;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
@@ -8,12 +9,14 @@ import gov.nist.csd.pm.pdp.PDP;
 import gov.nist.csd.pm.pdp.services.GraphService;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.Graph;
+import gov.nist.csd.pm.pip.graph.MemGraph;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import gov.nist.csd.pm.pip.graph.mysql.MySQLConnection;
 import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
 import gov.nist.csd.pm.pip.obligations.MemObligations;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
+import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
 import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 
 import java.util.*;
@@ -27,51 +30,56 @@ import java.util.*;
  * context automatically.
  */
 public class SingletonGraph extends PDP {
+    private Boolean isMysql;
     private static SingletonGraph g; // the single instance
     private static UserContext superContext;
     private static String superPCId, superUAId, superOAId;
     private static Random rand;
     private static Set<PolicyClassWithActive> activePCs;
     private static MySQLConnection connection = new MySQLConnection();
+    //make an attribute to render the mysql or mem graph
 
     private SingletonGraph(PAP pap) throws PMException {
-        super(pap, null);
-//        try {
-//            getGraphService().createNode(new UserContext(-1, -1),
-//                    -1, "Super PC", NodeType.PC, null);
-//        } catch (PMException e) {
-//            System.out.println(e.getMessage());
-//            e.printStackTrace();
-//        }
+        super(pap, new EPPOptions());
+
         //Prevent form the reflection api.
         if (g != null){
             throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
         }
     }
 
+    public Boolean getMysql() {
+        return isMysql;
+    }
+
+    public void setMysql(Boolean mysql) {
+        isMysql = mysql;
+    }
+
     /**
      * Gets the singleton instance of this class
-     * @return
      */
     public synchronized static SingletonGraph getInstance() {
         rand = new Random();
         if (g == null) { // if there is no instance available... create new one
-            fixGraphData(new MySQLGraph(connection));
+            fixGraphDataMem(new MemGraph());
+            g.setMysql(false);
         }
         return g;
     }
 
     private synchronized static void fixGraphData(Graph graph) {
         try {
-            g = new SingletonGraph(new PAP(
-                    graph,
-                    new MySQLProhibitions(connection),
-                    new MemObligations()
-            ));
+                g = new SingletonGraph(new PAP(
+                        graph,
+                        new MySQLProhibitions(connection),
+                        new MemObligations()
+                ));
+            System.out.println("MySQLGraph");
             superContext = null;
             activePCs = new HashSet<>();
-            String superId;
-            for (Node n : g.getPAP().getGraphPAP().getNodes()) {
+
+            for (Node n : g.getPAP().getGraphPAP().getNodes()) {;
                     if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
                         switch (n.getType()) {
                             case OA:
@@ -86,7 +94,6 @@ public class SingletonGraph extends PDP {
                                 break;
                             case U:
                                 System.out.println("Super U: " + n.getName());
-                                superId = n.getName();
                                 superContext = new UserContext(n.getName(), rand.toString());
                                 break;
                             case PC:
@@ -100,7 +107,50 @@ public class SingletonGraph extends PDP {
                     activePCs.add(new PolicyClassWithActive(n));
                 }
             }
+        } catch (PMException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
+    private synchronized static void fixGraphDataMem(Graph graph) {
+        try {
+            g = new SingletonGraph(new PAP(
+                    graph,
+                    new MemProhibitions(),
+                    new MemObligations()
+            ));
+            System.out.println("MemGraph");
+            superContext = null;
+            activePCs = new HashSet<>();
+            for (Node n : g.getPAP().getGraphPAP().getNodes()) {
+                if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
+                    switch (n.getType()) {
+                        case OA:
+                            System.out.println("Super OA: " + n.getName());
+                            superOAId = n.getName();
+                            break;
+                        case UA:
+                            if (n.getName().equals("super_ua2")) {
+                                System.out.println("Super UA: " + n.getName());
+                                superUAId = n.getName();
+                            }
+                            break;
+                        case U:
+                            System.out.println("Super U: " + n.getName());
+                            superContext = new UserContext(n.getName(), rand.toString());
+                            break;
+                        case PC:
+                            System.out.println("Super PC: " + n.getName());
+                            superPCId = n.getName();
+                            break;
+                    }
+                }
+
+                if (n.getType().equals(NodeType.PC)) {
+                    activePCs.add(new PolicyClassWithActive(n));
+                }
+            }
             //System.out.println(superPCId);
         } catch (PMException e) {
             System.out.println(e.getMessage());
@@ -129,14 +179,20 @@ public class SingletonGraph extends PDP {
     }
 
     public Node createPolicyClass(String name, Map<String, String> properties) throws PMException {
-        Node newPC = createNode(name, NodeType.PC, properties, superPCId);
+        Node newPC = g.getPAP().getGraphPAP().createPolicyClass(name, properties);
         activePCs.add(new PolicyClassWithActive(newPC));
         return newPC;
     }
 
-    public SingletonGraph updateGraph (Graph graph) {
+    public SingletonGraph updateGraph (boolean isMySQL){
         g = null;
-        fixGraphData(graph);
+        if (isMySQL) {
+            fixGraphData(new MySQLGraph(connection));
+            g.setMysql(true);
+        } else {
+            fixGraphDataMem(new MemGraph());
+            g.setMysql(false);
+        }
         return g;
     }
 
@@ -148,21 +204,20 @@ public class SingletonGraph extends PDP {
 
     public Node createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
         if (superContext != null) {
-            System.out.println("create node within singleton " + superContext.getUser());
             return g.getGraphService(superContext).createNode(name, type, properties, parent );
         } else {
             throw new PMException("Super Context is Null");
         }
     }
 
-    public String getPolicyClassDefault(long pcId, NodeType type) throws PMException {
-        if (pcId == 0) {
+    public String getPolicyClassDefault(String pc, NodeType type) throws PMException {
+        if (pc.equalsIgnoreCase("0")) {
             if (superContext != null) {
-                return g.getGraphService(superContext).getPolicyClassDefault(String.valueOf(superPCId), type);
+                return g.getGraphService(superContext).getPolicyClassDefault(superPCId, type);
             } else {
                 throw new PMException("Super Context is Null");
             }
-        } else return g.getGraphService(superContext).getPolicyClassDefault(String.valueOf(pcId), type);
+        } else return g.getGraphService(superContext).getPolicyClassDefault(pc, type);
     }
 
     public void updateNode(String name, Map<String, String> properties) throws PMException {
@@ -239,11 +294,6 @@ public class SingletonGraph extends PDP {
 
     public void associate(String ua, String target, OperationSet operations) throws PMException {
         if (superContext != null) {
-            System.out.println("====================== new super context : =================");
-            System.out.println(superContext.getUser());
-            System.out.println(superContext.getProcess());
-            System.out.println("====================== new super context : =================");
-
             g.getGraphService(superContext).associate(ua, target, operations);
         } else {
             throw new PMException("Super Context is Null");
@@ -292,7 +342,7 @@ public class SingletonGraph extends PDP {
 
     public void processEvent (EventContext eventCtx) throws PMException {
         if (superContext != null) {
-            g.getEPP().processEvent(eventCtx, superContext.getUser(), String.valueOf(rand.nextLong()));
+            g.getEPP().processEvent(eventCtx);
         } else {
             throw new PMException("Super Context is Null");
         }

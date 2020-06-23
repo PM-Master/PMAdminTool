@@ -11,6 +11,8 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLayout;
+import com.vaadin.flow.router.RouterLink;
 import gov.nist.csd.pm.admintool.actions.Action;
 import gov.nist.csd.pm.admintool.actions.SingletonActiveActions;
 import gov.nist.csd.pm.admintool.actions.events.Event;
@@ -23,16 +25,17 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Route
-public class MainView extends HorizontalLayout {
+public class MainView extends HorizontalLayout{
     private Div testResults;
     private Div pages;
     private SingletonActiveActions actions;
+
     private VerticalLayout navbar;
 
     public MainView() {
+
         testResults = new Div();
         actions = SingletonActiveActions.getInstance();
-
         navbar = new VerticalLayout();
         navbar.setWidth("16%");
         navbar.setJustifyContentMode(JustifyContentMode.START);
@@ -44,7 +47,7 @@ public class MainView extends HorizontalLayout {
         H3 admintool = new H3("Admin Tool");
         navbar.add(admintool);
 
-        Tab tab1 = new Tab("Graph Editor");
+        Tab  tab1 = new Tab("Graph Editor");
         VerticalLayout page1 = new GraphEditor();
         page1.setSizeFull();
 
@@ -73,8 +76,12 @@ public class MainView extends HorizontalLayout {
         page6.setSizeFull();
         page6.setVisible(false);
 
+        Tab tab7 = new Tab("Settings");
+        VerticalLayout page7 = new Settings();
+        page7.setSizeFull();
+        page7.setVisible(false);
 
-        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6);
+        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7);
         tabs.setOrientation(Tabs.Orientation.VERTICAL);
         tabs.setFlexGrowForEnclosedTabs(1);
         navbar.add(tabs);
@@ -86,8 +93,9 @@ public class MainView extends HorizontalLayout {
         tabsToPages.put(tab4, page4);
         tabsToPages.put(tab5, page5);
         tabsToPages.put(tab6, page6);
+        tabsToPages.put(tab7, page7);
 
-        pages = new Div(page1, page2, page3, page4, page5, page6);
+        pages = new Div(page1, page2, page3, page4, page5, page6, page7);
         pages.setSizeFull();
 
         Set<Component> pagesShown = Stream.of(page1)
@@ -98,9 +106,13 @@ public class MainView extends HorizontalLayout {
             Component selectedPage = tabsToPages.get(tabs.getSelectedTab());
             selectedPage.setVisible(true);
             pagesShown.add(selectedPage);
-            if (tabs.getSelectedTab().equals(tab1)) {
-                UI.getCurrent().getPage().reload();
-            }
+
+            /*if (tabs.getSelectedTab().equals(tab1)) {
+                if (settings.getMysqlBool() != null) {
+                    System.out.println(settings.getMysqlBool());
+                    graphEditor.setVisible(true);
+                }
+            }*/
         });
 
         testResults.getStyle()

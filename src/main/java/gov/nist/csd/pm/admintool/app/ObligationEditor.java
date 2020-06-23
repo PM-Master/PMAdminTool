@@ -18,6 +18,8 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.pdp.services.GraphService;
+import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.obligations.evr.EVRException;
 import gov.nist.csd.pm.pip.obligations.evr.EVRParser;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
@@ -87,7 +89,8 @@ public class ObligationEditor extends VerticalLayout {
             upload.setHeight("100%");
             upload.addSucceededListener(event -> {
                 try {
-                    g.addObl(EVRParser.parse(buffer.getInputStream(event.getFileName())));
+                    UserContext userContext = new UserContext("-1", "-1");
+                    g.addObl(EVRParser.parse(userContext.getUser(), buffer.getInputStream(event.getFileName())));
 //                    inputJson.clear();
                     obligationViewer.refreshGrid();
                 } catch (Exception e) {
@@ -178,7 +181,31 @@ public class ObligationEditor extends VerticalLayout {
 
             Button importButton = new Button("Parse YAML", event -> {
                 try {
-                    g.addObl(EVRParser.parse(new ByteArrayInputStream(inputYaml.getValue().getBytes())));
+                    /*
+                    YAML script :
+                    label: homes/inboxes/outboxes
+                    rules:
+                        - label: test
+                        event:
+                        subject:
+                        operations:
+                            - assign to
+                            target:
+                            policyElements:
+                                - name: users
+                                type: UA
+                                response:
+                                actions:
+                                    - function:
+                                        name: create_dac_user
+                                        args:
+                                            - function:
+                                            name: child_of_assign
+                     */
+
+
+                    UserContext userContext = new UserContext("-1", "-1");
+                    g.addObl(EVRParser.parse(userContext.getUser(), new ByteArrayInputStream(inputYaml.getValue().getBytes())));
                     ObligationEditor.notify("Successfully imported obligation!");
                     inputYaml.clear();
                     dialog.close();

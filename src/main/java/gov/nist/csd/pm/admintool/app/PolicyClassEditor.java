@@ -141,7 +141,8 @@ public class PolicyClassEditor extends VerticalLayout {
                         }
                     }
                     try {
-                        g.createPolicyClass(name, props);
+                        //g.getPAP().getGraphPAP().createPolicyClass(name, props);
+                        g.createPolicyClass(name,props);
                         refreshGrid();
                         dialog.close();
                     } catch (PMException e) {

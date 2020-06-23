@@ -2,7 +2,9 @@ package gov.nist.csd.pm.admintool.actions.events;
 
 import com.vaadin.flow.component.notification.Notification;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.epp.events.EventContext;
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 
 public class AssignEvent extends Event {
@@ -29,7 +31,8 @@ public class AssignEvent extends Event {
         }
 
         try {
-            g.processEvent(new gov.nist.csd.pm.epp.events.AssignEvent(child, parent));
+            UserContext userContext = new UserContext(child.getName(), "-1");
+            g.processEvent(new gov.nist.csd.pm.epp.events.AssignEvent(userContext,child, parent));
 //            notify("Assignment Event successfully executed");
             explanation = "Assignment Event successfully executed";
         } catch (PMException e) {

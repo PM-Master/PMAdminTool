@@ -86,15 +86,9 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <dependency>
             <groupId>com.github.PM-Master</groupId>
             <artifactId>policy-machine-core</artifactId>
-            <version>5b238384a1fba61e31ec608031914b3e86ac5119</version>
+            <version>497561ba6a728574cfbf126585565c293286c43b</version>
         </dependency>
     </dependencies>
 

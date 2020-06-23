@@ -364,7 +364,7 @@ public class Rule1Parser extends SptRuleParser {
 
         System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getId());
         // First parent UA
-        String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getId(),NodeType.UA);
+        String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(),NodeType.UA);
         pc1UaList.add(graph.createNode(pc1uas.get(pc1UASize-1), NodeType.UA,null, parentUAId ));
         for (int i=1;i<pcsforUA1.size();i++) {
             graph.assign(pc1UaList.get(pc1UASize-1).getName(), pcsforUA1.get(i).getName());
@@ -374,7 +374,7 @@ public class Rule1Parser extends SptRuleParser {
             pc1UaList.add(graph.createNode(pc1uas.get(i), NodeType.UA,null, pc1UaList.get(pc1UaList.size()-1).getName()));
         }
         // First parent OA
-        String parentOA = graph.getPolicyClassDefault(pcsforUA1.get(0).getId(), NodeType.OA);
+        String parentOA = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(), NodeType.OA);
         System.out.println("Build PC 1 OAs ...");
         pc1OaList.add(graph.createNode(pc1oas.get(pc1OASize-1), NodeType.OA,null, parentOA));
         for (int i=1;i<pcsforUA1.size();i++) {
