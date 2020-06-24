@@ -15,13 +15,10 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouterLayout;
 import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
@@ -55,6 +52,8 @@ public class GraphEditor extends VerticalLayout {
     private void setUpLayout() {
         setSizeFull();
         setPadding(true);
+        buttonGroup = new GraphButtonGroup();
+
         childNode = new NodeLayout(true);
         childNode.setWidth("45%");
         childNode.getStyle().set("height","100vh");
@@ -65,7 +64,6 @@ public class GraphEditor extends VerticalLayout {
         parentNode.getStyle().set("height","100vh");
         layout.add(parentNode);
 
-        buttonGroup = new GraphButtonGroup();
         layout.add(buttonGroup);
     }
 
@@ -78,7 +76,10 @@ public class GraphEditor extends VerticalLayout {
         private H3 currNodeName; // The current node whose children are being shown
         // for node info section
         private H4 name;
-        private HorizontalLayout children, parents;
+//        private HorizontalLayout children, parents;
+//        private VerticalLayout children, parents;
+        private Div childrenList, parentList;
+
         private boolean isSource;
 
         public NodeLayout(boolean isSource) {
@@ -89,7 +90,7 @@ public class GraphEditor extends VerticalLayout {
                 getStyle().set("background", "lightcoral");
             }
 
-            ///// TITLE SECTION (Title, Back Button, Current Parent Node) //////
+            /// TITLE START (Title, Back Button, Current Parent Node) ///
             // title layout config
             HorizontalLayout title = new HorizontalLayout();
             title.setAlignItems(Alignment.BASELINE);
@@ -110,7 +111,8 @@ public class GraphEditor extends VerticalLayout {
             backButton.addClickListener(evt -> {
                 if (!prevNodes.empty()) {
                     currNodes = prevNodes.pop();
-                    grid.setItems(currNodes);
+                    //grid.setItems(currNodes);
+                    updateGrid(currNodes);
                     grid.deselectAll();
                     if (isSource) {
                         selectedChildNode = null;
@@ -139,28 +141,22 @@ public class GraphEditor extends VerticalLayout {
 
             title.getStyle().set("overflow-y", "hidden").set("overflow-x", "scroll");
             title.add(currNodeName);
-            ///// End of Title Section //////
+            /// TITLE END ///
 
+
+            /// NODE TABLE Start ///
             prevNodes = new Stack<>(); // for the navigation system
             prevNodeNames = new Stack<>(); //  for the navigation system
 
-            ////// NODE TABLE SECTION //////
             // grid config
             grid = new Grid<>(Node.class);
-            grid.getStyle()
-                    .set("border-radius", "1px");
             createContextMenu(); // adds the content-specific context menu
             //retrieve nodes from proper DB (mysql or in memory)
-            try {
-                currNodes = g.getPAP().getGraphPAP().getNodes();
-                //System.out.println(g.toString());
-                updateGrid(currNodes);
-                refreshGrid();
-                System.out.println(currNodes);
-            } catch (PMException e) {
-                e.printStackTrace();
-            }
+            refreshGraph();
 
+            grid.getStyle()
+                    .set("border-radius", "1px");
+            grid.removeColumnByKey("id");
             grid.setColumnReorderingAllowed(true);
             grid.getColumns().forEach(col -> {
                 col.setFlexGrow(1);
@@ -179,7 +175,8 @@ public class GraphEditor extends VerticalLayout {
                             prevNodes.push(currNodes);
                             currNodes = g.getNodes().stream()
                                         .filter(node_k -> children.contains(node_k.getName())).collect(Collectors.toList());
-                            grid.setItems(currNodes);
+                            //grid.setItems(currNodes);
+                            updateGrid(currNodes);
 
                             prevNodeNames.push(currNodeName.getText());
                             currNodeName.setText(currNodeName.getText() + " > " + n.getName());
@@ -216,20 +213,11 @@ public class GraphEditor extends VerticalLayout {
                 updateNodeInfoSection();
             });
             add(grid);
-            ////// End of Node Grid Section //////
-
-            //TODO: Make it look prettier
-            ////// NODE INFO SECTION //////
-            children = new HorizontalLayout();
-            children.setMargin(true);
-            children.getStyle().set("margin-top", "0");
-            children.getStyle().set("margin-bottom", "0");
-            parents = new HorizontalLayout();
-            parents.setMargin(true);
-            parents.getStyle().set("margin-top", "0");
-            parents.getStyle().set("margin-bottom", "0");
+            /// NODE TABLE END ///
 
 
+            /// TODO: add properties and associations
+            /// NODE INFO START ///
             VerticalLayout nodeInfo = new VerticalLayout();
             nodeInfo.setWidthFull();
             nodeInfo.setHeight("30%");
@@ -238,27 +226,70 @@ public class GraphEditor extends VerticalLayout {
                     .set("border-radius", "2px")
                     .set("border", "1px solid lightgrey")
                     .set("padding", "10px")
-                    .set("line-height", "1px");
+                    .set("line-height", "1px")
+                    .set("text-align", "center");
+
 
             name = new H4("X");
+            name.setWidthFull();
             nodeInfo.add(name);
 
-            nodeInfo.add(new Paragraph("Children: "));
-            children.add(new Paragraph("None"));
-            nodeInfo.add(children);
+            nodeInfo.add(new Hr());
 
-            nodeInfo.add(new Paragraph("Parents: "));
-            parents.add(new Paragraph("None"));
-            nodeInfo.add(parents);
+            /// section with children and parents
+            HorizontalLayout relatives = new HorizontalLayout();
+            relatives.setMargin(true);
+            relatives.getStyle().set("margin-top", "0");
+            relatives.getStyle().set("margin-bottom", "0");
+            relatives.setWidthFull();
 
-//            HashSet<String> propoopops = new HashSet<>();
-//            propoopops.add("r");
-//            propoopops.add("w");
-//            propoopops.add("d");
-//            nodeInfo.add(new AssociationBlip(1, "John", NodeType.U, true, propoopops));
-//            nodeInfo.add(new AssociationBlip(1, "John", NodeType.U, false, propoopops));
+            // children layout
+            VerticalLayout children = new VerticalLayout();
+            children.setSizeFull();
+            children.setMargin(true);
+            children.getStyle().set("margin-top", "0");
+            children.getStyle().set("margin-bottom", "0");
+
+            children.add(new Paragraph("Children:"));
+
+            childrenList = new Div();
+            childrenList.setSizeFull();
+            childrenList.getStyle()
+                    .set("margin-top", "0")
+                    .set("margin-bottom", "0")
+                    .set("overflow","scroll");
+//                    .set("background","green");
+
+
+            children.add(childrenList);
+
+
+            // parent layout
+            VerticalLayout parents = new VerticalLayout();
+            parents.setMargin(true);
+            parents.setSizeFull();
+            parents.getStyle().set("margin-top", "0");
+            parents.getStyle().set("margin-bottom", "0");
+
+            parents.add(new Paragraph("Parents: "));
+
+            parentList = new Div();
+            parentList.setSizeFull();
+            parentList.getStyle()
+                    .set("margin-top", "0")
+                    .set("margin-bottom", "0")
+                    .set("overflow","scroll");
+//                    .set("background","green");
+
+            parents.add(parentList);
+
+            /// adding it all together
+            relatives.add(children);
+            relatives.add(parents);
+
+            nodeInfo.add(relatives);
             add(nodeInfo);
-            ////// End Node Info Section //////
+            /// NODE INFO END ///
         }
 
         private void updateNodeInfoSection() {
@@ -269,35 +300,35 @@ public class GraphEditor extends VerticalLayout {
                 gridSelecNode = selectedParentNode;
             }
 
-            children.removeAll();
-            parents.removeAll();
+            childrenList.removeAll();
+            parentList.removeAll();
 
             if (gridSelecNode != null) {
                 try {
-                    name.setText(gridSelecNode.getName());
+                    name.setText(gridSelecNode.getName() + " (" + gridSelecNode.getType().toString() + ")");
 
                     //TODO: find a more expandable way to do this
 
                     Iterator<String> childIter = g.getChildren(gridSelecNode.getName()).iterator();
                     if (!childIter.hasNext()) {
-                        children.add(new Paragraph("None"));
+                        childrenList.add(new Paragraph("None"));
                     } else {
                         while (childIter.hasNext()) {
                             String child = childIter.next();
                             Node childParent = g.getNode(child);
-                            children.add(new NodeDataBlip(childParent.getName(), childParent.getType()));
+                            childrenList.add(new NodeDataBlip(childParent.getName(), childParent.getType()));
 //                            children.setText(children.getText() + "{" + id + ": " + g.getNode(id).getName() + "},");
                         }
                     }
 
                     Iterator<String> parentIter = g.getParents(gridSelecNode.getName()).iterator();
                     if (!parentIter.hasNext()) {
-                        parents.add(new Paragraph("None"));
+                        parentList.add(new Paragraph("None"));
                     } else {
                         while (parentIter.hasNext()) {
                             String parent = parentIter.next();
                             Node parentNode = g.getNode(parent);
-                            parents.add(new NodeDataBlip(parentNode.getName(), parentNode.getType()));
+                            parentList.add(new NodeDataBlip(parentNode.getName(), parentNode.getType()));
 //                            parents.setText(parents.getText() + "{" + id + ": " + g.getNode(id).getName() + "},");
                         }
                     }
@@ -307,12 +338,18 @@ public class GraphEditor extends VerticalLayout {
                 }
             } else {
                 name.setText("X");
-                children.add("None");
-                parents.add("None");
+                childrenList.add(new Paragraph("None"));
+                parentList.add(new Paragraph("None"));
+
             }
         }
 
         public void updateGrid(Collection<Node> all_nodes) {
+//            currNodes = all_nodes.stream()
+//                    .filter(node -> children.contains(node.getName()))
+//                    .collect(Collectors.toList());
+            // TODO: filter to only have nodes in the active PC's
+
             final ListDataProvider<Node> dataProvider = DataProvider.ofCollection(all_nodes);
             grid.setDataProvider(dataProvider);
         }
@@ -325,7 +362,7 @@ public class GraphEditor extends VerticalLayout {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
             }
-            grid.setItems(currNodes);
+            updateGrid(currNodes);
         }
 
         public void refreshGraph() {
@@ -336,7 +373,7 @@ public class GraphEditor extends VerticalLayout {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
             }
-            grid.setItems(currNodes);
+            updateGrid(currNodes);
             grid.deselectAll();
             selectedParentNode = null;
             buttonGroup.refreshNodeTexts();
@@ -347,7 +384,7 @@ public class GraphEditor extends VerticalLayout {
         private void createContextMenu() {
             GridContextMenu<Node> contextMenu = new GridContextMenu<>(grid);
 
-            contextMenu.addItem("Add Node", event -> addNode());
+            //contextMenu.addItem("Add Node", event -> addNode());
             contextMenu.addItem("Edit Node", event -> {
                 event.getItem().ifPresent(node -> {
                     editNode(node);
@@ -832,16 +869,10 @@ public class GraphEditor extends VerticalLayout {
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(FlexComponent.Alignment.BASELINE);
 
-        NumberField idField = new NumberField("ID");
-        idField.setRequiredIndicatorVisible(true);
-        idField.setValue(((double) n.getId()));
-        idField.setMin(1);
-        idField.setHasControls(true);
-        form.add(idField);
-
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
         nameField.setValue(n.getName());
+        nameField.setEnabled(false);
         form.add(nameField);
 
         TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
@@ -851,14 +882,10 @@ public class GraphEditor extends VerticalLayout {
         form.add(propsFeild);
 
         Button button = new Button("Submit", event -> {
-            Long id = idField.getValue().longValue();
             String name = nameField.getValue();
             String propString = propsFeild.getValue();
             Map<String, String> props = new HashMap<>();
-            if (id == null) {
-                idField.focus();
-                notify("ID is Required");
-            } else if (name == null || name == "") {
+            if (name == null || name == "") {
                 nameField.focus();
                 notify("Name is Required");
             } else {

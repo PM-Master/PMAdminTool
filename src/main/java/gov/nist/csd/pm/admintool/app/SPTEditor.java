@@ -2,6 +2,7 @@ package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -89,6 +90,9 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
         public SPTInput () {
             getStyle().set("background", "lightblue");
             setAlignItems(Alignment.STRETCH);
+
+            add(new H2("SPT Input:"));
+
             inputSpt = new TextArea();
             inputSpt.getStyle()
                     .set("border-radius", "3px")
@@ -115,6 +119,9 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
         public RuleAnalysis () {
             getStyle().set("background", "lightcoral");
             setAlignItems(Alignment.STRETCH);
+
+            add(new H2("JSON Output:"));
+
             outputJson = new TextArea();
             outputJson.getStyle()
                     .set("border-radius", "5px")

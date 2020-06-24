@@ -9,23 +9,19 @@ public class NodeDataBlip extends HorizontalLayout {
     private String name;
     private NodeType type;
 
-    private HorizontalLayout box;
-
     public NodeDataBlip(String name, NodeType type) {
         this.name = name;
         this.type = type;
-        box = new HorizontalLayout();
-        add(box);
-        getStyle().set("margin" , "0");
         setUpBox();
     }
 
     private void setUpBox() {
-        Style style = box.getStyle();
+        Style style = getStyle();
+
         style.set("border-radius", "3px")
                 .set("border", "1px grey")
                 .set("padding", "2px")
-                .set("margin-top", "0px");
+                .set("margin", "1px");
 
         switch (type) {
             case PC:
@@ -48,16 +44,15 @@ public class NodeDataBlip extends HorizontalLayout {
                 break;
         }
 
-        box.setHeight("20px");
-        box.setMinWidth("50px");
-        box.setMaxWidth("100px");
+        setHeight("20px");
+        setWidth("99%");
 
         Paragraph typeText = new Paragraph(type.toString());
         typeText.getStyle().set("font-weight", "bold");
-        box.add(typeText);
+        add(typeText);
 
         Paragraph nameText = new Paragraph(name);
         nameText.getStyle().set("margin-left", "2px");
-        box.add(nameText);
+        add(nameText);
     }
 }
