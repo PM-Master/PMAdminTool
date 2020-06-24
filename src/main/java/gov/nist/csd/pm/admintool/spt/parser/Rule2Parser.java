@@ -50,7 +50,7 @@ public class Rule2Parser extends SptRuleParser {
     ArrayList<Association> associations = null;
     OperationSet associationOperations = null;
 
-    ArrayList<Purpose> purpose = new ArrayList<>();
+    ArrayList<Purpose> purpose = new ArrayList<Purpose>();
 
     public Rule2Parser() {
         super();

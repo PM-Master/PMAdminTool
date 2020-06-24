@@ -155,13 +155,13 @@ public class SptRuleParser{
         * 2. loop through each triplet in purpose of the current rule
         * 3. add/assign a dummy user to the UA and add/assign a dummy object to the OA
         * 4. Test if the purpose is solved
-        * 4. If not, call Analyse() to see the paths and equate it with purpose,
+        * 5. If not, call Analyse() to see the paths and equate it with purpose,
         *    then make smart decision to fix it so that purpose
         *    and go back to the first rule again to test from beginning
-        * 5. Once the current rule purpose succeed, move on to the next rule.*/
-
+        * 6. Once the current rule purpose succeed, move on to the next rule.*/
+/* This test can be done using the tester, so commenting out
         for (Rule1Parser rp: rule1Parsers) {
-
+            // TODO
         }
         for (Rule2Parser rp: rule2Parsers) {
             // add a dummy user
@@ -192,7 +192,7 @@ public class SptRuleParser{
                     }
                 }
             }
-        }
+        } */
         return result;
     }
 

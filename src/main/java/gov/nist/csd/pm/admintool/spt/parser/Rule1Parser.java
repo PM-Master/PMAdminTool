@@ -362,7 +362,7 @@ public class Rule1Parser extends SptRuleParser {
             pcsforUA1.add(graph.createPolicyClass(pcs1UA.get(0), null));
         }
 
-        System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getId());
+        System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getName());
         // First parent UA
         String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(),NodeType.UA);
         pc1UaList.add(graph.createNode(pc1uas.get(pc1UASize-1), NodeType.UA,null, parentUAId ));
