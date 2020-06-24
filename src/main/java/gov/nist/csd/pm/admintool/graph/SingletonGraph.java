@@ -178,10 +178,24 @@ public class SingletonGraph extends PDP {
         return activePCs;
     }
 
+
+    public String toString(){
+        List<String> pcs = new ArrayList<>();
+        for (PolicyClassWithActive pc: activePCs) {
+            pcs.add(pc.name);
+        }
+            return "Active pcs: " + pcs.toString();
+    }
+
     public Node createPolicyClass(String name, Map<String, String> properties) throws PMException {
-        Node newPC = g.getPAP().getGraphPAP().createPolicyClass(name, properties);
-        activePCs.add(new PolicyClassWithActive(newPC));
-        return newPC;
+
+        if (superContext != null) {
+            Node newPC = g.getGraphService(superContext).createPolicyClass(name, properties);
+            activePCs.add(new PolicyClassWithActive(newPC));
+            return newPC;
+        } else {
+            throw new PMException("Super Context is Null");
+        }
     }
 
     public SingletonGraph updateGraph (boolean isMySQL){
@@ -339,6 +353,10 @@ public class SingletonGraph extends PDP {
             throw new PMException("Super Context is Null");
         }
     }
+
+/*    public HashSet<PolicyClassWithActive> getActivePcs () {
+        //return the active pcs within the graph
+    }*/
 
     public void processEvent (EventContext eventCtx) throws PMException {
         if (superContext != null) {

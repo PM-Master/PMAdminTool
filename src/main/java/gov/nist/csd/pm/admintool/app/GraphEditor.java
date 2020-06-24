@@ -153,6 +153,7 @@ public class GraphEditor extends VerticalLayout {
             //retrieve nodes from proper DB (mysql or in memory)
             try {
                 currNodes = g.getPAP().getGraphPAP().getNodes();
+                //System.out.println(g.toString());
                 updateGrid(currNodes);
                 refreshGrid();
                 System.out.println(currNodes);
@@ -873,7 +874,7 @@ public class GraphEditor extends VerticalLayout {
                 }
                 try {
 //                    System.out.println(props);
-                    g.updateNode(name, props);
+                    g.getPAP().getGraphPAP().updateNode(name, props);
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();

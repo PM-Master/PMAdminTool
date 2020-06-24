@@ -37,7 +37,7 @@ public class PolicyClassEditor extends VerticalLayout {
     private void setUpLayout() {
         policyClassViewer = new PolicyClassViewer();
         policyClassViewer.setWidthFull();
-        policyClassViewer.getStyle().set("height","100vh");
+        policyClassViewer.getStyle().set("height","65vh");
         add(policyClassViewer);
     }
 

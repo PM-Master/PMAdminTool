@@ -34,8 +34,6 @@ public class Settings extends VerticalLayout {
         setFlexGrow(1.0);
         setSizeFull();
         setPadding(false);
-        //In Memory Selected by default
-        this.setMysqlBool(false);
         g = SingletonGraph.getInstance();
         setUpLayout();
     }
@@ -43,7 +41,7 @@ public class Settings extends VerticalLayout {
     private void setUpLayout() {
         settingsViewer = new SettingsViewer();
         settingsViewer.setWidthFull();
-        settingsViewer.getStyle().set("height","100vh");
+        settingsViewer.getStyle().set("height","35vh");
         add(settingsViewer);
     }
 
@@ -56,15 +54,19 @@ public class Settings extends VerticalLayout {
             RadioButtonGroup<String> radioGroup = new RadioButtonGroup<>();
             radioGroup.setLabel("What kind of database do you want to use ?");
             radioGroup.setItems("In-Memory", "MySQL");
-            radioGroup.setValue("In-Memory");
             radioGroup.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
+            if (g.getMysql()) {
+                radioGroup.setValue("MySQL");
+            } else {
+                radioGroup.setValue("In-Memory");
+            }
             radioGroup.addValueChangeListener(event -> {
                     Dialog dialog = new Dialog();
                     HorizontalLayout form = new HorizontalLayout();
                     form.setAlignItems(FlexComponent.Alignment.BASELINE);
-                    dialog.add(new Label("Warning: "));
+                    dialog.add(new Label("WARNING: "));
                     dialog.add(new Paragraph("\n"));
-                    dialog.add(new Paragraph("Switching database will reset your data. Are you sure ?"));
+                    dialog.add(new Paragraph("Switching database will reset your in-memory data. Are you sure ?"));
                     Button button = new Button("Yes", eventSwitch -> {
                         mysqlBool = event.getValue().equalsIgnoreCase("MySQL");
                         radioGroup.setValue(event.getValue());
@@ -78,8 +80,9 @@ public class Settings extends VerticalLayout {
                     form.add(button);
 
                 Button cancel = new Button("Cancel", eventCancel -> {
-                    dialog.close();
                     //radioGroup.setValue(event.getOldValue());
+                    dialog.close();
+
                     //radioGroup.clear();
                 });
                 cancel.addThemeVariants(ButtonVariant.LUMO_ERROR);

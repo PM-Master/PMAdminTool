@@ -117,8 +117,7 @@ public class ImportExport extends VerticalLayout {
             inputJson.setHeight("90vh");
 
             Button importButton = new Button("Import JSON", click -> {
-                //todo toggle which graph to import export with settings value
-                System.out.println("g : " + g.getMysql());
+
                 if (g.getMysql()) {
                     //MySQLGraph graph = (MySQLGraph) SingletonGraph.getInstance().getPAP().getGraphPAP();
                     try {
@@ -164,7 +163,6 @@ public class ImportExport extends VerticalLayout {
             exportJson.setHeight("90vh");
 
             Button exportButton = new Button("Export JSON", click -> {
-                System.out.println("g: " + g.getMysql());
                 if (g.getMysql()) {
                     try {
                         MySQLGraph graph = (MySQLGraph) SingletonGraph.getInstance().getPAP().getGraphPAP();
