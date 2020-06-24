@@ -1,3 +1,4 @@
 .idea
 pm-admin-tool.iml
 target
+*.iml
