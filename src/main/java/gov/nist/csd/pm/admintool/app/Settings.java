@@ -33,6 +33,7 @@ public class Settings extends VerticalLayout {
     public Settings() {
         setFlexGrow(1.0);
         setSizeFull();
+        setMargin(false);
         setPadding(false);
         g = SingletonGraph.getInstance();
         setUpLayout();

@@ -345,24 +345,23 @@ public class GraphEditor extends VerticalLayout {
         }
 
         public void updateGrid(Collection<Node> all_nodes) {
-//            currNodes = all_nodes.stream()
-//                    .filter(node -> children.contains(node.getName()))
-//                    .collect(Collectors.toList());
             // TODO: filter to only have nodes in the active PC's
-
+            Set<SingletonGraph.PolicyClassWithActive> pcs = SingletonGraph.getActivePCs();
+            all_nodes.stream()
+                    .filter(node -> {
+                        if (node.getType() == NodeType.PC) {
+                            pcs.forEach(policyClassWithActive -> {
+                                if (policyClassWithActive.getName().equalsIgnoreCase(node.getName())) {
+                                    if (!policyClassWithActive.isActive()) {
+                                        all_nodes.remove(node);
+                                    }
+                                }
+                            });
+                        }
+                        return true;
+                    }).collect(Collectors.toList());
             final ListDataProvider<Node> dataProvider = DataProvider.ofCollection(all_nodes);
             grid.setDataProvider(dataProvider);
-        }
-
-        public void refreshGrid() {
-            try {
-                currNodes = g.getPAP().getGraphPAP().getNodes();
-                //System.out.println(currNodes);
-            } catch (PMException e) {
-                System.out.println(e.getMessage());
-                e.printStackTrace();
-            }
-            updateGrid(currNodes);
         }
 
         public void refreshGraph() {

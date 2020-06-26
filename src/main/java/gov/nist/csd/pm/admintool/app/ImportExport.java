@@ -60,8 +60,9 @@ public class ImportExport extends VerticalLayout {
         public ImportLayout () {
             getStyle().set("background", "lightblue");
             setAlignItems(Alignment.STRETCH);
-
-            add(new H2("Import:"));
+            H2 importTitle = new H2("Import:");
+            importTitle.getStyle().set("margin-bottom","0");
+            add(importTitle);
 
             TextArea inputJson = new TextArea();
             inputJson.setValue("{\n" +
@@ -113,34 +114,20 @@ public class ImportExport extends VerticalLayout {
                     "  \"associations\": []\n" +
                     "}");
 
-
-            inputJson.setHeight("90vh");
-
+            inputJson.setHeight("80vh");
             Button importButton = new Button("Import JSON", click -> {
 
-                if (g.getMysql()) {
-                    //MySQLGraph graph = (MySQLGraph) SingletonGraph.getInstance().getPAP().getGraphPAP();
-                    try {
-                        SingletonGraph.getInstance().getPAP().getGraphPAP().fromJson(inputJson.getValue());
-                        notify("The Json has been imported");
-                        UI.getCurrent().getPage().reload();
-                    } catch (PMException e) {
-                        e.printStackTrace();
-                        notify(e.getMessage());
-                    }
-                } else {
-                    try {
-                        SingletonGraph.getInstance().getPAP().getGraphPAP().fromJson(inputJson.getValue());
-                        notify("The Json has been imported");
-                        UI.getCurrent().getPage().reload();
-                    } catch (PMException e) {
-                        notify("error : " + e.getMessage());
-                        e.printStackTrace();
-                    }
+                try {
+                    SingletonGraph.getInstance().getPAP().getGraphPAP().fromJson(inputJson.getValue());
+                    notify("The Json has been imported");
+                    UI.getCurrent().getPage().reload();
+                } catch (PMException e) {
+                    e.printStackTrace();
+                    notify(e.getMessage());
                 }
                 //updateGraph(inputJson.getValue());
             });
-            importButton.setHeight("10%");
+            importButton.setHeight("5%");
             add(inputJson);
             add(importButton);
         }
@@ -155,35 +142,27 @@ public class ImportExport extends VerticalLayout {
         public ExportLayout () {
             getStyle().set("background", "lightcoral");
             setAlignItems(Alignment.STRETCH);
-
-            add(new H2("Export:"));
+            H2 exportTitle = new H2("Export:");
+            exportTitle.getStyle().set("margin-bottom", "0");
+            add(exportTitle);
 
             TextArea exportJson = new TextArea();
 //            exportJson.setEnabled(false);
             exportJson.setHeight("90vh");
+            exportJson.setMaxHeight("90vh");
+            //exportJson.getStyle().set("resize", "none");
+
 
             Button exportButton = new Button("Export JSON", click -> {
-                if (g.getMysql()) {
-                    try {
-                        MySQLGraph graph = (MySQLGraph) SingletonGraph.getInstance().getPAP().getGraphPAP();
-                        exportJson.setValue(graph.toJson());
-                        notify("The graph has been exported into a JSON");
-                    } catch (PMException e) {
-                        e.printStackTrace();
-                        notify("error : " + e.getMessage());
-                    }
-                } else {
-                    try {
-                        MemGraph graph = (MemGraph) SingletonGraph.getInstance().getPAP().getGraphPAP();
-                        exportJson.setValue(graph.toJson());
-                        notify("The graph has been exported into a JSON");
-                    } catch (PMException e) {
-                        e.printStackTrace();
-                        notify("error : " + e.getMessage());
-                    }
+                try {
+                    exportJson.setValue(SingletonGraph.getInstance().getPAP().getGraphPAP().toJson());
+                    notify("The graph has been exported into a JSON");
+                } catch (PMException e) {
+                    e.printStackTrace();
+                    notify("error : " + e.getMessage());
                 }
             });
-            exportButton.setHeight("10%");
+            exportButton.setHeight("5%");
             add(exportJson);
             add(exportButton);
         }

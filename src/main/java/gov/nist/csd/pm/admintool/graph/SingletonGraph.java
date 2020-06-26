@@ -182,7 +182,9 @@ public class SingletonGraph extends PDP {
     public String toString(){
         List<String> pcs = new ArrayList<>();
         for (PolicyClassWithActive pc: activePCs) {
-            pcs.add(pc.name);
+            if (pc.isActive()){
+                pcs.add(pc.name);
+            }
         }
             return "Active pcs: " + pcs.toString();
     }
