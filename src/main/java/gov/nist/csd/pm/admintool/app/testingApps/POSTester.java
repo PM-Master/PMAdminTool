@@ -261,7 +261,6 @@ public class POSTester extends VerticalLayout {
                     }
                 }
                 try {
-//                    System.out.println(props);
                     g.updateNode(name, props);
                     updateGraph();
                     dialog.close();

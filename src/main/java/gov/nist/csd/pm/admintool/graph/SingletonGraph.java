@@ -6,7 +6,6 @@ import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pap.PAP;
 import gov.nist.csd.pm.pdp.PDP;
-import gov.nist.csd.pm.pdp.services.GraphService;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.Graph;
 import gov.nist.csd.pm.pip.graph.MemGraph;
@@ -61,8 +60,8 @@ public class SingletonGraph extends PDP {
     public synchronized static SingletonGraph getInstance() {
         rand = new Random();
         if (g == null) { // if there is no instance available... create new one
-            fixGraphData(new MySQLGraph(connection));
-            g.setMysql(true);
+            fixGraphDataMem(new MemGraph());
+            g.setMysql(false);
         }
         return g;
     }
@@ -355,6 +354,21 @@ public class SingletonGraph extends PDP {
         }
     }
 
+    public void fromJson(String s) throws PMException {
+        if (superContext != null) {
+            g.getGraphService(superContext).fromJson(s);
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public String toJson() throws PMException {
+        if (superContext != null) {
+            return g.getGraphService(superContext).toJson();
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
 /*    public HashSet<PolicyClassWithActive> getActivePcs () {
         //return the active pcs within the graph
     }*/
