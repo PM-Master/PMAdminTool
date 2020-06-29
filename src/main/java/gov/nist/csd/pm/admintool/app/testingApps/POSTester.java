@@ -28,7 +28,7 @@ public class POSTester extends VerticalLayout {
     private Grid<Node> grid;
     private Node user;
     private SingletonGraph g;
-    private static Random rand;
+    private static Random rand = new Random();
 
 
     public POSTester () {
@@ -114,11 +114,11 @@ public class POSTester extends VerticalLayout {
 
         grid.setItems(new HashSet<>());
         grid.setColumnReorderingAllowed(true);
+        grid.removeColumnByKey("id");
         grid.getColumns().forEach(col -> {
             col.setFlexGrow(1);
         });
 
-        //grid.removeColumnByKey("ID");
 
         // Double Click Action: go into current node's children
 //        grid.addItemDoubleClickListener(evt -> {
