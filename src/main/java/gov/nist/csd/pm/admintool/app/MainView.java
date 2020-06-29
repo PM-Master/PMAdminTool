@@ -1,7 +1,6 @@
 package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.icon.Icon;
@@ -11,8 +10,6 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.router.RouterLayout;
-import com.vaadin.flow.router.RouterLink;
 import gov.nist.csd.pm.admintool.actions.Action;
 import gov.nist.csd.pm.admintool.actions.SingletonActiveActions;
 import gov.nist.csd.pm.admintool.actions.events.Event;
@@ -108,12 +105,6 @@ public class MainView extends HorizontalLayout{
             selectedPage.setVisible(true);
             pagesShown.add(selectedPage);
 
-            /*if (tabs.getSelectedTab().equals(tab1)) {
-                if (settings.getMysqlBool() != null) {
-                    System.out.println(settings.getMysqlBool());
-                    graphEditor.setVisible(true);
-                }
-            }*/
         });
 
         testResults.getStyle()

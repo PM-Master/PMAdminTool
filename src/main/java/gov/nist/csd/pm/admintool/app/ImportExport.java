@@ -11,8 +11,6 @@ import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pdp.services.UserContext;
-import gov.nist.csd.pm.pip.graph.MemGraph;
-import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
 
 @Tag("import-export")
 public class ImportExport extends VerticalLayout {
@@ -20,7 +18,6 @@ public class ImportExport extends VerticalLayout {
     private HorizontalLayout layout;
     private ImportLayout importLayout;
     private ExportLayout exportLayout;
-    private UserContext userCtx;
 
     public ImportExport() {
         g = SingletonGraph.getInstance();
@@ -119,9 +116,10 @@ public class ImportExport extends VerticalLayout {
             Button importButton = new Button("Import JSON", click -> {
 
                 try {
-                    SingletonGraph.getInstance().getGraphService(userCtx).fromJson(inputJson.getValue());
+                    //SingletonGraph.getInstance().getGraphService(userCtx).fromJson(inputJson.getValue());
+                    g.fromJson(inputJson.getValue());
                     notify("The Json has been imported");
-                    UI.getCurrent().getPage().reload();
+                    //UI.getCurrent().getPage().reload();
                 } catch (PMException e) {
                     e.printStackTrace();
                     notify(e.getMessage());
@@ -156,8 +154,8 @@ public class ImportExport extends VerticalLayout {
 
             Button exportButton = new Button("Export JSON", click -> {
                 try {
-                    exportJson.setValue(SingletonGraph.getInstance().getGraphService(userCtx).toJson());
-
+                    //exportJson.setValue(SingletonGraph.getInstance().getGraphService(userCtx).toJson());
+                    exportJson.setValue(g.toJson());
                     //exportJson.setValue(SingletonGraph.getInstance().getPAP().getGraphPAP().toJson());
                     notify("The graph has been exported into a JSON");
                 } catch (PMException e) {

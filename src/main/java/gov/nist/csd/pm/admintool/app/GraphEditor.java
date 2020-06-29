@@ -474,7 +474,6 @@ public class GraphEditor extends VerticalLayout {
         public void refreshGraph() {
             try {
                 currNodes = g.getNodes();
-                //System.out.println(currNodes);
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -1006,7 +1005,6 @@ public class GraphEditor extends VerticalLayout {
                     }
                 }
                 try {
-//                    System.out.println(props);
                     g.updateNode(name, props);
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
