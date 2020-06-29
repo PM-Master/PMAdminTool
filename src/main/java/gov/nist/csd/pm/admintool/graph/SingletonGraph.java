@@ -37,10 +37,9 @@ public class SingletonGraph extends PDP {
     private static Random rand;
     private static Set<PolicyClassWithActive> activePCs;
     private static MySQLConnection connection = new MySQLConnection();
-    //make an attribute to render the mysql or mem graph
 
     private SingletonGraph(PAP pap) throws PMException {
-        super(pap, new EPPOptions());
+        super(pap, new EPPOptions(), new OperationSet());
 
         //Prevent form the reflection api.
         if (g != null){
@@ -62,8 +61,8 @@ public class SingletonGraph extends PDP {
     public synchronized static SingletonGraph getInstance() {
         rand = new Random();
         if (g == null) { // if there is no instance available... create new one
-            fixGraphDataMem(new MemGraph());
-            g.setMysql(false);
+            fixGraphData(new MySQLGraph(connection));
+            g.setMysql(true);
         }
         return g;
     }
@@ -79,7 +78,7 @@ public class SingletonGraph extends PDP {
             superContext = null;
             activePCs = new HashSet<>();
 
-            for (Node n : g.getPAP().getGraphPAP().getNodes()) {;
+            for (Node n : graph.getNodes()) {;
                     if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
                         switch (n.getType()) {
                             case OA:
@@ -123,7 +122,7 @@ public class SingletonGraph extends PDP {
             System.out.println("MemGraph");
             superContext = null;
             activePCs = new HashSet<>();
-            for (Node n : g.getPAP().getGraphPAP().getNodes()) {
+            for (Node n : graph.getNodes()) {
                 if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
                     switch (n.getType()) {
                         case OA:

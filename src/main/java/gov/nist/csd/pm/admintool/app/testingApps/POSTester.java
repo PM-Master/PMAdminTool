@@ -172,7 +172,7 @@ public class POSTester extends VerticalLayout {
     public Node[] getUsers() {
         Collection<Node> nodeCollection;
         try {
-            nodeCollection = new HashSet<>(g.getPAP().getGraphPAP().getNodes());
+            nodeCollection = new HashSet<>(g.getNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
             System.out.println(e.getMessage());
