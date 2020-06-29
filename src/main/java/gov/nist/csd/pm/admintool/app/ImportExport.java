@@ -10,6 +10,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.MemGraph;
 import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
 
@@ -19,7 +20,7 @@ public class ImportExport extends VerticalLayout {
     private HorizontalLayout layout;
     private ImportLayout importLayout;
     private ExportLayout exportLayout;
-//    private UserContext userCtx;
+    private UserContext userCtx;
 
     public ImportExport() {
         g = SingletonGraph.getInstance();
@@ -118,7 +119,7 @@ public class ImportExport extends VerticalLayout {
             Button importButton = new Button("Import JSON", click -> {
 
                 try {
-                    SingletonGraph.getInstance().getPAP().getGraphPAP().fromJson(inputJson.getValue());
+                    SingletonGraph.getInstance().getGraphService(userCtx).fromJson(inputJson.getValue());
                     notify("The Json has been imported");
                     UI.getCurrent().getPage().reload();
                 } catch (PMException e) {
@@ -155,7 +156,9 @@ public class ImportExport extends VerticalLayout {
 
             Button exportButton = new Button("Export JSON", click -> {
                 try {
-                    exportJson.setValue(SingletonGraph.getInstance().getPAP().getGraphPAP().toJson());
+                    exportJson.setValue(SingletonGraph.getInstance().getGraphService(userCtx).toJson());
+
+                    //exportJson.setValue(SingletonGraph.getInstance().getPAP().getGraphPAP().toJson());
                     notify("The graph has been exported into a JSON");
                 } catch (PMException e) {
                     e.printStackTrace();

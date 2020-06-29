@@ -366,7 +366,7 @@ public class GraphEditor extends VerticalLayout {
 
         public void refreshGraph() {
             try {
-                currNodes = g.getPAP().getGraphPAP().getNodes();
+                currNodes = g.getNodes();
                 //System.out.println(currNodes);
             } catch (PMException e) {
                 System.out.println(e.getMessage());
@@ -603,7 +603,7 @@ public class GraphEditor extends VerticalLayout {
 
         Collection<Node> nodesCol;
         try {
-            nodesCol = new HashSet<>(g.getPAP().getGraphPAP().getNodes());
+            nodesCol = new HashSet<>(g.getNodes());
         } catch (PMException e) {
             nodesCol = new HashSet<>();
             e.printStackTrace();
@@ -613,7 +613,7 @@ public class GraphEditor extends VerticalLayout {
         typeSelect.addValueChangeListener(event -> {
             Collection<Node> nodeCollection;
             try {
-                nodeCollection = new HashSet<>(g.getPAP().getGraphPAP().getNodes());
+                nodeCollection = new HashSet<>(g.getNodes());
             } catch (PMException e) {
                 nodeCollection = new HashSet<>();
                 e.printStackTrace();
@@ -706,7 +706,7 @@ public class GraphEditor extends VerticalLayout {
 
         Collection<Node> nodeCollection;
         try {
-            nodeCollection = new HashSet<>(g.getPAP().getGraphPAP().getNodes());
+            nodeCollection = new HashSet<>(g.getNodes());
 
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
@@ -799,7 +799,7 @@ public class GraphEditor extends VerticalLayout {
 
         Collection<Node> nodeCollection;
         try {
-            nodeCollection = new HashSet<>(g.getPAP().getGraphPAP().getNodes());
+            nodeCollection = new HashSet<>(g.getNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
             e.printStackTrace();
@@ -900,7 +900,7 @@ public class GraphEditor extends VerticalLayout {
                 }
                 try {
 //                    System.out.println(props);
-                    g.getPAP().getGraphPAP().updateNode(name, props);
+                    g.updateNode(name, props);
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
