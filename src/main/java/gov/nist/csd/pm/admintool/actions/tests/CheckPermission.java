@@ -14,7 +14,7 @@ import java.util.Random;
 import java.util.Set;
 
 public class CheckPermission extends Test {
-    private static Random rand;
+    private static Random rand = new Random();
 
     public CheckPermission() {
         setName("checkPermission");

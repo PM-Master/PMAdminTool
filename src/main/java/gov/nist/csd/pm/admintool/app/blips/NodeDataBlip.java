@@ -23,6 +23,9 @@ public class NodeDataBlip extends HorizontalLayout {
                 .set("padding", "2px")
                 .set("margin", "1px");
 
+        setHeight("20px");
+        setWidth("99%");
+
         switch (type) {
             case PC:
                 style.set("background", "#C1BFB5");
@@ -43,9 +46,6 @@ public class NodeDataBlip extends HorizontalLayout {
                 style.set("background", "#C1EDCC");
                 break;
         }
-
-        setHeight("20px");
-        setWidth("99%");
 
         Paragraph typeText = new Paragraph(type.toString());
         typeText.getStyle().set("font-weight", "bold");

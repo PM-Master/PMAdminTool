@@ -19,6 +19,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
+import gov.nist.csd.pm.admintool.app.blips.AssociationBlip;
 import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
@@ -75,10 +76,12 @@ public class GraphEditor extends VerticalLayout {
         private Collection<Node> currNodes; // The current nodes in the grid
         private H3 currNodeName; // The current node whose children are being shown
         // for node info section
-        private H4 name;
+        private H3 name;
 //        private HorizontalLayout children, parents;
 //        private VerticalLayout children, parents;
         private Div childrenList, parentList;
+        private Div outgoingList, incomingList; // for associations
+
 
         private boolean isSource;
 
@@ -155,7 +158,8 @@ public class GraphEditor extends VerticalLayout {
             refreshGraph();
 
             grid.getStyle()
-                    .set("border-radius", "1px");
+                    .set("border-radius", "1px")
+                    .set("user-select", "none");
             grid.removeColumnByKey("id");
             grid.setColumnReorderingAllowed(true);
             grid.getColumns().forEach(col -> {
@@ -216,7 +220,9 @@ public class GraphEditor extends VerticalLayout {
             /// NODE TABLE END ///
 
 
-            /// TODO: add properties and associations
+
+
+            /// TODO: add properties
             /// NODE INFO START ///
             VerticalLayout nodeInfo = new VerticalLayout();
             nodeInfo.setWidthFull();
@@ -227,21 +233,29 @@ public class GraphEditor extends VerticalLayout {
                     .set("border", "1px solid lightgrey")
                     .set("padding", "10px")
                     .set("line-height", "1px")
-                    .set("text-align", "center");
+                    .set("text-align", "center")
+                    .set("overflow-y", "scroll")
+                    .set("overflow-x", "hidden");
 
 
-            name = new H4("X");
+            name = new H3("X");
             name.setWidthFull();
             nodeInfo.add(name);
 
             nodeInfo.add(new Hr());
 
-            /// section with children and parents
-            HorizontalLayout relatives = new HorizontalLayout();
-            relatives.setMargin(true);
-            relatives.getStyle().set("margin-top", "0");
-            relatives.getStyle().set("margin-bottom", "0");
-            relatives.setWidthFull();
+
+            ///// section with assignments
+            Paragraph assignmentsText = new Paragraph("Assignments:");
+            assignmentsText.setWidthFull();
+            assignmentsText.getStyle().set("font-weight", "bold");
+            nodeInfo.add(assignmentsText);
+
+            HorizontalLayout assignments = new HorizontalLayout();
+            assignments.setMargin(true);
+            assignments.getStyle().set("margin-top", "0");
+            assignments.getStyle().set("margin-bottom", "0");
+            assignments.setWidthFull();
 
             // children layout
             VerticalLayout children = new VerticalLayout();
@@ -258,7 +272,6 @@ public class GraphEditor extends VerticalLayout {
                     .set("margin-top", "0")
                     .set("margin-bottom", "0")
                     .set("overflow","scroll");
-//                    .set("background","green");
 
 
             children.add(childrenList);
@@ -283,11 +296,75 @@ public class GraphEditor extends VerticalLayout {
 
             parents.add(parentList);
 
-            /// adding it all together
-            relatives.add(children);
-            relatives.add(parents);
+            // adding it all together
+            assignments.add(children);
+            assignments.add(parents);
 
-            nodeInfo.add(relatives);
+            nodeInfo.add(assignments);
+            ///// end section with assignments
+
+
+
+            nodeInfo.add(new Hr());
+
+
+
+            ///// section with associations
+            Paragraph associationsText = new Paragraph("Associations:");
+            associationsText.setWidthFull();
+            associationsText.getStyle().set("font-weight", "bold");
+            nodeInfo.add(associationsText);
+
+            HorizontalLayout associations = new HorizontalLayout();
+            associations.setMargin(true);
+            associations.getStyle().set("margin-top", "0");
+            associations.getStyle().set("margin-bottom", "0");
+            associations.setWidthFull();
+
+            // children layout
+            VerticalLayout outgoing = new VerticalLayout();
+            outgoing.setSizeFull();
+            outgoing.setMargin(true);
+            outgoing.getStyle().set("margin-top", "0");
+            outgoing.getStyle().set("margin-bottom", "0");
+
+            outgoing.add(new Paragraph("Outgoing:"));
+
+            outgoingList = new Div();
+            outgoingList.setSizeFull();
+            outgoingList.getStyle()
+                    .set("margin-top", "0")
+                    .set("margin-bottom", "0")
+                    .set("overflow","scroll");
+
+            outgoing.add(outgoingList);
+
+
+            // parent layout
+            VerticalLayout incoming = new VerticalLayout();
+            incoming.setMargin(true);
+            incoming.setSizeFull();
+            incoming.getStyle().set("margin-top", "0");
+            incoming.getStyle().set("margin-bottom", "0");
+
+            incoming.add(new Paragraph("Incoming: "));
+
+            incomingList = new Div();
+            incomingList.setSizeFull();
+            incomingList.getStyle()
+                    .set("margin-top", "0")
+                    .set("margin-bottom", "0")
+                    .set("overflow","scroll");
+
+            incoming.add(incomingList);
+
+            // adding it all together
+            associations.add(outgoing);
+            associations.add(incoming);
+
+            nodeInfo.add(associations);
+
+
             add(nodeInfo);
             /// NODE INFO END ///
         }
@@ -302,6 +379,9 @@ public class GraphEditor extends VerticalLayout {
 
             childrenList.removeAll();
             parentList.removeAll();
+
+            outgoingList.removeAll();
+            incomingList.removeAll();
 
             if (gridSelecNode != null) {
                 try {
@@ -332,15 +412,42 @@ public class GraphEditor extends VerticalLayout {
 //                            parents.setText(parents.getText() + "{" + id + ": " + g.getNode(id).getName() + "},");
                         }
                     }
+
+                    Map<String, OperationSet> outgoingMap = g.getSourceAssociations(gridSelecNode.getName());
+                    Iterator<String> outgoingKeySet = outgoingMap.keySet().iterator();
+                    if (!outgoingKeySet.hasNext()) {
+                        outgoingList.add(new Paragraph("None"));
+                    } else {
+                        while (outgoingKeySet.hasNext()) {
+                            String name = outgoingKeySet.next();
+                            Node node = g.getNode(name);
+                            outgoingList.add(new AssociationBlip(node.getId(), name, node.getType(), true, outgoingMap.get(name)));
+                        }
+                    }
+
+                    Map<String, OperationSet> incomingMap = g.getTargetAssociations(gridSelecNode.getName());
+                    Iterator<String> incomingKeySet = incomingMap.keySet().iterator();
+                    if (!incomingKeySet.hasNext()) {
+                        incomingList.add(new Paragraph("None"));
+                    } else {
+                        while (incomingKeySet.hasNext()) {
+                            String name = incomingKeySet.next();
+                            Node node = g.getNode(name);
+                            incomingList.add(new AssociationBlip(node.getId(), name, node.getType(), false, incomingMap.get(name)));
+                        }
+                    }
                 } catch (PMException e) {
                     e.printStackTrace();
                     GraphEditor.this.notify(e.getMessage());
                 }
             } else {
                 name.setText("X");
+
                 childrenList.add(new Paragraph("None"));
                 parentList.add(new Paragraph("None"));
 
+                outgoingList.add(new Paragraph("None"));
+                incomingList.add(new Paragraph("None"));
             }
         }
 
