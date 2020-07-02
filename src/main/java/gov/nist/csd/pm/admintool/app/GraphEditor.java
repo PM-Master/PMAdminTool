@@ -5,24 +5,19 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
-import com.vaadin.flow.data.provider.hierarchy.*;
-import com.vaadin.flow.function.ValueProvider;
 import gov.nist.csd.pm.admintool.app.blips.AssociationBlip;
 import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
@@ -33,7 +28,6 @@ import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Tag("graph-editor")
 public class GraphEditor extends VerticalLayout {
@@ -74,7 +68,7 @@ public class GraphEditor extends VerticalLayout {
     }
 
     private class NodeLayout extends VerticalLayout {
-        private TreeGrid<Node> grid;
+        private Grid<Node> grid;
         private Button backButton;
         private Stack<Collection<Node>> prevNodes; // Contains the nodes for going 'back'
         private Stack<String> prevNodeNames; // Contains the String for going 'back'
@@ -82,7 +76,7 @@ public class GraphEditor extends VerticalLayout {
         private H3 currNodeName; // The current node whose children are being shown
         // for node info section
         private H3 name;
-//        private HorizontalLayout children, parents;
+        //        private HorizontalLayout children, parents;
 //        private VerticalLayout children, parents;
         private Div childrenList, parentList;
         private Div outgoingList, incomingList; // for associations
@@ -157,7 +151,7 @@ public class GraphEditor extends VerticalLayout {
             prevNodeNames = new Stack<>(); //  for the navigation system
 
             // grid config
-            grid = new TreeGrid<>(Node.class);
+            grid = new Grid<>(Node.class);
             createContextMenu(); // adds the content-specific context menu
             //retrieve nodes from proper DB (mysql or in memory)
             refreshGraph();
@@ -166,15 +160,10 @@ public class GraphEditor extends VerticalLayout {
                     .set("border-radius", "1px")
                     .set("user-select", "none");
             grid.removeColumnByKey("id");
-            grid.removeColumnByKey("properties");
             grid.setColumnReorderingAllowed(true);
-            grid.setHierarchyColumn("name");
-            grid.getColumnByKey("name")
-                    .setWidth("80%")
-                    .setResizable(true);
-            grid.getColumnByKey("type")
-                    .setTextAlign(ColumnTextAlign.END)
-                    .setWidth("20%");
+            grid.getColumns().forEach(col -> {
+                col.setFlexGrow(1);
+            });
 
             //grid.getColumnByKey("Id").setWidth("18%");
             //grid.removeColumnByKey("Id");
@@ -188,7 +177,7 @@ public class GraphEditor extends VerticalLayout {
                         if (!children.isEmpty()) {
                             prevNodes.push(currNodes);
                             currNodes = g.getNodes().stream()
-                                        .filter(node_k -> children.contains(node_k.getName())).collect(Collectors.toList());
+                                    .filter(node_k -> children.contains(node_k.getName())).collect(Collectors.toList());
                             //grid.setItems(currNodes);
                             updateGrid(currNodes);
 
@@ -477,97 +466,13 @@ public class GraphEditor extends VerticalLayout {
                         }
                         return true;
                     }).collect(Collectors.toList());
-
-            ValueProvider<Node, Collection<Node>> childValueProvider = (node) -> {
-                Collection<Node> children = new HashSet<>();
-                try{
-                    Set<String> childrenNames = g.getChildren(node.getName());
-                    //System.out.println("getting children nodes");
-                    for (String name: childrenNames) {
-                        children.add(g.getNode(name));
-                    }
-                } catch (PMException e) {
-                    e.printStackTrace();
-                }
-                return children;
-            };
-            TreeData<Node> treeData = new TreeData<>();
-            treeData.addItems(all_nodes, childValueProvider);
-            TreeDataProvider<Node> treeDataProvider = new TreeDataProvider<>(treeData);
-            grid.setDataProvider(treeDataProvider);
-
-//            HierarchicalDataProvider dataProvider = new AbstractBackEndHierarchicalDataProvider<Node, Void>() {
-//
-//                @Override
-//                public int getChildCount(HierarchicalQuery<Node, Void> query) {
-//                    try {
-//                        if (g == null) {
-//                            System.out.println("Singleton Graph is null");
-//                            return 0;
-//                        } else if (query == null) {
-//                            System.out.println("query is null");
-//                            return 0;
-//                        } else {
-//                            Optional<Node> node = query.getParentOptional();
-//                            if (node.isPresent()) {
-//                                return g.getChildren(node.get().getName()).size();
-//                            } else {
-//                                return 0;
-//                            }
-//                        }
-//                    } catch (PMException e) {
-//                        e.printStackTrace();
-//                        return 0;
-//                    }
-//                }
-//
-//                @Override
-//                public boolean hasChildren(Node item) {
-//                    try {
-//                        return g.getChildren(item.getName()).size() > 0;
-//                    } catch (PMException e) {
-//                        e.printStackTrace();
-//                        return false;
-//                    }
-//                }
-//
-//                @Override
-//                protected Stream<Node> fetchChildrenFromBackEnd(HierarchicalQuery<Node, Void> query) {
-//                    Collection<Node> children = new HashSet<>();
-//                    try{
-//                        if (g == null) {
-//                            System.out.println("Singleton Graph is null");
-//                        } else if (query == null) {
-//                            System.out.println("query is null");
-//                        } else if (query.getParent() == null) {
-//                            System.out.println("query parent is null");
-//                        } else {
-//                            Set<String> childrenNames = g.getChildren(query.getParent().getName());
-//                            System.out.println("getting children nodes");
-//                            for (String name: childrenNames) {
-//                                children.add(g.getNode(name));
-//                            }
-//                        }
-//                    } catch (PMException e) {
-//                        e.printStackTrace();
-//                    }
-//                    return children.stream();
-//                }
-//            };
-//
-//            TreeData<Node> treeData = new TreeData<>();
-//            treeData.addItems(all_nodes, dataProvider);
-//            TreeDataProvider<Node> treeDataProvider = new TreeDataProvider<>(treeData);
-//            grid.setDataProvider(dataProvider);
+            final ListDataProvider<Node> dataProvider = DataProvider.ofCollection(all_nodes);
+            grid.setDataProvider(dataProvider);
         }
 
         public void refreshGraph() {
-            currNodes = new HashSet<>();
             try {
-                Set<String> pcNames = g.getPolicies();
-                for (String name: pcNames) {
-                    currNodes.add(g.getNode(name));
-                }
+                currNodes = g.getNodes();
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -599,14 +504,14 @@ public class GraphEditor extends VerticalLayout {
 
     private class GraphButtonGroup extends VerticalLayout {
         private Button addNodeButton, addUserButton, addObjectButton,
-                    addAssignmentButton, deleteAssignmentButton,
-                    addAssociationButton, editAssociationButton, deleteAssociationButton,
-                    resetButton;
+                addAssignmentButton, deleteAssignmentButton,
+                addAssociationButton, editAssociationButton, deleteAssociationButton,
+                resetButton;
         private H4 parentNodeText, childNodeText;
         private Component connectorSymbol;
         public GraphButtonGroup() {
             getStyle().set("background", "#DADADA") //#A0FFA0
-                      .set("overflow-y", "scroll");
+                    .set("overflow-y", "scroll");
             setWidth("20%");
             getStyle().set("height","100vh");
             setAlignItems(Alignment.CENTER);
@@ -776,7 +681,7 @@ public class GraphEditor extends VerticalLayout {
     private void addNode() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+        form.setAlignItems(Alignment.BASELINE);
 
 //        NumberField idField = new NumberField("ID");
 //        idField.setRequiredIndicatorVisible(true);
@@ -897,7 +802,7 @@ public class GraphEditor extends VerticalLayout {
     private void addUser() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+        form.setAlignItems(Alignment.BASELINE);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
@@ -990,7 +895,7 @@ public class GraphEditor extends VerticalLayout {
     private void addObject() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+        form.setAlignItems(Alignment.BASELINE);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
@@ -1066,7 +971,7 @@ public class GraphEditor extends VerticalLayout {
     private void editNode(Node n) {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+        form.setAlignItems(Alignment.BASELINE);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
@@ -1118,7 +1023,7 @@ public class GraphEditor extends VerticalLayout {
     private void deleteNode(Node n) {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+        form.setAlignItems(Alignment.BASELINE);
 
         form.add(new Paragraph("Are You Sure?"));
 
@@ -1165,7 +1070,7 @@ public class GraphEditor extends VerticalLayout {
         if (child != null && parent != null) {
             Dialog dialog = new Dialog();
             HorizontalLayout form = new HorizontalLayout();
-            form.setAlignItems(FlexComponent.Alignment.BASELINE);
+            form.setAlignItems(Alignment.BASELINE);
 
             form.add(new Paragraph("Are You Sure?"));
 
@@ -1199,7 +1104,7 @@ public class GraphEditor extends VerticalLayout {
     private void addAssociation() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+        form.setAlignItems(Alignment.BASELINE);
 
         TextArea opsFeild = new TextArea("Operations (Op1, Op2, ...)");
         opsFeild.setPlaceholder("Enter Operations...");
@@ -1241,7 +1146,7 @@ public class GraphEditor extends VerticalLayout {
     private void editAssociation() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+        form.setAlignItems(Alignment.BASELINE);
 
         TextArea opsFeild = new TextArea("Operations (Op1, Op2, ...)");
         String sourceToTargetOpsString = "";
@@ -1302,7 +1207,7 @@ public class GraphEditor extends VerticalLayout {
     private void deleteAssociation() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+        form.setAlignItems(Alignment.BASELINE);
 
         form.add(new Paragraph("Are You Sure?"));
 
@@ -1332,7 +1237,7 @@ public class GraphEditor extends VerticalLayout {
     private void resetGraph() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+        form.setAlignItems(Alignment.BASELINE);
 
         form.add(new Paragraph("Are You Sure?"));
 
@@ -1367,3 +1272,4 @@ public class GraphEditor extends VerticalLayout {
     }
 
 }
+
