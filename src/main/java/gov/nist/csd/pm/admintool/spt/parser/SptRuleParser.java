@@ -26,12 +26,12 @@ public class SptRuleParser{
         try {
             String rule = "rule1 \n" +
                     "allow teller->staff: rbac\n" +
-                    "        to \"create object\", \"delete object\" \n" +
+                    "        to \"read\", \"write\" \n" +
                     "        in branchAccounts->accounts\n" +
                     "\n" +
                     "rule2 \n" +
                     "allow teller->staff: rbac; ask ua value: branch\n" +
-                    "        to \"create object\", \"delete object\" \n" +
+                    "        to \"read\", \"write\" \n" +
                     "        in branchAccounts->accounts: rbac; ask oa value: branch\n" +
                     "when ua_value = oa_value";
         	SptRuleParser ruleParser = new SptRuleParser(rule);
