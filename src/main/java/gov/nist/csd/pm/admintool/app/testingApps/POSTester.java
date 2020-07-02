@@ -3,10 +3,12 @@ package gov.nist.csd.pm.admintool.app.testingApps;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -15,8 +17,14 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.function.ValueProvider;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.operations.OperationSet;
+import gov.nist.csd.pm.pdp.audit.model.Explain;
+import gov.nist.csd.pm.pdp.audit.model.Path;
+import gov.nist.csd.pm.pdp.audit.model.PolicyClass;
+import gov.nist.csd.pm.pdp.services.AnalyticsService;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
@@ -110,63 +118,52 @@ public class POSTester extends VerticalLayout {
                 deleteNode(node);
             });
         });
+        contextMenu.addItem("Explain", event -> {
+            event.getItem().ifPresent(node -> {
+                explain(user, node);
+            });
+        });
         ///// end of context menu /////
 
         grid.setItems(new HashSet<>());
         grid.setColumnReorderingAllowed(true);
         grid.removeColumnByKey("id");
-        grid.getColumns().forEach(col -> {
-            col.setFlexGrow(1);
-        });
+        grid.removeColumnByKey("properties");
+        grid.getColumnByKey("name")
+                .setFlexGrow(2)
+                .setResizable(true);
+
+        ValueProvider<Node, String> permissionsValueProvider = (node) -> getPermissions(user, node).toString();
+        grid.addColumn(permissionsValueProvider)
+                .setHeader("Permissions")
+                .setKey("permissions");
+        grid.getColumnByKey("permissions")
+                .setFlexGrow(2);
+
+        grid.removeColumnByKey("type");
+        grid.addColumn(Node::getType)
+                .setHeader("Type")
+                .setKey("type");;
+        grid.getColumnByKey("type")
+                .setTextAlign(ColumnTextAlign.END)
+                .setWidth("20%");
 
 
-        // Double Click Action: go into current node's children
-//        grid.addItemDoubleClickListener(evt -> {
-//            Node n = evt.getItem();
-//            if(n != null) {
-//                try {
-//                    Set<Node> children = g.getChildren(n.getID());
-//                    if (!children.isEmpty()) {
-//                        prevNodes.push(currNodes);
-//                        currNodes = children;
-//                        grid.setItems(currNodes);
-//
-//                        prevNodeNames.push(currNodeName.getText());
-//                        currNodeName.setText(currNodeName.getText() + " > " + n.getName());
-//                        updateNodeInfoSection();
-//
-//                        backButton.setEnabled(true);
-//                    } else {
-//                        GraphEditor.this.notify("Node has no children");
-//                    }
-//                } catch (PMException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//
-//        });
 
-        // Single Click Action: select node
-//        grid.addItemClickListener(evt -> {
-//            try {
-//                if (isSource) {
-//                    selectedChildNode = grid.getSelectedItems().iterator().next();
-//                } else {
-//                    selectedParentNode = grid.getSelectedItems().iterator().next();
-//                }
-//
-//            } catch (NoSuchElementException e) {
-//                if (isSource) {
-//                    selectedChildNode = null;
-//                } else {
-//                    selectedParentNode = null;
-//                }
-//            }
-//            buttonGroup.refreshButtonStates();
-//            buttonGroup.refreshNodeTexts();
-//            updateNodeInfoSection();
-//        });
         add(grid);
+    }
+
+    public Set<String> getPermissions(Node user, Node node) {
+        Set<String> permissions = new HashSet<>();
+        permissions.add("None");
+
+        try {
+            permissions = g.getAnalyticsService(new UserContext(user.getName())).getPermissions(node.getName());
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
+
+        return permissions;
     }
 
     public Node[] getUsers() {
@@ -220,12 +217,6 @@ public class POSTester extends VerticalLayout {
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(FlexComponent.Alignment.BASELINE);
 
-        NumberField idField = new NumberField("ID");
-        idField.setRequiredIndicatorVisible(true);
-        idField.setValue(((double) n.getId()));
-        idField.setMin(1);
-        idField.setHasControls(true);
-        form.add(idField);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
@@ -239,14 +230,10 @@ public class POSTester extends VerticalLayout {
         form.add(propsFeild);
 
         Button button = new Button("Submit", event -> {
-            Long id = idField.getValue().longValue();
             String name = nameField.getValue();
             String propString = propsFeild.getValue();
             Map<String, String> props = new HashMap<>();
-            if (id == null) {
-                idField.focus();
-                notify("ID is Required");
-            } else if (name == null || name == "") {
+            if (name == null || name == "") {
                 nameField.focus();
                 notify("Name is Required");
             } else {
@@ -301,6 +288,119 @@ public class POSTester extends VerticalLayout {
         });
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
+
+        dialog.add(form);
+        dialog.open();
+    }
+
+    private void explain(Node user, Node node) {
+        Dialog dialog = new Dialog();
+        HorizontalLayout form = new HorizontalLayout();
+        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+
+
+        AnalyticsService analyticsService = g.getAnalyticsService(new UserContext(user.getName()));
+        String explanation;
+        Explain explain = null;
+
+        try {
+            explain = analyticsService.explain(user.getName(), node.getName());
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
+
+        if (explain != null) {
+            String ret = "";
+            // Explain returns two things:
+            //  1. The permissions the user has on the target
+            //  2. A breakdown of permissions per policy class and paths in each policy class
+            ret +=  "'" + user.getName() + "' has the following permissions on the target '" + node.getName() + "': \n";
+            Set<String> permissions = explain.getPermissions();
+            for (String perm: permissions) {
+                ret += "\t- " + perm + "\n";
+            }
+            ret += "\n";
+
+
+            // policyClasses maps the name of a policy class node to a Policy Class object
+            // a policy class object contains the permissions the user has on the target node
+            //   in that policy class
+            ret += "The following section shows a more detailed permission breakdown from the perspective of each policy class:\n";
+            Map<String, PolicyClass> policyClasses = explain.getPolicyClasses();
+            int i = 1;
+            for (String pcName : policyClasses.keySet()) {
+                ret += "\t" + i + ". '" + pcName + "':\n";
+                PolicyClass policyClass = policyClasses.get(pcName);
+
+                // the operations available to the user on the target under this policy class
+                Set<String> operations = policyClass.getOperations();
+                ret += "\t\t- Permissions (Given by this PC):\n";
+                for (String op: operations) {
+                    ret += "\t\t\t- " + op + "\n";
+                }
+                // the paths from the user to the target
+                // A Path object contains the path and the permissions the path provides
+                // the path is just a list of nodes starting at the user and ending at the target node
+                // example: u1 -> ua1 -> oa1 -> o1 [read]
+                //   the association ua1 -> oa1 has the permission [read]
+                ret += "\t\t- Paths (How each permission is found):\n";
+                List<Path> paths = policyClass.getPaths();
+                for (Path path : paths) {
+                    ret += "\t\t\t";
+                    // this is just a list of nodes -> [u1, ua1, oa1, o1]
+                    List<Node> nodes = path.getNodes();
+                    for (Node n: nodes) {
+                        ret += "'" + n.getName() + "'";
+                        if (!nodes.get(nodes.size()-1).equals(n)) { // not final node
+                            ret += " > ";
+                        }
+                    }
+
+                    // this is the operations in the association between ua1 and oa1
+                    Set<String> pathOps = path.getOperations();
+                    ret += " " + pathOps;
+                    // This is the string representation of the path (i.e. "u1-ua1-oa1-o1 ops=[r, w]")
+                    String pathString = path.toString();
+                    ret += "\n";
+                }
+                i++;
+            }
+
+            explanation = ret;
+        } else {
+            explanation = "Returned Audit was null";
+        }
+
+        //explanation = explain.toString();
+
+        VerticalLayout auditLayout = new VerticalLayout();
+        auditLayout.setSizeFull();
+        auditLayout.getStyle()
+                .set("padding-bottom", "0px");
+        String[] split = explanation.split("\n");
+        if (split.length > 1) {
+            for (String line : split) {
+                Span lineSpan = new Span(line);
+                int tabs = 0;
+                while (line.startsWith("\t")) {
+                    tabs++;
+                    line = line.substring(1);
+                }
+                lineSpan.getStyle()
+                        .set("margin", "0")
+                        .set("padding-left", ((Integer) (tabs * 25)).toString() + "px")
+                        .set("padding", "0");
+                auditLayout.add(lineSpan);
+            }
+        } else {
+            auditLayout.add(new Span(explanation));
+        }
+        form.add(auditLayout);
+
+
+        Button ok = new Button("Ok", event -> dialog.close());
+        ok.setHeightFull();
+        form.add(ok);
 
         dialog.add(form);
         dialog.open();

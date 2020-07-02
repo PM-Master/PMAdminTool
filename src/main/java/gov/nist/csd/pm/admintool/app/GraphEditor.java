@@ -5,6 +5,7 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.*;
@@ -17,8 +18,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
+import com.vaadin.flow.data.provider.hierarchy.*;
+import com.vaadin.flow.function.ValueProvider;
 import gov.nist.csd.pm.admintool.app.blips.AssociationBlip;
 import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
@@ -29,6 +33,7 @@ import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Tag("graph-editor")
 public class GraphEditor extends VerticalLayout {
@@ -69,7 +74,7 @@ public class GraphEditor extends VerticalLayout {
     }
 
     private class NodeLayout extends VerticalLayout {
-        private Grid<Node> grid;
+        private TreeGrid<Node> grid;
         private Button backButton;
         private Stack<Collection<Node>> prevNodes; // Contains the nodes for going 'back'
         private Stack<String> prevNodeNames; // Contains the String for going 'back'
@@ -152,7 +157,7 @@ public class GraphEditor extends VerticalLayout {
             prevNodeNames = new Stack<>(); //  for the navigation system
 
             // grid config
-            grid = new Grid<>(Node.class);
+            grid = new TreeGrid<>(Node.class);
             createContextMenu(); // adds the content-specific context menu
             //retrieve nodes from proper DB (mysql or in memory)
             refreshGraph();
@@ -161,10 +166,15 @@ public class GraphEditor extends VerticalLayout {
                     .set("border-radius", "1px")
                     .set("user-select", "none");
             grid.removeColumnByKey("id");
+            grid.removeColumnByKey("properties");
             grid.setColumnReorderingAllowed(true);
-            grid.getColumns().forEach(col -> {
-                col.setFlexGrow(1);
-            });
+            grid.setHierarchyColumn("name");
+            grid.getColumnByKey("name")
+                    .setWidth("80%")
+                    .setResizable(true);
+            grid.getColumnByKey("type")
+                    .setTextAlign(ColumnTextAlign.END)
+                    .setWidth("20%");
 
             //grid.getColumnByKey("Id").setWidth("18%");
             //grid.removeColumnByKey("Id");
@@ -467,13 +477,97 @@ public class GraphEditor extends VerticalLayout {
                         }
                         return true;
                     }).collect(Collectors.toList());
-            final ListDataProvider<Node> dataProvider = DataProvider.ofCollection(all_nodes);
-            grid.setDataProvider(dataProvider);
+
+            ValueProvider<Node, Collection<Node>> childValueProvider = (node) -> {
+                Collection<Node> children = new HashSet<>();
+                try{
+                    Set<String> childrenNames = g.getChildren(node.getName());
+                    //System.out.println("getting children nodes");
+                    for (String name: childrenNames) {
+                        children.add(g.getNode(name));
+                    }
+                } catch (PMException e) {
+                    e.printStackTrace();
+                }
+                return children;
+            };
+            TreeData<Node> treeData = new TreeData<>();
+            treeData.addItems(all_nodes, childValueProvider);
+            TreeDataProvider<Node> treeDataProvider = new TreeDataProvider<>(treeData);
+            grid.setDataProvider(treeDataProvider);
+
+//            HierarchicalDataProvider dataProvider = new AbstractBackEndHierarchicalDataProvider<Node, Void>() {
+//
+//                @Override
+//                public int getChildCount(HierarchicalQuery<Node, Void> query) {
+//                    try {
+//                        if (g == null) {
+//                            System.out.println("Singleton Graph is null");
+//                            return 0;
+//                        } else if (query == null) {
+//                            System.out.println("query is null");
+//                            return 0;
+//                        } else {
+//                            Optional<Node> node = query.getParentOptional();
+//                            if (node.isPresent()) {
+//                                return g.getChildren(node.get().getName()).size();
+//                            } else {
+//                                return 0;
+//                            }
+//                        }
+//                    } catch (PMException e) {
+//                        e.printStackTrace();
+//                        return 0;
+//                    }
+//                }
+//
+//                @Override
+//                public boolean hasChildren(Node item) {
+//                    try {
+//                        return g.getChildren(item.getName()).size() > 0;
+//                    } catch (PMException e) {
+//                        e.printStackTrace();
+//                        return false;
+//                    }
+//                }
+//
+//                @Override
+//                protected Stream<Node> fetchChildrenFromBackEnd(HierarchicalQuery<Node, Void> query) {
+//                    Collection<Node> children = new HashSet<>();
+//                    try{
+//                        if (g == null) {
+//                            System.out.println("Singleton Graph is null");
+//                        } else if (query == null) {
+//                            System.out.println("query is null");
+//                        } else if (query.getParent() == null) {
+//                            System.out.println("query parent is null");
+//                        } else {
+//                            Set<String> childrenNames = g.getChildren(query.getParent().getName());
+//                            System.out.println("getting children nodes");
+//                            for (String name: childrenNames) {
+//                                children.add(g.getNode(name));
+//                            }
+//                        }
+//                    } catch (PMException e) {
+//                        e.printStackTrace();
+//                    }
+//                    return children.stream();
+//                }
+//            };
+//
+//            TreeData<Node> treeData = new TreeData<>();
+//            treeData.addItems(all_nodes, dataProvider);
+//            TreeDataProvider<Node> treeDataProvider = new TreeDataProvider<>(treeData);
+//            grid.setDataProvider(dataProvider);
         }
 
         public void refreshGraph() {
+            currNodes = new HashSet<>();
             try {
-                currNodes = g.getNodes();
+                Set<String> pcNames = g.getPolicies();
+                for (String name: pcNames) {
+                    currNodes.add(g.getNode(name));
+                }
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
