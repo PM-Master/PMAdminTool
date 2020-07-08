@@ -25,6 +25,7 @@ import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
+import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -173,10 +174,10 @@ public class GraphEditor extends VerticalLayout {
                 Node n = evt.getItem();
                 if(n != null) {
                     try {
-                        Set<String> children = g.getChildren(n.getName());
+                        Set<String> children = SingletonGraph.getPap().getGraphPAP().getChildren(n.getName());
                         if (!children.isEmpty()) {
                             prevNodes.push(currNodes);
-                            currNodes = g.getNodes().stream()
+                            currNodes = SingletonGraph.getPap().getGraphPAP().getNodes().stream()
                                     .filter(node_k -> children.contains(node_k.getName())).collect(Collectors.toList());
                             //grid.setItems(currNodes);
                             updateGrid(currNodes);
@@ -203,7 +204,6 @@ public class GraphEditor extends VerticalLayout {
                     } else {
                         selectedParentNode = grid.getSelectedItems().iterator().next();
                     }
-
                 } catch (NoSuchElementException e) {
                     if (isSource) {
                         selectedChildNode = null;
@@ -211,8 +211,11 @@ public class GraphEditor extends VerticalLayout {
                         selectedParentNode = null;
                     }
                 }
+
                 buttonGroup.refreshButtonStates();
+
                 buttonGroup.refreshNodeTexts();
+
                 updateNodeInfoSection();
             });
             add(grid);
@@ -388,51 +391,56 @@ public class GraphEditor extends VerticalLayout {
 
                     //TODO: find a more expandable way to do this
 
-                    Iterator<String> childIter = g.getChildren(gridSelecNode.getName()).iterator();
+
+                    Iterator<String> childIter = SingletonGraph.getPap().getGraphPAP().getChildren(gridSelecNode.getName()).iterator();
                     if (!childIter.hasNext()) {
                         childrenList.add(new Paragraph("None"));
                     } else {
                         while (childIter.hasNext()) {
                             String child = childIter.next();
-                            Node childParent = g.getNode(child);
+                            Node childParent = SingletonGraph.getPap().getGraphPAP().getNode(child);
                             childrenList.add(new NodeDataBlip(childParent.getName(), childParent.getType()));
 //                            children.setText(children.getText() + "{" + id + ": " + g.getNode(id).getName() + "},");
                         }
                     }
 
-                    Iterator<String> parentIter = g.getParents(gridSelecNode.getName()).iterator();
+                    Iterator<String> parentIter = SingletonGraph.getPap().getGraphPAP().getParents(gridSelecNode.getName()).iterator();
                     if (!parentIter.hasNext()) {
                         parentList.add(new Paragraph("None"));
                     } else {
                         while (parentIter.hasNext()) {
                             String parent = parentIter.next();
-                            Node parentNode = g.getNode(parent);
+                            Node parentNode = SingletonGraph.getPap().getGraphPAP().getNode(parent);
                             parentList.add(new NodeDataBlip(parentNode.getName(), parentNode.getType()));
 //                            parents.setText(parents.getText() + "{" + id + ": " + g.getNode(id).getName() + "},");
                         }
                     }
 
-                    Map<String, OperationSet> outgoingMap = g.getSourceAssociations(gridSelecNode.getName());
-                    Iterator<String> outgoingKeySet = outgoingMap.keySet().iterator();
-                    if (!outgoingKeySet.hasNext()) {
-                        outgoingList.add(new Paragraph("None"));
-                    } else {
-                        while (outgoingKeySet.hasNext()) {
-                            String name = outgoingKeySet.next();
-                            Node node = g.getNode(name);
-                            outgoingList.add(new AssociationBlip(node.getId(), name, node.getType(), true, outgoingMap.get(name)));
+                    if (gridSelecNode.getType() == NodeType.UA) {
+                        Map<String, OperationSet> outgoingMap = SingletonGraph.getPap().getGraphPAP().getSourceAssociations(gridSelecNode.getName());
+                        Iterator<String> outgoingKeySet = outgoingMap.keySet().iterator();
+                        if (!outgoingKeySet.hasNext()) {
+                            outgoingList.add(new Paragraph("None"));
+                        } else {
+                            while (outgoingKeySet.hasNext()) {
+                                String name = outgoingKeySet.next();
+                                Node node = SingletonGraph.getPap().getGraphPAP().getNode(name);
+                                outgoingList.add(new AssociationBlip(node.getId(), name, node.getType(), true, outgoingMap.get(name)));
+                            }
                         }
                     }
 
-                    Map<String, OperationSet> incomingMap = g.getTargetAssociations(gridSelecNode.getName());
-                    Iterator<String> incomingKeySet = incomingMap.keySet().iterator();
-                    if (!incomingKeySet.hasNext()) {
-                        incomingList.add(new Paragraph("None"));
-                    } else {
-                        while (incomingKeySet.hasNext()) {
-                            String name = incomingKeySet.next();
-                            Node node = g.getNode(name);
-                            incomingList.add(new AssociationBlip(node.getId(), name, node.getType(), false, incomingMap.get(name)));
+                    if (gridSelecNode.getType() == NodeType.UA || gridSelecNode.getType() == NodeType.OA) {
+                        Map<String, OperationSet> incomingMap = SingletonGraph.getPap().getGraphPAP().getTargetAssociations(gridSelecNode.getName());
+                        Iterator<String> incomingKeySet = incomingMap.keySet().iterator();
+                        if (!incomingKeySet.hasNext()) {
+                            incomingList.add(new Paragraph("None"));
+                        } else {
+                            while (incomingKeySet.hasNext()) {
+                                String name = incomingKeySet.next();
+                                Node node = SingletonGraph.getPap().getGraphPAP().getNode(name);
+                                incomingList.add(new AssociationBlip(node.getId(), name, node.getType(), false, incomingMap.get(name)));
+                            }
                         }
                     }
                 } catch (PMException e) {
@@ -472,7 +480,7 @@ public class GraphEditor extends VerticalLayout {
 
         public void refreshGraph() {
             try {
-                currNodes = g.getNodes();
+                currNodes = SingletonGraph.getPap().getGraphPAP().getNodes();
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();

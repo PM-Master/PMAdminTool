@@ -97,7 +97,7 @@ public class CheckPermission extends Test {
                     // example: u1 -> ua1 -> oa1 -> o1 [read]
                     //   the association ua1 -> oa1 has the permission [read]
                     ret += "\t\t- Paths (How each permission is found):\n";
-                    List<Path> paths = policyClass.getPaths();
+                    Set<Path> paths = policyClass.getPaths();
                     for (Path path : paths) {
                         ret += "\t\t\t";
                         // this is just a list of nodes -> [u1, ua1, oa1, o1]

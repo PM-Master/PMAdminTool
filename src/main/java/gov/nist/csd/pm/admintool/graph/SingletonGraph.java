@@ -36,10 +36,12 @@ public class SingletonGraph extends PDP {
     private static Random rand;
     private static Set<PolicyClassWithActive> activePCs;
     private static MySQLConnection connection = new MySQLConnection();
+    private static PAP _pap;
 
     private SingletonGraph(PAP pap) throws PMException {
         super(pap, new EPPOptions(), new OperationSet());
 
+        SingletonGraph._pap = pap;
         //Prevent form the reflection api.
         if (g != null){
             throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
@@ -77,7 +79,7 @@ public class SingletonGraph extends PDP {
             superContext = null;
             activePCs = new HashSet<>();
 
-            for (Node n : graph.getNodes()) {;
+            for (Node n : SingletonGraph.getPap().getGraphPAP().getNodes()) {
                     if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
                         switch (n.getType()) {
                             case OA:
@@ -176,6 +178,9 @@ public class SingletonGraph extends PDP {
         return activePCs;
     }
 
+    public static PAP getPap() {
+        return SingletonGraph._pap;
+    }
 
     public String toString(){
         List<String> pcs = new ArrayList<>();
