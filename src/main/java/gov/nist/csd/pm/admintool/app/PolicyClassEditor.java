@@ -83,7 +83,7 @@ public class PolicyClassEditor extends VerticalLayout {
 
         public void refreshGrid() {
             Set<PolicyClassWithActive> currObls = SingletonGraph.getActivePCs();
-            System.out.println("in refresh Grid : " + g.toString());
+            System.out.println(g.toString());
             policyClassWithActiveGrid.setItems(currObls);
         }
 

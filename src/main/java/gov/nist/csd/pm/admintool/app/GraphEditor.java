@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
@@ -23,9 +24,10 @@ import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
+import gov.nist.csd.pm.operations.Operations;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
-import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
+import org.vaadin.gatanaso.MultiselectComboBox;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -912,19 +914,19 @@ public class GraphEditor extends VerticalLayout {
 
         Collection<Node> nodeCollection;
         try {
-            nodeCollection = new HashSet<>(g.getNodes());
+            //filter nodes
+            g.getNodes();
+            nodeCollection = new HashSet<>(SingletonGraph.getPap().getGraphPAP().getNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
             e.printStackTrace();
         }
         nodeCollection.removeIf(curr -> curr.getType() != NodeType.OA);
-        Node[] nodes = nodeCollection.toArray(new Node[nodeCollection.size()]);
-        Select<Node> parentSelect = new Select<>(nodes);
+        ComboBox<Node> parentSelect = new ComboBox<Node>("Parent", nodeCollection);
         if (nodeCollection.size() == 0) {
             parentSelect.setEnabled(false);
         }
         parentSelect.setRequiredIndicatorVisible(true);
-        parentSelect.setLabel("Parent");
         parentSelect.setPlaceholder("Select OA...");
         form.add(parentSelect);
 
@@ -1111,30 +1113,42 @@ public class GraphEditor extends VerticalLayout {
 
     private void addAssociation() {
         Dialog dialog = new Dialog();
+        dialog.setWidth("75vh");
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(Alignment.BASELINE);
 
-        TextArea opsFeild = new TextArea("Operations (Op1, Op2, ...)");
-        opsFeild.setPlaceholder("Enter Operations...");
-        form.add(opsFeild);
+        MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
+        opsSelectRessource.setLabel("Operations");
+        opsSelectRessource.setPlaceholder("Resources operations");
+        opsSelectRessource.setItems(OperationsEditor.OperationsViewer.getResourcesOpsList());
+        opsSelectRessource.setWidth("100%");
+
+        MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
+        opsSelectAdmin.setLabel("Operations");
+        opsSelectAdmin.setPlaceholder("Admin operations");
+        opsSelectAdmin.setItems(OperationsEditor.OperationsViewer.getAdminOpsList());
+        opsSelectAdmin.setWidth("100%");
+
+        form.add(opsSelectRessource);
+        form.add(opsSelectAdmin);
 
         Button submit = new Button("Submit", event -> {
-            String opString = opsFeild.getValue();
+
+            List<String> opString = new ArrayList<>();
+            opString.addAll(opsSelectRessource.getValue());
+            opString.addAll(opsSelectAdmin.getValue());
             OperationSet ops = new OperationSet();
             if (opString == null || opString.equals("")) {
-                opsFeild.focus();
                 notify("Operations are Required");
             } else {
                 try {
-                    for (String op : opString.split(",")) {
-                        ops.add(op.replaceAll(" ", ""));
-                    }
+                    ops.addAll(opString);
                 } catch (Exception e) {
                     notify("Incorrect Formatting of Operations");
                     e.printStackTrace();
                 }
                 try {
-//                    System.out.println(props);
+                    System.out.println("ops: " + ops);
                     g.associate(selectedChildNode.getName(), selectedParentNode.getName(), ops);
                     notify("Association Created");
                     dialog.close();
@@ -1144,59 +1158,75 @@ public class GraphEditor extends VerticalLayout {
                 }
             }
         });
+        submit.setWidth("20vh");
         form.add(submit);
 
         dialog.add(form);
         dialog.open();
-        opsFeild.focus();
     }
 
     private void editAssociation() {
         Dialog dialog = new Dialog();
+        dialog.setWidth("75vh");
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(Alignment.BASELINE);
 
-        TextArea opsFeild = new TextArea("Operations (Op1, Op2, ...)");
-        String sourceToTargetOpsString = "";
+        MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
+        opsSelectRessource.setLabel("Operations");
+        opsSelectRessource.setItems(OperationsEditor.OperationsViewer.getResourcesOpsList());
+        opsSelectRessource.setWidth("100%");
+
+        MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
+        opsSelectAdmin.setLabel("Admin");
+        opsSelectAdmin.setItems(OperationsEditor.OperationsViewer.getAdminOpsList());
+        opsSelectAdmin.setWidth("100%");
+
+        form.add(opsSelectRessource);
+        form.add(opsSelectAdmin);
         try {
-            if (selectedParentNode.getType() == NodeType.UA) {
-                Map<String, OperationSet> sourceOps = g.getSourceAssociations(selectedParentNode.getName());
+            if (selectedChildNode.getType() == NodeType.UA) {
+                Map<String, OperationSet> sourceOps = g.getSourceAssociations(selectedChildNode.getName());
                 Set<String> sourceToTargetOps = new HashSet<>();
                 sourceOps.forEach((targetName, targetOps) -> {
-                    if (targetName.equalsIgnoreCase(selectedChildNode.getName())) {
+                    if (targetName.equalsIgnoreCase(selectedParentNode.getName())) {
                         sourceToTargetOps.addAll(targetOps);
                     }
                 });
-
-                sourceToTargetOpsString = sourceToTargetOps.toString();
-                sourceToTargetOpsString = sourceToTargetOpsString.substring(1, sourceToTargetOpsString.length() - 1);
+                System.out.println("ops = " + sourceToTargetOps);
+                HashSet<String> existingResourcesOp = new HashSet<>();
+                HashSet<String> existingAdminsOp = new HashSet<>();
+                sourceToTargetOps.forEach(op -> {
+                    if (OperationsEditor.OperationsViewer.getResourcesOpsList().contains(op)){
+                        existingResourcesOp.add(op);
+                    } else if (OperationsEditor.OperationsViewer.getAdminOpsList().contains(op)) {
+                        existingAdminsOp.add(op);
+                    }
+                });
+                opsSelectRessource.setValue(existingResourcesOp);
+                opsSelectAdmin.setValue(existingAdminsOp);
             }
         } catch (PMException e) {
             notify(e.getMessage());
             e.printStackTrace();
         }
-        opsFeild.setValue(sourceToTargetOpsString);
-        opsFeild.setPlaceholder("Enter Operations...");
-        form.add(opsFeild);
 
         Button submit = new Button("Submit", event -> {
-            String opString = opsFeild.getValue();
+
+            List<String> opString = new ArrayList<>();
+            opString.addAll(opsSelectRessource.getValue());
+            opString.addAll(opsSelectAdmin.getValue());
             OperationSet ops = new OperationSet();
             if (opString == null || opString.equals("")) {
-                opsFeild.focus();
                 notify("Operations are Required");
             } else {
                 try {
-                    for (String op : opString.split(",")) {
-                        ops.add(op.replaceAll(" ", ""));
-                    }
+                    ops.addAll(opString);
                 } catch (Exception e) {
                     notify("Incorrect Formatting of Operations");
                     e.printStackTrace();
                 }
                 try {
-//                    System.out.println(props);
-                    g.associate(selectedChildNode.getName(),selectedParentNode.getName(), ops);
+                    g.associate(selectedChildNode.getName(), selectedParentNode.getName(), ops);
                     notify("Association Created");
                     dialog.close();
                 } catch (Exception e) {
@@ -1205,11 +1235,11 @@ public class GraphEditor extends VerticalLayout {
                 }
             }
         });
+        submit.setWidth("20vh");
         form.add(submit);
 
         dialog.add(form);
         dialog.open();
-        opsFeild.focus();
     }
 
     private void deleteAssociation() {
