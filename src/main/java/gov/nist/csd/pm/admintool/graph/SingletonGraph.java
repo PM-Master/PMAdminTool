@@ -16,6 +16,7 @@ import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
 import gov.nist.csd.pm.pip.obligations.MemObligations;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
 import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
+import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
 import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 
 import java.util.*;
@@ -451,6 +452,80 @@ public class SingletonGraph extends PDP {
         }
     }*/
     // ENDOF wrapped methods (implies super context) \\
+
+
+    // prohibition service methods
+    public List<Prohibition> getAllProhibitions() throws PMException {
+        if (superContext != null) {
+            return g.getProhibitionsService(superContext).getAll();
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public void addProhibition(String prohibitionName, String subject, Map<String, Boolean> containers, OperationSet ops, boolean intersection) throws PMException {
+        Prohibition.Builder builder = new Prohibition.Builder(prohibitionName, subject, ops)
+                .setIntersection(intersection);
+        containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
+        if (superContext != null) {
+            g.getProhibitionsService(superContext).add(builder.build());
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public Prohibition getProhibition(String prohibitionName) throws PMException {
+        if (superContext != null) {
+            return g.getProhibitionsService(superContext).get(prohibitionName);
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public List<Prohibition> getProhibitionsFor(String subject) throws PMException {
+        if (superContext != null) {
+            return g.getProhibitionsService(superContext).getProhibitionsFor(subject);
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public List<Prohibition> getProhibitionsFrom(String target) throws PMException {
+        if (superContext != null) {
+            List<Prohibition> allProhibitions = g.getProhibitionsService(superContext).getAll();
+            allProhibitions.removeIf((prohibition) -> !prohibition.getContainers().keySet().contains(target));
+            return allProhibitions;
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public void updateProhibition(String prohibitionName, String subject, Map<String, Boolean> containers, OperationSet ops, boolean intersection) throws PMException {
+        Prohibition.Builder builder = new Prohibition.Builder(prohibitionName, subject, ops)
+                .setIntersection(intersection);
+        containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
+        if (superContext != null) {
+            g.getProhibitionsService(superContext).update(prohibitionName, builder.build());
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public void deleteProhibition(String prohibitionName) throws PMException {
+        if (superContext != null) {
+            g.getProhibitionsService(superContext).delete(prohibitionName);
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+//    public void resetProhibitions(UserContext userCtx) throws PMException {
+//        if (superContext != null) {
+//            g.getProhibitionsService(superContext).reset();
+//        } else {
+//            throw new PMException("Super Context is Null");
+//        }
+//    }
 
     // Policy class with active feild class
     public static class PolicyClassWithActive {

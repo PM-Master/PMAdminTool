@@ -1,6 +1,7 @@
 package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
@@ -14,13 +15,13 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
 @Tag("SPTEditor")
     public class SPTEditor extends VerticalLayout {
         public SingletonGraph g;
-        private HorizontalLayout layout;
+        private VerticalLayout layout;
         private SPTInput editorLayout;
         private RuleAnalysis ruleAnalysis;
 
         public SPTEditor() {
             g = SingletonGraph.getInstance();
-            layout = new HorizontalLayout();
+            layout = new VerticalLayout();
             layout.setFlexGrow(1.0);
             layout.setJustifyContentMode(JustifyContentMode.CENTER);
             add(layout);
@@ -32,14 +33,15 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
         setPadding(true);
 
         editorLayout = new SPTInput();
-        editorLayout.setWidth("44%");
-        editorLayout.getStyle().set("height","100vh");
+        editorLayout.setWidth("99%");
+        editorLayout.setHeight("90%");
         layout.add(editorLayout);
 
-        Button execute = new Button("Execute>", evt -> {
+        Button execute = new Button("Execute", evt -> {
             executeRule(editorLayout.getValue());
         });
-        execute.setHeight("99vh");
+        execute.setHeight("20%");
+        execute.setWidth("99%");
         layout.add(execute);
 
 //        Button convert = new Button("Export to JSON>", evt -> {
@@ -57,10 +59,10 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
 //
 //        layout.add(convert);
 
-        ruleAnalysis = new RuleAnalysis();
-        ruleAnalysis.setWidth("44%");
-        ruleAnalysis.getStyle().set("height","100vh");
-        layout.add(ruleAnalysis);
+//        ruleAnalysis = new RuleAnalysis();
+//        ruleAnalysis.setWidth("44%");
+//        ruleAnalysis.getStyle().set("height","100vh");
+//        layout.add(ruleAnalysis);
     }
 
     public void executeRule (String sptRule) {
@@ -104,7 +106,7 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
                             "        to \"create object\", \"delete object\" \n" +
                             "        in branchAccounts->accounts: rbac; ask oa value: branch\n" +
                             "when ua_value = oa_value\n");
-            inputSpt.setHeight("100vh");
+            inputSpt.setHeight("75vh");
             add(inputSpt);
         }
 
