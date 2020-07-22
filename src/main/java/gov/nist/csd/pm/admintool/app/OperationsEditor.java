@@ -14,15 +14,10 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.operations.Operations;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 public class OperationsEditor extends VerticalLayout {
 
@@ -135,14 +130,10 @@ public class OperationsEditor extends VerticalLayout {
             });
 
             contextMenu.addItem("Edit Operation", event -> {
-                event.getItem().ifPresent(ops -> {
-                    editOperation(ops);
-                });
+                event.getItem().ifPresent(this::editOperation);
             });
             contextMenu.addItem("Delete Operation", event -> {
-                event.getItem().ifPresent(ops -> {
-                    deleteOperation(ops);
-                });
+                event.getItem().ifPresent(this::deleteOperation);
             });
         }
 

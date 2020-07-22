@@ -271,6 +271,40 @@ public class SingletonGraph extends PDP {
         }
     }
 
+    public Set<Node> getActiveNodes() throws PMException {
+        Set<Node> all_nodes = getNodes();
+        Set<PolicyClassWithActive> pcs = getActivePCs();
+        Set<Node> nodes_to_remove = new HashSet<>();
+
+        for (Node node : all_nodes) {
+            for (PolicyClassWithActive policyClassWithActive : pcs) {
+                if (node.getType() == NodeType.PC) {
+                    if (policyClassWithActive.getName().equalsIgnoreCase(node.getName())) {
+                        if (!policyClassWithActive.isActive()) {
+                            //only remove PC's
+                            nodes_to_remove.add(node);
+                        }
+                    }
+                } else {
+                    if (node.getProperties().get("namespace") != null) {
+                        if (node.getProperties().get("namespace").equalsIgnoreCase(policyClassWithActive.getName())) {
+                            //remove nodes UA & OA
+                            nodes_to_remove.add(node);
+                        }
+                    }
+                    if (node.getProperties().get("pc") != null) {
+                        if (node.getProperties().get("pc").equalsIgnoreCase(policyClassWithActive.getName())) {
+                            //remove nodes pc properties
+                            nodes_to_remove.add(node);
+                        }
+                    }
+                }
+            }
+        }
+        all_nodes.removeAll(nodes_to_remove);
+        return all_nodes;
+    }
+
     public Set<String> getPolicies() throws PMException {
         if (superContext != null) {
             return g.getGraphService(superContext).getPolicyClasses();

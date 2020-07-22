@@ -24,7 +24,6 @@ import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.operations.Operations;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import org.vaadin.gatanaso.MultiselectComboBox;
@@ -87,7 +86,7 @@ public class GraphEditor extends VerticalLayout {
 
         private boolean isSource;
 
-        public NodeLayout(boolean isSource) {
+        public NodeLayout(boolean isSource){
             this.isSource = isSource;
             if (isSource) {
                 getStyle().set("background", "lightblue");
@@ -215,16 +214,11 @@ public class GraphEditor extends VerticalLayout {
                 }
 
                 buttonGroup.refreshButtonStates();
-
                 buttonGroup.refreshNodeTexts();
-
                 updateNodeInfoSection();
             });
             add(grid);
             /// NODE TABLE END ///
-
-
-
 
             /// TODO: add properties
             /// NODE INFO START ///
@@ -277,9 +271,7 @@ public class GraphEditor extends VerticalLayout {
                     .set("margin-bottom", "0")
                     .set("overflow","scroll");
 
-
             children.add(childrenList);
-
 
             // parent layout
             VerticalLayout parents = new VerticalLayout();
@@ -307,11 +299,7 @@ public class GraphEditor extends VerticalLayout {
             nodeInfo.add(assignments);
             ///// end section with assignments
 
-
-
             nodeInfo.add(new Hr());
-
-
 
             ///// section with associations
             Paragraph associationsText = new Paragraph("Associations:");
@@ -367,8 +355,6 @@ public class GraphEditor extends VerticalLayout {
             associations.add(incoming);
 
             nodeInfo.add(associations);
-
-
             add(nodeInfo);
             /// NODE INFO END ///
         }
@@ -460,22 +446,41 @@ public class GraphEditor extends VerticalLayout {
             }
         }
 
-        public void updateGrid(Collection<Node> all_nodes) {
+        public void updateGrid(Collection<Node> all_nodes){
             // TODO: filter to only have nodes in the active PC's
             Set<SingletonGraph.PolicyClassWithActive> pcs = SingletonGraph.getActivePCs();
-            all_nodes.stream()
-                    .filter(node -> {
-                        if (node.getType() == NodeType.PC) {
-                            pcs.forEach(policyClassWithActive -> {
-                                if (policyClassWithActive.getName().equalsIgnoreCase(node.getName())) {
-                                    if (!policyClassWithActive.isActive()) {
-                                        all_nodes.remove(node);
-                                    }
-                                }
-                            });
+            Set<Node> nodes_to_remove = new HashSet<>();
+
+            for (Node node : all_nodes) {
+                for (SingletonGraph.PolicyClassWithActive policyClassWithActive : pcs) {
+                    if (node.getType() == NodeType.PC) {
+                        if (policyClassWithActive.getName().equalsIgnoreCase(node.getName())) {
+                            if (!policyClassWithActive.isActive()) {
+                                //only remove PC's
+                                nodes_to_remove.add(node);
+                            }
                         }
-                        return true;
-                    }).collect(Collectors.toList());
+                    } else {
+                        if (node.getProperties().get("namespace") != null) {
+                            if (!policyClassWithActive.isActive()) {
+                                if (node.getProperties().get("namespace").equalsIgnoreCase(policyClassWithActive.getName())) {
+                                    //remove nodes UA & OA
+                                    nodes_to_remove.add(node);
+                                }
+                            }
+                        }
+                        if (node.getProperties().get("pc") != null) {
+                            if (!policyClassWithActive.isActive()) {
+                                if (node.getProperties().get("pc").equalsIgnoreCase(policyClassWithActive.getName())) {
+                                    //remove nodes pc properties
+                                    nodes_to_remove.add(node);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            all_nodes.removeAll(nodes_to_remove);
             final ListDataProvider<Node> dataProvider = DataProvider.ofCollection(all_nodes);
             grid.setDataProvider(dataProvider);
         }
@@ -718,7 +723,7 @@ public class GraphEditor extends VerticalLayout {
 
         Collection<Node> nodesCol;
         try {
-            nodesCol = new HashSet<>(g.getNodes());
+            nodesCol = new HashSet<>(g.getActiveNodes());
         } catch (PMException e) {
             nodesCol = new HashSet<>();
             e.printStackTrace();
@@ -728,7 +733,7 @@ public class GraphEditor extends VerticalLayout {
         typeSelect.addValueChangeListener(event -> {
             Collection<Node> nodeCollection;
             try {
-                nodeCollection = new HashSet<>(g.getNodes());
+                nodeCollection = new HashSet<>(g.getActiveNodes());
             } catch (PMException e) {
                 nodeCollection = new HashSet<>();
                 e.printStackTrace();
@@ -821,7 +826,7 @@ public class GraphEditor extends VerticalLayout {
 
         Collection<Node> nodeCollection;
         try {
-            nodeCollection = new HashSet<>(g.getNodes());
+            nodeCollection = new HashSet<>(g.getActiveNodes());
 
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
@@ -916,7 +921,7 @@ public class GraphEditor extends VerticalLayout {
         try {
             //filter nodes
             g.getNodes();
-            nodeCollection = new HashSet<>(SingletonGraph.getPap().getGraphPAP().getNodes());
+            nodeCollection = new HashSet<>(g.getActiveNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
             e.printStackTrace();
