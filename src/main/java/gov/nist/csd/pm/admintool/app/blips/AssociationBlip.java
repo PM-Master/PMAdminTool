@@ -20,7 +20,7 @@ public class AssociationBlip extends Blip {
 
     @Override
     public void setDetailsContent() {
-        Paragraph propertiesText = new Paragraph("Properties: ");
+        Paragraph propertiesText = new Paragraph("Operations: ");
         propertiesText.getStyle().set("font-weight", "bold");
         addContent(propertiesText);
 

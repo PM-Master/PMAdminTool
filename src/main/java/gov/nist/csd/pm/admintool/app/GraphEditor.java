@@ -250,7 +250,8 @@ public class GraphEditor extends VerticalLayout {
                     .set("line-height", "1px")
                     .set("text-align", "center")
                     .set("overflow-y", "scroll")
-                    .set("overflow-x", "hidden");
+                    .set("overflow-x", "hidden")
+                    .set("user-select", "none");
             add(nodeInfo);
 
             name = new H3("X");
@@ -434,12 +435,6 @@ public class GraphEditor extends VerticalLayout {
 //            incomingProhibitions.add(incomingProhibitionList);
 
             // adding it all together
-            associations.add(outgoing);
-            associations.add(incoming);
-
-            nodeInfo.add(associations);
-            add(nodeInfo);
-            /// NODE INFO END ///
             prohibitions.add(outgoingProhibitions);
 //            prohibitions.add(incomingProhibitions);
 
@@ -1398,13 +1393,21 @@ public void updateGrid(Collection<Node> all_nodes){
         MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
         opsSelectRessource.setLabel("Operations");
         opsSelectRessource.setPlaceholder("Resources operations");
-        opsSelectRessource.setItems(OperationsEditor.OperationsViewer.getResourcesOpsList());
+        try {
+            opsSelectRessource.setItems(g.getResourceOpsWithStars());
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
         opsSelectRessource.setWidth("100%");
 
         MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
         opsSelectAdmin.setLabel("Operations");
         opsSelectAdmin.setPlaceholder("Admin operations");
-        opsSelectAdmin.setItems(OperationsEditor.OperationsViewer.getAdminOpsList());
+        try {
+            opsSelectAdmin.setItems(g.getAdminOpsWithStars());
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
         opsSelectAdmin.setWidth("100%");
 
         form.add(opsSelectRessource);
@@ -1451,22 +1454,32 @@ public void updateGrid(Collection<Node> all_nodes){
 
         MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
         opsSelectRessource.setLabel("Operations");
-        opsSelectRessource.setItems(OperationsEditor.OperationsViewer.getResourcesOpsList());
+        opsSelectRessource.setPlaceholder("Resources operations");
+        try {
+            opsSelectRessource.setItems(g.getResourceOpsWithStars());
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
         opsSelectRessource.setWidth("100%");
 
         MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
         opsSelectAdmin.setLabel("Admin");
-        opsSelectAdmin.setItems(OperationsEditor.OperationsViewer.getAdminOpsList());
+        opsSelectAdmin.setPlaceholder("Admin operations");
+        try {
+            opsSelectAdmin.setItems(g.getAdminOpsWithStars());
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
         opsSelectAdmin.setWidth("100%");
 
         form.add(opsSelectRessource);
         form.add(opsSelectAdmin);
         try {
-            if (selectedParentNode.getType() == NodeType.UA) {
-                Map<String, OperationSet> sourceOps = g.getSourceAssociations(selectedParentNode.getName());
+            if (selectedChildNode.getType() == NodeType.UA) {
+                Map<String, OperationSet> sourceOps = g.getSourceAssociations(selectedChildNode.getName());
                 Set<String> sourceToTargetOps = new HashSet<>();
                 sourceOps.forEach((targetName, targetOps) -> {
-                    if (targetName.equalsIgnoreCase(selectedChildNode.getName())) {
+                    if (targetName.equalsIgnoreCase(selectedParentNode.getName())) {
                         sourceToTargetOps.addAll(targetOps);
                     }
                 });
@@ -1474,10 +1487,15 @@ public void updateGrid(Collection<Node> all_nodes){
                 HashSet<String> existingResourcesOp = new HashSet<>();
                 HashSet<String> existingAdminsOp = new HashSet<>();
                 sourceToTargetOps.forEach(op -> {
-                    if (OperationsEditor.OperationsViewer.getResourcesOpsList().contains(op)){
-                        existingResourcesOp.add(op);
-                    } else if (OperationsEditor.OperationsViewer.getAdminOpsList().contains(op)) {
-                        existingAdminsOp.add(op);
+                    try {
+                        if (g.getResourceOpsWithStars().contains(op)) {
+                            existingResourcesOp.add(op);
+                        } else if (g.getAdminOpsWithStars().contains(op)) {
+                            existingAdminsOp.add(op);
+                        }
+                    } catch (PMException e) {
+                        e.printStackTrace();
+                        MainView.notify(e.getMessage());
                     }
                 });
                 opsSelectRessource.setValue(existingResourcesOp);

@@ -31,7 +31,8 @@ public abstract class Blip extends Details {
                 .set("border", "1px grey")
                 .set("padding-left", "10px")
                 .set("margin", "1px")
-                .set("text-align", "left");
+                .set("text-align", "left")
+                .set("user-select", "none");
 
 
 

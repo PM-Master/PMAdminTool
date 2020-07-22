@@ -4,6 +4,7 @@ import gov.nist.csd.pm.epp.EPPOptions;
 import gov.nist.csd.pm.epp.events.EventContext;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
+import gov.nist.csd.pm.operations.Operations;
 import gov.nist.csd.pm.pap.PAP;
 import gov.nist.csd.pm.pdp.PDP;
 import gov.nist.csd.pm.pdp.services.UserContext;
@@ -108,6 +109,15 @@ public class SingletonGraph extends PDP {
                     activePCs.add(new PolicyClassWithActive(n));
                 }
             }
+
+            OperationSet resourceOps = new OperationSet();
+//            resourceOps.add(Operations.ALL_OPS);
+//            resourceOps.add(Operations.ALL_RESOURCE_OPS);
+            resourceOps.add(Operations.READ);
+            resourceOps.add(Operations.WRITE);
+            resourceOps.add(Operations.OBJECT_ACCESS);
+            g.getGraphService(superContext).setResourceOps(resourceOps);
+
         } catch (PMException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
@@ -152,6 +162,15 @@ public class SingletonGraph extends PDP {
                     activePCs.add(new PolicyClassWithActive(n));
                 }
             }
+
+            OperationSet resourceOps = new OperationSet();
+//            resourceOps.add(Operations.ALL_OPS);
+//            resourceOps.add(Operations.ALL_RESOURCE_OPS);
+            resourceOps.add(Operations.READ);
+            resourceOps.add(Operations.WRITE);
+            resourceOps.add(Operations.OBJECT_ACCESS);
+            g.getGraphService(superContext).setResourceOps(resourceOps);
+
             //System.out.println(superPCId);
         } catch (PMException e) {
             System.out.println(e.getMessage());
@@ -560,6 +579,84 @@ public class SingletonGraph extends PDP {
 //            throw new PMException("Super Context is Null");
 //        }
 //    }
+
+
+    // operation methods
+    public Set<String> getAdminOps() throws PMException {
+        if (superContext != null) {
+            return Operations.ADMIN_OPS;
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public Set<String> getAdminOpsWithStars() throws PMException {
+        if (superContext != null) {
+            Set<String> ret = getAdminOps();
+            ret.add(Operations.ALL_ADMIN_OPS);
+            return ret;
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public OperationSet getResourceOps() throws PMException {
+        if (superContext != null) {
+            return g.getGraphService(superContext).getResourceOps();
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public Set<String> getResourceOpsWithStars() throws PMException {
+        if (superContext != null) {
+            Set<String> ret = getResourceOps();
+            ret.add(Operations.ALL_OPS);
+            ret.add(Operations.ALL_RESOURCE_OPS);
+            return ret;
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public void setResourceOps (Set<String> ops) throws PMException {
+        if (superContext != null) {
+            g.getGraphService(superContext).setResourceOps(new OperationSet(ops));
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public void addResourceOps (String... ops) throws PMException {
+        if (superContext != null) {
+            Set<String> resourceOps = getResourceOps();
+            String[] newOps = ops;
+            for (String op: newOps) {
+                if (!resourceOps.contains(op)) {
+                    resourceOps.add(op);
+                }
+            }
+            setResourceOps(resourceOps);
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
+    public void deleteResourceOps (String... ops) throws PMException {
+        if (superContext != null) {
+            Set<String> resourceOps = getResourceOps();
+            String[] newOps = ops;
+            for (String op: newOps) {
+                if (resourceOps.contains(op)) {
+                    resourceOps.remove(op);
+                }
+            }
+            setResourceOps(resourceOps);
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
 
     // Policy class with active feild class
     public static class PolicyClassWithActive {
