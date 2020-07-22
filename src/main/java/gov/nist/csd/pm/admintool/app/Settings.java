@@ -4,7 +4,10 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.CheckboxGroup;
+import com.vaadin.flow.component.checkbox.CheckboxGroupVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Paragraph;
@@ -14,6 +17,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.radiobutton.RadioGroupVariant;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.exceptions.PMException;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Tag("settings")
 public class Settings extends VerticalLayout {
@@ -52,16 +59,16 @@ public class Settings extends VerticalLayout {
             setAlignItems(Alignment.STRETCH);
             add(new H2("Settings:"));
 
-            RadioButtonGroup<String> radioGroup = new RadioButtonGroup<>();
-            radioGroup.setLabel("What kind of database do you want to use ?");
-            radioGroup.setItems("In-Memory", "MySQL");
-            radioGroup.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
+            RadioButtonGroup<String> databaseRadio = new RadioButtonGroup<>();
+            databaseRadio.setLabel("What kind of database do you want to use ?");
+            databaseRadio.setItems("In-Memory", "MySQL");
+            databaseRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
             if (g.getMysql()) {
-                radioGroup.setValue("MySQL");
+                databaseRadio.setValue("MySQL");
             } else {
-                radioGroup.setValue("In-Memory");
+                databaseRadio.setValue("In-Memory");
             }
-            radioGroup.addValueChangeListener(event -> {
+            databaseRadio.addValueChangeListener(event -> {
                     Dialog dialog = new Dialog();
                     HorizontalLayout form = new HorizontalLayout();
                     form.setAlignItems(FlexComponent.Alignment.BASELINE);
@@ -70,7 +77,7 @@ public class Settings extends VerticalLayout {
                     dialog.add(new Paragraph("Switching database will reset your in-memory data. Are you sure ?"));
                     Button button = new Button("Yes", eventSwitch -> {
                         mysqlBool = event.getValue().equalsIgnoreCase("MySQL");
-                        radioGroup.setValue(event.getValue());
+                        databaseRadio.setValue(event.getValue());
                         setMysqlBool(mysqlBool);
                         SingletonGraph g = SingletonGraph.getInstance();
                         g.updateGraph(mysqlBool);
@@ -91,7 +98,29 @@ public class Settings extends VerticalLayout {
                 dialog.add(form);
                 dialog.open();
             });
-            add(radioGroup);
+
+            add(databaseRadio);
+
+//            CheckboxGroup<SingletonGraph.PolicyClassWithActive> checkboxGroup = new CheckboxGroup<>();
+//            checkboxGroup.setLabel("Which Policy Classes do you want to be active?");
+//            Set<SingletonGraph.PolicyClassWithActive> policies = g.getActivePCs();
+//            checkboxGroup.setItems(policies);
+//            policies.removeIf((pc) -> !pc.isActive());
+//            checkboxGroup.setValue(policies);
+//
+//            checkboxGroup.addThemeVariants(CheckboxGroupVariant.LUMO_VERTICAL);
+//
+//            Div value = new Div();
+//            value.setText("Select a value");
+//            checkboxGroup.addValueChangeListener(event -> {
+//                if (event.getValue() == null) {
+//                    value.setText("No option selected");
+//                } else {
+//                    value.setText("Selected: " + event.getValue());
+//                }
+//            });
+//
+//            add (checkboxGroup);
         }
     }
 

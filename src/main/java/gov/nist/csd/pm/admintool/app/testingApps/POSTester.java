@@ -84,18 +84,6 @@ public class POSTester extends VerticalLayout {
         });
         form.add(submit);
 
-        // Analyse button
-        Button analyse = new Button("Analyse POS", event -> {
-            Node selectedUser = userSelect.getValue();
-            if (selectedUser == null) {
-                notify("User is required!");
-            } else {
-                user = selectedUser;
-//                AnalyseGraph();
-            }
-        });
-        form.add(analyse);
-
         add(form);
     }
 
@@ -143,7 +131,7 @@ public class POSTester extends VerticalLayout {
         grid.removeColumnByKey("type");
         grid.addColumn(Node::getType)
                 .setHeader("Type")
-                .setKey("type");;
+                .setKey("type");
         grid.getColumnByKey("type")
                 .setTextAlign(ColumnTextAlign.END)
                 .setWidth("20%");
@@ -205,11 +193,6 @@ public class POSTester extends VerticalLayout {
         } else {
             notify("Select a User");
         }
-    }
-
-    private void anaylizePOS() {
-        // This function should display more detailed analysis
-        // List of objects that user has access to with the path from user to each object
     }
 
     private void editNode(Node n) {
