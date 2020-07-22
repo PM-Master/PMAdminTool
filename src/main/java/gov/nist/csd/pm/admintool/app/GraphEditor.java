@@ -24,6 +24,8 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
+import com.vaadin.flow.data.provider.DataProvider;
+import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.*;
 import com.vaadin.flow.dom.Style;
 import gov.nist.csd.pm.admintool.app.blips.*;
@@ -625,7 +627,7 @@ public void updateGrid(Collection<Node> all_nodes){
             }
             all_nodes.removeAll(nodes_to_remove);
 
-            final ListDataProvider<Node> dataProvider = DataProvider.ofCollection(all_nodes);
+            //final ListDataProvider<Node> dataProvider = DataProvider.ofCollection(all_nodes);
 
 //            ValueProvider<Node, Collection<Node>> childValueProvider = (node) -> {
 //                Collection<Node> children = new HashSet<>();
