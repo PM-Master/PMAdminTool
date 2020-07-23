@@ -41,8 +41,10 @@ public class SingletonGraph extends PDP {
     private static PAP _pap;
 
     private SingletonGraph(PAP pap) throws PMException {
+        //pdp public
         super(pap, new EPPOptions(), new OperationSet());
-
+       /* PDP pdp = PDP.newPDP(pap, new EPPOptions(), new OperationSet());
+        pdp.initServices();*/
         SingletonGraph._pap = pap;
         //Prevent form the reflection api.
         if (g != null){
@@ -73,7 +75,7 @@ public class SingletonGraph extends PDP {
     private synchronized static void fixGraphData(Graph graph) {
         try {
                 g = new SingletonGraph(new PAP(
-                        graph,
+                        new MySQLGraph(connection),
                         new MySQLProhibitions(connection),
                         new MemObligations()
                 ));
@@ -116,7 +118,7 @@ public class SingletonGraph extends PDP {
             resourceOps.add(Operations.READ);
             resourceOps.add(Operations.WRITE);
             resourceOps.add(Operations.OBJECT_ACCESS);
-            g.getGraphService(superContext).setResourceOps(resourceOps);
+            //g.getGraphService(superContext).setResourceOps(resourceOps);
 
         } catch (PMException e) {
             System.out.println(e.getMessage());
@@ -127,14 +129,14 @@ public class SingletonGraph extends PDP {
     private synchronized static void fixGraphDataMem(Graph graph) {
         try {
             g = new SingletonGraph(new PAP(
-                    graph,
+                    new MemGraph(),
                     new MemProhibitions(),
                     new MemObligations()
             ));
             System.out.println("MemGraph");
             superContext = null;
             activePCs = new HashSet<>();
-            for (Node n : graph.getNodes()) {
+            for (Node n : SingletonGraph.getPap().getGraphPAP().getNodes()) {
                 if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
                     switch (n.getType()) {
                         case OA:
@@ -169,7 +171,8 @@ public class SingletonGraph extends PDP {
             resourceOps.add(Operations.READ);
             resourceOps.add(Operations.WRITE);
             resourceOps.add(Operations.OBJECT_ACCESS);
-            g.getGraphService(superContext).setResourceOps(resourceOps);
+            System.out.println(resourceOps);
+            //g.setResourceOps(resourceOps);
 
             //System.out.println(superPCId);
         } catch (PMException e) {
@@ -196,6 +199,10 @@ public class SingletonGraph extends PDP {
 
     public static Set<PolicyClassWithActive> getActivePCs() {
         return activePCs;
+    }
+
+    public static void resetActivePCs() {
+        activePCs.removeIf(policyClassWithActive -> !policyClassWithActive.getName().equals("super_pc"));
     }
 
     public static PAP getPap() {
@@ -327,6 +334,7 @@ public class SingletonGraph extends PDP {
 
     public Set<String> getPolicies() throws PMException {
         if (superContext != null) {
+            System.out.println(g.getGraphService(superContext).getNodes());
             return g.getGraphService(superContext).getPolicyClasses();
         } else {
             throw new PMException("Super Context is Null");
@@ -600,7 +608,7 @@ public class SingletonGraph extends PDP {
         }
     }
 
-    public OperationSet getResourceOps() throws PMException {
+    public OperationSet getResourceOps() throws PMException{
         if (superContext != null) {
             return g.getGraphService(superContext).getResourceOps();
         } else {
