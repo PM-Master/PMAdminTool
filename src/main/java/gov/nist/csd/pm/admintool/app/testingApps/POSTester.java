@@ -6,6 +6,7 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -40,11 +41,18 @@ public class POSTester extends VerticalLayout {
 
 
     public POSTester () {
-        setPadding(false);
-        setMargin(false);
+        H2 importTitle = new H2("POS:");
+        importTitle.getStyle().set("margin-bottom","0");
+        add(importTitle);
+
         setWidthFull();
-        setAlignItems(Alignment.CENTER);
+        setHeightFull();
+//        setAlignItems(Alignment.CENTER);
+        setAlignItems(Alignment.STRETCH);
         setJustifyContentMode(JustifyContentMode.START);
+
+        getStyle().set("background", "lightblue");
+
 
         g = SingletonGraph.getInstance();
         userSelect = new Select<>();

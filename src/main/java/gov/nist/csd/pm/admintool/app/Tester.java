@@ -25,7 +25,7 @@ public class Tester extends VerticalLayout {
 
         add(new H2("All Tests:"));
 
-        pos = new Details("POS Tester", null);
+//        pos = new Details("POS Tester", null);
         obligations = new Details("Obligations Tester", new Span("obligations tester"));
         unitTests = new Details("Unit Tests", null);
         acl = new Details("ACL Generator", null);
@@ -41,18 +41,18 @@ public class Tester extends VerticalLayout {
         setPadding(true);
 
         // POS Tester
-        posTester = new POSTester();
-        posTester.setWidth("100%");
-        pos.setContent(posTester);
-        pos.getElement().getStyle()
-                .set("background", "lightblue");
-        pos.addThemeVariants(DetailsVariant.FILLED);
-        pos.addOpenedChangeListener(e -> {
-            if (e.isOpened()) {
-                posTester.setUserSelect();
-            }
-        });
-        add(pos);
+//        posTester = new POSTester();
+//        posTester.setWidth("100%");
+//        pos.setContent(posTester);
+//        pos.getElement().getStyle()
+//                .set("background", "lightblue");
+//        pos.addThemeVariants(DetailsVariant.FILLED);
+//        pos.addOpenedChangeListener(e -> {
+//            if (e.isOpened()) {
+//                posTester.setUserSelect();
+//            }
+//        });
+//        add(pos);
 
         // Obligation Tester
         obligations.getElement().getStyle()
