@@ -167,7 +167,10 @@ public class POSTester extends VerticalLayout {
         Iterator<Node> nodeIterator = nodeCollection.iterator();
         while (nodeIterator.hasNext()) {
             Node curr = nodeIterator.next();
-            if (!(curr.getType() == NodeType.U) || curr.getProperties().get("namespace") == "super") {
+            if (!(curr.getType() == NodeType.U || curr.getType() == NodeType.UA)) {
+                nodeIterator.remove();
+            }
+            if (curr.getProperties().get("namespace") == "super") {
                 nodeIterator.remove();
             }
         }
