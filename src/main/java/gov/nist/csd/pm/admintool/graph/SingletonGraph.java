@@ -120,7 +120,7 @@ public class SingletonGraph extends PDP {
             resourceOps.add(Operations.READ);
             resourceOps.add(Operations.WRITE);
             resourceOps.add(Operations.OBJECT_ACCESS);
-            g.getGraphService(superContext).setResourceOps(resourceOps);
+            g.setResourceOps(resourceOps);
 
         } catch (PMException e) {
             System.out.println(e.getMessage());
@@ -174,7 +174,7 @@ public class SingletonGraph extends PDP {
             resourceOps.add(Operations.WRITE);
             resourceOps.add(Operations.OBJECT_ACCESS);
             //g.setResourceOps(resourceOps);
-            g.getGraphService(superContext).setResourceOps(resourceOps);
+            g.setResourceOps(resourceOps);
 
         } catch (PMException e) {
             System.out.println(e.getMessage());
@@ -604,58 +604,12 @@ public class SingletonGraph extends PDP {
         }
     }
 
-    public OperationSet getResourceOps() throws PMException{
-        if (superContext != null) {
-            return g.getGraphService(superContext).getResourceOps();
-        } else {
-            throw new PMException("Super Context is Null");
-        }
-    }
-
     public Set<String> getResourceOpsWithStars() throws PMException {
         if (superContext != null) {
             Set<String> ret = getResourceOps();
             ret.add(Operations.ALL_OPS);
             ret.add(Operations.ALL_RESOURCE_OPS);
             return ret;
-        } else {
-            throw new PMException("Super Context is Null");
-        }
-    }
-
-    public void setResourceOps (Set<String> ops) throws PMException {
-        if (superContext != null) {
-            g.getGraphService(superContext).setResourceOps(new OperationSet(ops));
-        } else {
-            throw new PMException("Super Context is Null");
-        }
-    }
-
-    public void addResourceOps (String... ops) throws PMException {
-        if (superContext != null) {
-            Set<String> resourceOps = getResourceOps();
-            String[] newOps = ops;
-            for (String op: newOps) {
-                if (!resourceOps.contains(op)) {
-                    resourceOps.add(op);
-                }
-            }
-            setResourceOps(resourceOps);
-        } else {
-            throw new PMException("Super Context is Null");
-        }
-    }
-
-    public void deleteResourceOps (String... ops) throws PMException {
-        if (superContext != null) {
-            Set<String> resourceOps = getResourceOps();
-            String[] newOps = ops;
-            for (String op: newOps) {
-                if (resourceOps.contains(op)) {
-                    resourceOps.remove(op);
-                }
-            }
-            setResourceOps(resourceOps);
         } else {
             throw new PMException("Super Context is Null");
         }

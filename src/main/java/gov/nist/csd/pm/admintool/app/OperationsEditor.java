@@ -96,11 +96,11 @@ public class OperationsEditor extends VerticalLayout {
             contextMenu.addItem("Add Operation", event -> {
                     addOperation();
             });
-            contextMenu.addItem("Edit Operation", event -> {
-                event.getItem().ifPresent(op -> {
-                    editOperation(op);
-                });
-            });
+//            contextMenu.addItem("Edit Operation", event -> {
+//                event.getItem().ifPresent(op -> {
+//                    editOperation(op);
+//                });
+//            });
             contextMenu.addItem("Delete Operation", event -> {
                 event.getItem().ifPresent(op -> {
                     deleteOperation(op);
