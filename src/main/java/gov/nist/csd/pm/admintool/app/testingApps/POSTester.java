@@ -19,6 +19,7 @@ import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.function.ValueProvider;
+import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
@@ -84,7 +85,7 @@ public class POSTester extends VerticalLayout {
         Button submit = new Button("Update POS", event -> {
             Node selectedUser = userSelect.getValue();
             if (selectedUser == null) {
-                notify("User is required!");
+                MainView.notify("User is required!");
             } else {
                 user = selectedUser;
                 updateGraph();
@@ -199,7 +200,7 @@ public class POSTester extends VerticalLayout {
             }
             grid.setItems(currNodes);
         } else {
-            notify("Select a User");
+            MainView.notify("Select a User");
         }
     }
 
@@ -226,7 +227,7 @@ public class POSTester extends VerticalLayout {
             Map<String, String> props = new HashMap<>();
             if (name == null || name == "") {
                 nameField.focus();
-                notify("Name is Required");
+                MainView.notify("Name is Required");
             } else {
                 if (propString != null) {
                     try {
@@ -234,7 +235,7 @@ public class POSTester extends VerticalLayout {
                             props.put(prop.split("=")[0], prop.split("=")[1]);
                         }
                     } catch (Exception e) {
-                        notify("Incorrect Formatting of Properties");
+                        MainView.notify("Incorrect Formatting of Properties");
                         e.printStackTrace();
                     }
                 }
@@ -243,7 +244,7 @@ public class POSTester extends VerticalLayout {
                     updateGraph();
                     dialog.close();
                 } catch (Exception e) {
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -395,10 +396,5 @@ public class POSTester extends VerticalLayout {
 
         dialog.add(form);
         dialog.open();
-    }
-
-    public void notify(String message){
-        Notification notif = new Notification(message, 3000);
-        notif.open();
     }
 }

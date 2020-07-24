@@ -8,6 +8,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
@@ -60,7 +61,7 @@ public class ACLTester extends VerticalLayout {
         Button submit = new Button("Update ACL", event -> {
             Node selectedUser = attrSelect.getValue();
             if (selectedUser == null) {
-                notify("Attribute is required!");
+                MainView.notify("Attribute is required!");
             } else {
                 attr = selectedUser;
                 updateGraph();
@@ -133,7 +134,7 @@ public class ACLTester extends VerticalLayout {
             }
             grid.setItems(currNodes);
         } else {
-            notify("Select an Attribute");
+            MainView.notify("Select an Attribute");
         }
     }
 
@@ -151,11 +152,6 @@ public class ACLTester extends VerticalLayout {
                 updateGraphRecursiveHelper(g.getNode(child), childPerms, targetAssociations, nodes);
             }
         }
-    }
-
-    public void notify(String message) {
-        Notification notif = new Notification(message, 3000);
-        notif.open();
     }
 
     public class NodeAndPermissions extends Node {

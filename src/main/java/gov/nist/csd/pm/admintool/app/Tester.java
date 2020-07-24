@@ -88,10 +88,4 @@ public class Tester extends VerticalLayout {
         });
         add(acl);
     }
-
-    public void notify(String message){
-        Notification notif = new Notification(message, 3000);
-        notif.open();
-    }
-
 }

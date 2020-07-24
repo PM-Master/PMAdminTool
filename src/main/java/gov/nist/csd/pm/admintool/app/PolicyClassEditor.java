@@ -129,7 +129,7 @@ public class PolicyClassEditor extends VerticalLayout {
                 Map<String, String> props = new HashMap<>();
                 if (name == null || name == "") {
                     nameField.focus();
-                    PolicyClassEditor.notify("Name is Required");
+                    MainView.notify("Name is Required");
                 } else {
                     if (propString != null && !propString.equals("")) {
                         try {
@@ -137,7 +137,7 @@ public class PolicyClassEditor extends VerticalLayout {
                                 props.put(prop.split("=")[0], prop.split("=")[1]);
                             }
                         } catch (Exception e) {
-                            PolicyClassEditor.notify("Incorrect Formatting of Properties");
+                            MainView.notify("Incorrect Formatting of Properties");
                             e.printStackTrace();
                         }
                     }
@@ -208,10 +208,5 @@ public class PolicyClassEditor extends VerticalLayout {
             dialog.add(form);
             dialog.open();
         }
-    }
-
-    private static void notify (String message) {
-        Notification notif = new Notification(message, 3000);
-        notif.open();
     }
 }

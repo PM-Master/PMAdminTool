@@ -69,7 +69,7 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
         try {
             SptRuleParser ruleParser = new SptRuleParser(sptRule);
             ruleParser.parse();
-            notify("Graph updated");
+            MainView.notify("Graph updated");
             analyseScript();
         } catch (Exception e) {
             e.printStackTrace();
@@ -137,10 +137,5 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
         public void setValue(String value) {
             outputJson.setValue(value);
         }
-    }
-
-    public void notify(String message){
-        Notification notif = new Notification(message, 3000);
-        notif.open();
     }
 }

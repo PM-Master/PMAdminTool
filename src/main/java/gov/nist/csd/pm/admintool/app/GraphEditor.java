@@ -208,7 +208,7 @@ public class GraphEditor extends VerticalLayout {
 
                             backButton.setEnabled(true);
                         } else {
-                            GraphEditor.this.notify("Node has no children");
+                            MainView.notify("Node has no children");
                         }
                     } catch (PMException e) {
                         e.printStackTrace();
@@ -468,7 +468,7 @@ public class GraphEditor extends VerticalLayout {
                     updateProhibitionInfo(gridSelecNode);
                 } catch (PMException e) {
                     e.printStackTrace();
-                    GraphEditor.this.notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                 }
             } else {
                 name.setText("X");
@@ -810,7 +810,7 @@ public void updateGrid(Collection<Node> all_nodes){
                     childNode.updateNodeInfoSection();
                     parentNode.updateNodeInfoSection();
                 } else {
-                    GraphEditor.this.notify("");
+                    MainView.notify("");
                 }
             });
             addAssignmentButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
@@ -1044,14 +1044,14 @@ public void updateGrid(Collection<Node> all_nodes){
             Map<String, String> props = new HashMap<>();
 //            if (id == null) {
 //                idField.focus();
-//                notify("ID is Required");
+//                MainView.notify("ID is Required");
 //            } else
             if (name == null || name == "") {
                 nameField.focus();
-                notify("Name is Required");
+                MainView.notify("Name is Required");
             } else if (type == null) {
                 typeSelect.focus();
-                notify("Type is Required");
+                MainView.notify("Type is Required");
             } else {
                 if (propString != null && !propString.equals("")) {
                     try {
@@ -1059,18 +1059,19 @@ public void updateGrid(Collection<Node> all_nodes){
                             props.put(prop.split("=")[0], prop.split("=")[1]);
                         }
                     } catch (Exception e) {
-                        notify("Incorrect Formatting of Properties");
+                        MainView.notify("Incorrect Formatting of Properties");
                         e.printStackTrace();
                     }
                 }
                 try {
                     g.createNode(name, type, props, parent.getName());
+                    MainView.notify("Node with name: " + name + " created");
                     //g.getPAP().getGraphPAP().createNode(name, type, props, parent.getName());
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
                 } catch (PMException e) {
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1127,10 +1128,10 @@ public void updateGrid(Collection<Node> all_nodes){
             Map<String, String> props = new HashMap<>();
             if (name == null || name == "") {
                 nameField.focus();
-                notify("Name is Required");
+                MainView.notify("Name is Required");
             } else if (parent == null) {
                 parentSelect.focus();
-                notify("Parent is Required");
+                MainView.notify("Parent is Required");
             } else {
                 if (propString != null && !propString.equals("")) {
                     try {
@@ -1138,7 +1139,7 @@ public void updateGrid(Collection<Node> all_nodes){
                             props.put(prop.split("=")[0], prop.split("=")[1]);
                         }
                     } catch (Exception e) {
-                        notify("Incorrect Formatting of Properties");
+                        MainView.notify("Incorrect Formatting of Properties");
                         e.printStackTrace();
                     }
                 }
@@ -1146,21 +1147,14 @@ public void updateGrid(Collection<Node> all_nodes){
                     //Node home = g.createNode(name + " Home", NodeType.OA, props, SingletonGraph.getSuperOAId());
                     //Node attr = g.createNode(name + " Attr", NodeType.UA, props, SingletonGraph.getSuperUAId());
                     // What are those nodes used for ?
-                    Node user = g.createNode(name, NodeType.U, props, parent.getName());
-                    //g.assign(attr.getName(), parent.getName());
-
-                    OperationSet ops = new OperationSet();
-                    ops.add("read");
-                    ops.add("write");
-                    ops.add("delete");
-                    //Is there a need to associate them ?
-                    //g.associate(attr.getName(), home.getName(), ops);
+                    g.createNode(name, NodeType.U, props, parent.getName());
+                    MainView.notify("User with name: " + name + " has been created");
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
 
                 } catch (Exception e) {
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1215,10 +1209,10 @@ public void updateGrid(Collection<Node> all_nodes){
             Map<String, String> props = new HashMap<>();
             if (name == null || name == "") {
                 nameField.focus();
-                notify("Name is Required");
+                MainView.notify("Name is Required");
             } else if (parent == null) {
                 parentSelect.focus();
-                notify("Parent is Required");
+                MainView.notify("Parent is Required");
             } else {
                 if (propString != null && !propString.equals("")) {
                     try {
@@ -1226,17 +1220,18 @@ public void updateGrid(Collection<Node> all_nodes){
                             props.put(prop.split("=")[0], prop.split("=")[1]);
                         }
                     } catch (Exception e) {
-                        notify("Incorrect Formatting of Properties");
+                        MainView.notify("Incorrect Formatting of Properties");
                         e.printStackTrace();
                     }
                 }
                 try {
                     g.createNode(name, NodeType.O, props, parent.getName());
+                    MainView.notify("Object with name: " + name + " has been created");
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
                 } catch (Exception e) {
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1274,7 +1269,7 @@ public void updateGrid(Collection<Node> all_nodes){
             Map<String, String> props = new HashMap<>();
             if (name == null || name == "") {
                 nameField.focus();
-                notify("Name is Required");
+                MainView.notify("Name is Required");
             } else {
                 if (propString != null) {
                     try {
@@ -1282,17 +1277,18 @@ public void updateGrid(Collection<Node> all_nodes){
                             props.put(prop.split("=")[0], prop.split("=")[1]);
                         }
                     } catch (Exception e) {
-                        notify("Incorrect Formatting of Properties");
+                        MainView.notify("Incorrect Formatting of Properties");
                         e.printStackTrace();
                     }
                 }
                 try {
                     g.updateNode(name, props);
+                    MainView.notify("Node with name: " + name + " has been edited");
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
                 } catch (Exception e) {
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1312,10 +1308,12 @@ public void updateGrid(Collection<Node> all_nodes){
 
         Button button = new Button("Delete", event -> {
             try {
-                g.deleteNode(n.getName());
+                String name = n.getName();
+                g.deleteNode(name);
+                MainView.notify("Node with name: " + name + " has been deleted");
             } catch (PMException e) {
-                //notify(e.getMessage());
-                notify("You have to delete all assignment on that node first.");
+                MainView.notify(e.getMessage());
+//                MainView.notify("You have to delete all assignment on that node first.");
                 e.printStackTrace();
             }
             childNode.refreshGraph();
@@ -1339,13 +1337,13 @@ public void updateGrid(Collection<Node> all_nodes){
         if (child != null && parent != null) {
             try {
                 g.assign(child.getName(), parent.getName());
-                notify(child.getName() + " assigned to " + parent.getName());
+                MainView.notify(child.getName() + " assigned to " + parent.getName());
             } catch (PMException e) {
                 e.printStackTrace();
-                notify(e.getMessage());
+                MainView.notify(e.getMessage());
             }
         } else {
-            notify("Must choose both a parent and a child for assignment");
+            MainView.notify("Must choose both a parent and a child for assignment");
         }
     }
 
@@ -1360,6 +1358,7 @@ public void updateGrid(Collection<Node> all_nodes){
             Button button = new Button("Delete", event -> {
                 try {
                     g.deassign(child.getName(), parent.getName());
+                    MainView.notify(child.getName() + " un-assigned from " + parent.getName());
                 } catch (PMException e) {
                     System.out.println(e.getMessage());
                     e.printStackTrace();
@@ -1380,7 +1379,7 @@ public void updateGrid(Collection<Node> all_nodes){
             dialog.add(form);
             dialog.open();
         } else {
-            notify("Must choose both a parent and a child for de-assignment");
+            MainView.notify("Must choose both a parent and a child for de-assignment");
         }
     }
 
@@ -1420,21 +1419,20 @@ public void updateGrid(Collection<Node> all_nodes){
             opString.addAll(opsSelectAdmin.getValue());
             OperationSet ops = new OperationSet();
             if (opString == null || opString.equals("")) {
-                notify("Operations are Required");
+                MainView.notify("Operations are Required");
             } else {
                 try {
                     ops.addAll(opString);
                 } catch (Exception e) {
-                    notify("Incorrect Formatting of Operations");
+                    MainView.notify("Incorrect Formatting of Operations");
                     e.printStackTrace();
                 }
                 try {
-                    System.out.println("ops: " + ops);
                     g.associate(selectedChildNode.getName(), selectedParentNode.getName(), ops);
-                    notify("Association Created");
+                    MainView.notify(selectedChildNode.getName() + " assigned to " + selectedParentNode.getName());
                     dialog.close();
                 } catch (Exception e) {
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1502,7 +1500,7 @@ public void updateGrid(Collection<Node> all_nodes){
                 opsSelectAdmin.setValue(existingAdminsOp);
             }
         } catch (PMException e) {
-            notify(e.getMessage());
+            MainView.notify(e.getMessage());
             e.printStackTrace();
         }
 
@@ -1513,20 +1511,20 @@ public void updateGrid(Collection<Node> all_nodes){
             opString.addAll(opsSelectAdmin.getValue());
             OperationSet ops = new OperationSet();
             if (opString == null || opString.equals("")) {
-                notify("Operations are Required");
+                MainView.notify("Operations are Required");
             } else {
                 try {
                     ops.addAll(opString);
                 } catch (Exception e) {
-                    notify("Incorrect Formatting of Operations");
+                    MainView.notify("Incorrect Formatting of Operations");
                     e.printStackTrace();
                 }
                 try {
                     g.associate(selectedChildNode.getName(), selectedParentNode.getName(), ops);
-                    notify("Association Created");
+                    MainView.notify("Association between " + selectedChildNode.getName() + " and " + selectedParentNode.getName() + " has been modified");
                     dialog.close();
                 } catch (Exception e) {
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1547,8 +1545,8 @@ public void updateGrid(Collection<Node> all_nodes){
 
         Button button = new Button("Delete", event -> {
             try {
-                System.out.println("Deleting association between " + selectedChildNode.getName() + "-" + selectedChildNode.getType()+ " AND " + selectedParentNode.getName());
                 g.dissociate(selectedChildNode.getName(), selectedParentNode.getName());
+                MainView.notify("Association between " + selectedChildNode.getName() + " and " + selectedParentNode.getName() + " has been deleted");
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -1606,26 +1604,27 @@ public void updateGrid(Collection<Node> all_nodes){
             Map<String, Boolean> containers = containerField.getValue();
             if (opString == null || opString.equals("")) {
                 opsFeild.focus();
-                notify("Operations are Required");
+                MainView.notify("Operations are Required");
             } else if (name == null || name.equals("")) {
                 nameField.focus();
-                notify("Name is Required");
+                MainView.notify("Name is Required");
             } else if (containers.isEmpty()) {
-                notify("Containers are Required");
+                MainView.notify("Containers are Required");
             } else {
                 try {
                     for (String op : opString.split(",")) {
                         ops.add(op.replaceAll(" ", ""));
                     }
                 } catch (Exception e) {
-                    notify("Incorrect Formatting of Operations");
+                    MainView.notify("Incorrect Formatting of Operations");
                     e.printStackTrace();
                 }
                 try {
                     g.addProhibition(nameField.getValue(), selectedChildNode.getName(), containers, ops, intersection);
+                    MainView.notify("Prohibition with name: " + nameField.getValue() + " has been created");
                     dialog.close();
                 } catch (PMException e) {
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1639,6 +1638,7 @@ public void updateGrid(Collection<Node> all_nodes){
     }
 
     private void deleteProhibition() {
+        // TODO: is currently broken
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(FlexComponent.Alignment.BASELINE);
@@ -1648,6 +1648,8 @@ public void updateGrid(Collection<Node> all_nodes){
         Button button = new Button("Delete", event -> {
             try {
                 g.deleteProhibition(selectedChildNode.getName());
+                MainView.notify("Prohibition with name: " + selectedChildNode.getName() + " has been deleted");
+
 //                System.out.println("Deleting prohibition between " + selectedChildNode.getName() + "-" + selectedChildNode.getType()+ " AND " + selectedParentNode.getName());
 //                List<Prohibition> prohibtions = g.getProhibitionsFor(selectedChildNode.getName());
 //                prohibtions.removeIf(prohibition -> !prohibition.getSubject().equals(selectedParentNode.getName()));
@@ -1696,7 +1698,7 @@ public void updateGrid(Collection<Node> all_nodes){
             sourceToTargetOpsString = sourceToTargetOps.toString();
             sourceToTargetOpsString = sourceToTargetOpsString.substring(1, sourceToTargetOpsString.length() - 1);
         } catch (PMException e) {
-            notify(e.getMessage());
+            MainView.notify(e.getMessage());
             e.printStackTrace();
         }
 
@@ -1716,22 +1718,22 @@ public void updateGrid(Collection<Node> all_nodes){
             boolean intersection = intersectionFeild.getValue();
             if (opString == null || opString.equals("")) {
                 opsFeild.focus();
-                notify("Operations are Required");
+                MainView.notify("Operations are Required");
             } else {
                 try {
                     for (String op : opString.split(",")) {
                         ops.add(op.replaceAll(" ", ""));
                     }
                 } catch (Exception e) {
-                    notify("Incorrect Formatting of Operations");
+                    MainView.notify("Incorrect Formatting of Operations");
                     e.printStackTrace();
                 }
                 try {
 //                    g.updateProhibition(selectedChildNode.getName(), selectedChildNode.getName(), selectedParentNode.getName(), ops, intersection);
-                    notify("Prohibition Created");
+//                    MainView.notify("Prohibition with name: " + );
                     dialog.close();
                 } catch (Exception e) {
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -1754,6 +1756,7 @@ public void updateGrid(Collection<Node> all_nodes){
             try {
                 g.reset();
                 SingletonGraph.resetActivePCs();
+                MainView.notify("Graph has been reset");
                 childNode.refreshGraph();
                 parentNode.refreshGraph();
             } catch (PMException e) {
@@ -1774,11 +1777,6 @@ public void updateGrid(Collection<Node> all_nodes){
         dialog.add(form);
         dialog.open();
 
-    }
-
-    public void notify(String message){
-        Notification notif = new Notification(message, 3000);
-        notif.open();
     }
 
 }

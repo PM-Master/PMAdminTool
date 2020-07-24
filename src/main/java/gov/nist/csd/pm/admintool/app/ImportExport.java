@@ -118,22 +118,17 @@ public class ImportExport extends VerticalLayout {
                 try {
                     //SingletonGraph.getInstance().getGraphService(userCtx).fromJson(inputJson.getValue());
                     g.fromJson(inputJson.getValue());
-                    notify("The Json has been imported");
+                    MainView.notify("The Json has been imported");
                     //UI.getCurrent().getPage().reload();
                 } catch (PMException e) {
                     e.printStackTrace();
-                    notify(e.getMessage());
+                    MainView.notify(e.getMessage());
                 }
                 //updateGraph(inputJson.getValue());
             });
             importButton.setHeight("5%");
             add(inputJson);
             add(importButton);
-        }
-
-        public void notify(String message){
-            Notification notif = new Notification(message, 3000);
-            notif.open();
         }
     }
 
@@ -157,26 +152,16 @@ public class ImportExport extends VerticalLayout {
                     //exportJson.setValue(SingletonGraph.getInstance().getGraphService(userCtx).toJson());
                     exportJson.setValue(g.toJson());
                     //exportJson.setValue(SingletonGraph.getInstance().getPAP().getGraphPAP().toJson());
-                    notify("The graph has been exported into a JSON");
+                    MainView.notify("The graph has been exported into a JSON");
                 } catch (PMException e) {
                     e.printStackTrace();
-                    notify("error : " + e.getMessage());
+                    MainView.notify("error : " + e.getMessage());
                 }
             });
             exportButton.setHeight("5%");
             add(exportJson);
             add(exportButton);
         }
-
-        public void notify(String message){
-            Notification notif = new Notification(message, 3000);
-            notif.open();
-        }
-    }
-
-    public void notify(String message){
-        Notification notif = new Notification(message, 3000);
-        notif.open();
     }
 }
 

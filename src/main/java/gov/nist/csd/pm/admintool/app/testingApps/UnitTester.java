@@ -17,6 +17,7 @@ import gov.nist.csd.pm.admintool.actions.events.AssignEvent;
 import gov.nist.csd.pm.admintool.actions.events.DeassignEvent;
 import gov.nist.csd.pm.admintool.actions.events.DeassignFromEvent;
 import gov.nist.csd.pm.admintool.actions.events.Event;
+import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.actions.tests.*;
 import gov.nist.csd.pm.exceptions.PMException;
@@ -69,7 +70,7 @@ public class UnitTester extends VerticalLayout {
                 actions.add(tempTest);
                 refreshComponent();
             } else {
-                notify("test is null");
+                MainView.notify("test is null");
             }
         });
         form.add(test);
@@ -116,7 +117,7 @@ public class UnitTester extends VerticalLayout {
                                     uaIDSelect.setItems(g.getNodes());
                                 } catch (PMException e) {
                                     e.printStackTrace();
-                                    notify(e.getMessage());
+                                    MainView.notify(e.getMessage());
                                 }
                                 uaIDSelect.setLabel(key);
                                 uaIDSelect.setPlaceholder("Select Node");
@@ -226,10 +227,5 @@ public class UnitTester extends VerticalLayout {
         testSelect.setValue(null);
         params.removeAll();
         refreshListOfTests();
-    }
-
-    public void notify(String message){
-        Notification notif = new Notification(message, 3000);
-        notif.open();
     }
 }

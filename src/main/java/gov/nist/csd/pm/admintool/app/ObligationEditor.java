@@ -94,7 +94,7 @@ public class ObligationEditor extends VerticalLayout {
 //                    inputJson.clear();
                     obligationViewer.refreshGrid();
                 } catch (Exception e) {
-                    ObligationEditor.notify(event.getFileName() + " failed to parse");
+                    MainView.notify(event.getFileName() + " failed to parse");
                     e.printStackTrace();
                     System.out.println(e.getMessage());
                 }
@@ -161,7 +161,7 @@ public class ObligationEditor extends VerticalLayout {
             });
             contextMenu.addItem("View Source", event -> {
                 event.getItem().ifPresent(obli -> {
-                    ObligationEditor.notify("View Obligaiton Source Method");
+                    MainView.notify("View Obligaiton Source Method");
                 });
             });
         }
@@ -206,7 +206,7 @@ public class ObligationEditor extends VerticalLayout {
 
                     UserContext userContext = new UserContext("-1", "-1");
                     g.addObl(EVRParser.parse(userContext.getUser(), new ByteArrayInputStream(inputYaml.getValue().getBytes())));
-                    ObligationEditor.notify("Successfully imported obligation!");
+                    MainView.notify("Successfully imported obligation!");
                     inputYaml.clear();
                     dialog.close();
                     obligationViewer.refreshGrid();
@@ -244,7 +244,7 @@ public class ObligationEditor extends VerticalLayout {
                 String label = labelField.getValue();
                 if (label == null || label == "") {
                     labelField.focus();
-                    ObligationEditor.notify("Label is Required");
+                    MainView.notify("Label is Required");
                 } else {
                     obli.setLabel(label);
                     refreshGrid();
@@ -287,10 +287,5 @@ public class ObligationEditor extends VerticalLayout {
             dialog.add(form);
             dialog.open();
         }
-    }
-
-    private static void notify(String message){
-        Notification notif = new Notification(message, 3000);
-        notif.open();
     }
 }
