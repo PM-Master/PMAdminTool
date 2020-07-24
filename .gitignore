@@ -2,3 +2,4 @@
 pm-admin-tool.iml
 target
 *.iml
+node_modules
