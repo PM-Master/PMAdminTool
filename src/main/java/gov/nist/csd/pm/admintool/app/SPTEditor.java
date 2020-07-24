@@ -69,9 +69,10 @@ import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
         try {
             SptRuleParser ruleParser = new SptRuleParser(sptRule);
             ruleParser.parse();
-            MainView.notify("Graph updated");
+            MainView.notify("Graph updated", MainView.NotificationType.SUCCESS);
             analyseScript();
         } catch (Exception e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
     }

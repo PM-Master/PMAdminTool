@@ -85,7 +85,7 @@ public class POSTester extends VerticalLayout {
         Button submit = new Button("Update POS", event -> {
             Node selectedUser = userSelect.getValue();
             if (selectedUser == null) {
-                MainView.notify("User is required!");
+                MainView.notify("User is required!", MainView.NotificationType.DEFAULT);
             } else {
                 user = selectedUser;
                 updateGraph();
@@ -105,16 +105,16 @@ public class POSTester extends VerticalLayout {
         GridContextMenu<Node> contextMenu = new GridContextMenu<>(grid);
 
 //            contextMenu.addItem("Add Node", event -> addNode());
-        contextMenu.addItem("Edit Node", event -> {
-            event.getItem().ifPresent(node -> {
-                editNode(node);
-            });
-        });
-        contextMenu.addItem("Delete Node", event -> {
-            event.getItem().ifPresent(node -> {
-                deleteNode(node);
-            });
-        });
+//        contextMenu.addItem("Edit Node", event -> {
+//            event.getItem().ifPresent(node -> {
+//                editNode(node);
+//            });
+//        });
+//        contextMenu.addItem("Delete Node", event -> {
+//            event.getItem().ifPresent(node -> {
+//                deleteNode(node);
+//            });
+//        });
         contextMenu.addItem("Explain", event -> {
             event.getItem().ifPresent(node -> {
                 explain(user, node);
@@ -200,7 +200,7 @@ public class POSTester extends VerticalLayout {
             }
             grid.setItems(currNodes);
         } else {
-            MainView.notify("Select a User");
+            MainView.notify("Select a User", MainView.NotificationType.DEFAULT);
         }
     }
 
@@ -227,7 +227,7 @@ public class POSTester extends VerticalLayout {
             Map<String, String> props = new HashMap<>();
             if (name == null || name == "") {
                 nameField.focus();
-                MainView.notify("Name is Required");
+                MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
             } else {
                 if (propString != null) {
                     try {
@@ -235,7 +235,7 @@ public class POSTester extends VerticalLayout {
                             props.put(prop.split("=")[0], prop.split("=")[1]);
                         }
                     } catch (Exception e) {
-                        MainView.notify("Incorrect Formatting of Properties");
+                        MainView.notify("Incorrect Formatting of Properties", MainView.NotificationType.ERROR);
                         e.printStackTrace();
                     }
                 }
@@ -244,7 +244,7 @@ public class POSTester extends VerticalLayout {
                     updateGraph();
                     dialog.close();
                 } catch (Exception e) {
-                    MainView.notify(e.getMessage());
+                    MainView.notify(e.getMessage(), MainView.NotificationType.DEFAULT);
                     e.printStackTrace();
                 }
             }

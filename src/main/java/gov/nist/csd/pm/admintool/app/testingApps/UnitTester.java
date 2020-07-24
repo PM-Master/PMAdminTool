@@ -70,7 +70,7 @@ public class UnitTester extends VerticalLayout {
                 actions.add(tempTest);
                 refreshComponent();
             } else {
-                MainView.notify("test is null");
+                MainView.notify("No Test", MainView.NotificationType.DEFAULT);
             }
         });
         form.add(test);
@@ -117,7 +117,7 @@ public class UnitTester extends VerticalLayout {
                                     uaIDSelect.setItems(g.getNodes());
                                 } catch (PMException e) {
                                     e.printStackTrace();
-                                    MainView.notify(e.getMessage());
+                                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                                 }
                                 uaIDSelect.setLabel(key);
                                 uaIDSelect.setPlaceholder("Select Node");

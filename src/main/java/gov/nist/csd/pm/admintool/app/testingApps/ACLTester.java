@@ -61,7 +61,7 @@ public class ACLTester extends VerticalLayout {
         Button submit = new Button("Update ACL", event -> {
             Node selectedUser = attrSelect.getValue();
             if (selectedUser == null) {
-                MainView.notify("Attribute is required!");
+                MainView.notify("Attribute is required!", MainView.NotificationType.DEFAULT);
             } else {
                 attr = selectedUser;
                 updateGraph();
@@ -134,7 +134,7 @@ public class ACLTester extends VerticalLayout {
             }
             grid.setItems(currNodes);
         } else {
-            MainView.notify("Select an Attribute");
+            MainView.notify("Select an Attribute", MainView.NotificationType.DEFAULT);
         }
     }
 

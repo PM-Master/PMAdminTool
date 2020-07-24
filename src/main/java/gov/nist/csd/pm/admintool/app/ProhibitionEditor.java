@@ -95,7 +95,7 @@ public class ProhibitionEditor extends VerticalLayout {
 //                buttonGroup.refreshProhibitionText();
 //
 //                updateProhibitionInfoSection();
-                MainView.notify("in item click listener");
+                MainView.notify("in item click listener", MainView.NotificationType.DEFAULT);
             });
 
             createContextMenu(); // adds the content-specific context menu

@@ -118,11 +118,11 @@ public class ImportExport extends VerticalLayout {
                 try {
                     //SingletonGraph.getInstance().getGraphService(userCtx).fromJson(inputJson.getValue());
                     g.fromJson(inputJson.getValue());
-                    MainView.notify("The Json has been imported");
+                    MainView.notify("The Json has been imported", MainView.NotificationType.SUCCESS);
                     //UI.getCurrent().getPage().reload();
                 } catch (PMException e) {
                     e.printStackTrace();
-                    MainView.notify(e.getMessage());
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 }
                 //updateGraph(inputJson.getValue());
             });
@@ -152,10 +152,10 @@ public class ImportExport extends VerticalLayout {
                     //exportJson.setValue(SingletonGraph.getInstance().getGraphService(userCtx).toJson());
                     exportJson.setValue(g.toJson());
                     //exportJson.setValue(SingletonGraph.getInstance().getPAP().getGraphPAP().toJson());
-                    MainView.notify("The graph has been exported into a JSON");
+                    MainView.notify("The graph has been exported into a JSON", MainView.NotificationType.SUCCESS);
                 } catch (PMException e) {
                     e.printStackTrace();
-                    MainView.notify("error : " + e.getMessage());
+                    MainView.notify("error : " + e.getMessage(), MainView.NotificationType.ERROR);
                 }
             });
             exportButton.setHeight("5%");

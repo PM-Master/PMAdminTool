@@ -3,6 +3,8 @@ package gov.nist.csd.pm.admintool.app;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -158,9 +160,26 @@ public class MainView extends HorizontalLayout{
         }
     }
 
-    public static void notify(String message){
-        Notification notif = new Notification(message, 3000);
+    public static void notify(String message, NotificationType type){
+        Paragraph text = new Paragraph(message);
+        switch(type) {
+            case SUCCESS:
+                text.getStyle().set("color", "#009933"); //success
+                break;
+            case ERROR:
+                text.getStyle().set("color", "#990033"); //error
+                break;
+            case DEFAULT:
+            default:
+                break;
+        }
+        Notification notif = new Notification(text);
+        notif.setDuration(3000);
         notif.open();
+    }
+
+    public enum NotificationType {
+        SUCCESS, ERROR, DEFAULT
     }
 
 }
