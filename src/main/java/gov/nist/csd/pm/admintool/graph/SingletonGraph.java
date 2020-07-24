@@ -44,8 +44,6 @@ public class SingletonGraph extends PDP {
     private static MySQLConnection connection = new MySQLConnection();
 
     private SingletonGraph(PAP pap) throws PMException {
-        //super(pap, new OperationSet());
-        //super.initServices();
         super(pap, new EPPOptions(), new OperationSet());
 
         //Prevent form the reflection api.
@@ -313,13 +311,17 @@ public class SingletonGraph extends PDP {
                     if (node.getProperties().get("namespace") != null) {
                         if (node.getProperties().get("namespace").equalsIgnoreCase(policyClassWithActive.getName())) {
                             //remove nodes UA & OA
-                            nodes_to_remove.add(node);
+                            if (!policyClassWithActive.isActive()) {
+                                nodes_to_remove.add(node);
+                            }
                         }
                     }
                     if (node.getProperties().get("pc") != null) {
                         if (node.getProperties().get("pc").equalsIgnoreCase(policyClassWithActive.getName())) {
                             //remove nodes pc properties
-                            nodes_to_remove.add(node);
+                            if (!policyClassWithActive.isActive()) {
+                                nodes_to_remove.add(node);
+                            }
                         }
                     }
                 }
