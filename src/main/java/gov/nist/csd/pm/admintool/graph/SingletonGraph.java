@@ -1,6 +1,5 @@
 package gov.nist.csd.pm.admintool.graph;
 
-import gov.nist.csd.pm.epp.EPP;
 import gov.nist.csd.pm.epp.EPPOptions;
 import gov.nist.csd.pm.epp.events.EventContext;
 import gov.nist.csd.pm.exceptions.PMException;
@@ -34,9 +33,10 @@ import java.util.*;
  * It also implies the super context, so I have created "wrapper" methods which use the super
  * context automatically.
  */
-public class SingletonGraph extends PDP {
-    private Boolean isMysql;
+public class SingletonGraph {
+    private static Boolean isMysql;
     private static SingletonGraph g; // the single instance
+    private static PDP pdp;
     private static UserContext superContext;
     private static String superPCId, superUAId, superOAId;
     private static Random rand;
@@ -44,12 +44,16 @@ public class SingletonGraph extends PDP {
     private static MySQLConnection connection = new MySQLConnection();
 
     private SingletonGraph(PAP pap) throws PMException {
-        super(pap, new EPPOptions(), new OperationSet());
+        pdp = PDP.newPDP(pap, new EPPOptions(), new OperationSet());
 
         //Prevent form the reflection api.
-        if (g != null){
-            throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
-        }
+//        if (pdp == null){
+//            throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
+//        }
+    }
+
+    public synchronized static PDP getPDP() {
+        return getInstance().pdp;
     }
 
     public Boolean getMysql() {
@@ -118,7 +122,7 @@ public class SingletonGraph extends PDP {
             resourceOps.add(Operations.READ);
             resourceOps.add(Operations.WRITE);
             resourceOps.add(Operations.OBJECT_ACCESS);
-            g.setResourceOps(resourceOps);
+            getPDP().setResourceOps(resourceOps);
 
         } catch (PMException e) {
             System.out.println(e.getMessage());
@@ -172,7 +176,7 @@ public class SingletonGraph extends PDP {
             resourceOps.add(Operations.WRITE);
             resourceOps.add(Operations.OBJECT_ACCESS);
             //g.setResourceOps(resourceOps);
-            g.setResourceOps(resourceOps);
+            getPDP().setResourceOps(resourceOps);
 
         } catch (PMException e) {
             System.out.println(e.getMessage());
@@ -211,13 +215,13 @@ public class SingletonGraph extends PDP {
                 pcs.add(pc.name);
             }
         }
-            return "Active pcs: " + pcs.toString();
+        return "Active pcs: " + pcs.toString();
     }
 
-    public Node createPolicyClass(String name, Map<String, String> properties) throws PMException {
+    public static Node createPolicyClass(String name, Map<String, String> properties) throws PMException {
 
         if (superContext != null) {
-            Node newPC = g.getGraphService(superContext).createPolicyClass(name, properties);
+            Node newPC = getPDP().getGraphService(superContext).createPolicyClass(name, properties);
             activePCs.add(new PolicyClassWithActive(newPC));
             return newPC;
         } else {
@@ -240,12 +244,12 @@ public class SingletonGraph extends PDP {
     // wrapped methods (implies super context) \\
     // graph service methods
     public void reset() throws PMException {
-        g.getGraphService(superContext).reset(superContext);
+        getPDP().getGraphService(superContext).reset(superContext);
     }
 
     public Node createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).createNode(name, type, properties, parent );
+            return getPDP().getGraphService(superContext).createNode(name, type, properties, parent );
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -254,16 +258,16 @@ public class SingletonGraph extends PDP {
     public String getPolicyClassDefault(String pc, NodeType type) throws PMException {
         if (pc.equalsIgnoreCase("0")) {
             if (superContext != null) {
-                return g.getGraphService(superContext).getPolicyClassDefault(superPCId, type);
+                return getPDP().getGraphService(superContext).getPolicyClassDefault(superPCId, type);
             } else {
                 throw new PMException("Super Context is Null");
             }
-        } else return g.getGraphService(superContext).getPolicyClassDefault(pc, type);
+        } else return getPDP().getGraphService(superContext).getPolicyClassDefault(pc, type);
     }
 
     public void updateNode(String name, Map<String, String> properties) throws PMException {
         if (superContext != null) {
-            g.getGraphService(superContext).updateNode(name, properties);
+            getPDP().getGraphService(superContext).updateNode(name, properties);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -271,7 +275,7 @@ public class SingletonGraph extends PDP {
 
     public void deleteNode(String name) throws PMException {
         if (superContext != null) {
-            g.getGraphService(superContext).deleteNode(name);
+            getPDP().getGraphService(superContext).deleteNode(name);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -279,7 +283,7 @@ public class SingletonGraph extends PDP {
 
     public boolean exists(String name) throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).exists(name);
+            return getPDP().getGraphService(superContext).exists(name);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -287,7 +291,7 @@ public class SingletonGraph extends PDP {
 
     public Set<Node> getNodes() throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).getNodes();
+            return getPDP().getGraphService(superContext).getNodes();
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -333,7 +337,7 @@ public class SingletonGraph extends PDP {
 
     public Set<String> getPolicies() throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).getPolicyClasses();
+            return getPDP().getGraphService(superContext).getPolicyClasses();
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -341,7 +345,7 @@ public class SingletonGraph extends PDP {
 
     public Set<String> getChildren(String name) throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).getChildren(name);
+            return getPDP().getGraphService(superContext).getChildren(name);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -349,7 +353,7 @@ public class SingletonGraph extends PDP {
 
     public Set<String> getParents(String node) throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).getParents(node);
+            return getPDP().getGraphService(superContext).getParents(node);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -357,7 +361,7 @@ public class SingletonGraph extends PDP {
 
     public void assign(String child, String parent) throws PMException {
         if (superContext != null) {
-            g.getGraphService(superContext).assign(child, parent);
+            getPDP().getGraphService(superContext).assign(child, parent);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -365,7 +369,7 @@ public class SingletonGraph extends PDP {
 
     public void deassign(String child, String parent) throws PMException {
         if (superContext != null) {
-            g.getGraphService(superContext).deassign(child, parent);
+            getPDP().getGraphService(superContext).deassign(child, parent);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -373,7 +377,7 @@ public class SingletonGraph extends PDP {
 
     public void associate(String ua, String target, OperationSet operations) throws PMException {
         if (superContext != null) {
-            g.getGraphService(superContext).associate(ua, target, operations);
+            getPDP().getGraphService(superContext).associate(ua, target, operations);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -381,7 +385,7 @@ public class SingletonGraph extends PDP {
 
     public void dissociate(String ua, String target) throws PMException {
         if (superContext != null) {
-            g.getGraphService(superContext).dissociate(ua, target);
+            getPDP().getGraphService(superContext).dissociate(ua, target);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -389,7 +393,7 @@ public class SingletonGraph extends PDP {
 
     public Map<String, OperationSet> getSourceAssociations(String source) throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).getSourceAssociations(source);
+            return getPDP().getGraphService(superContext).getSourceAssociations(source);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -397,7 +401,7 @@ public class SingletonGraph extends PDP {
 
     public Map<String, OperationSet> getTargetAssociations(String target) throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).getTargetAssociations(target);
+            return getPDP().getGraphService(superContext).getTargetAssociations(target);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -405,7 +409,7 @@ public class SingletonGraph extends PDP {
 
     public Set<Node> search(String name, String type, Map<String, String> properties) throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).search(NodeType.toNodeType(type), properties);
+            return getPDP().getGraphService(superContext).search(NodeType.toNodeType(type), properties);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -413,7 +417,7 @@ public class SingletonGraph extends PDP {
 
     public Node getNode(String name) throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).getNode(name);
+            return getPDP().getGraphService(superContext).getNode(name);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -421,7 +425,7 @@ public class SingletonGraph extends PDP {
 
     public void fromJson(String s) throws PMException {
         if (superContext != null) {
-            g.getGraphService(superContext).fromJson(s);
+            getPDP().getGraphService(superContext).fromJson(s);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -429,7 +433,7 @@ public class SingletonGraph extends PDP {
 
     public String toJson() throws PMException {
         if (superContext != null) {
-            return g.getGraphService(superContext).toJson();
+            return getPDP().getGraphService(superContext).toJson();
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -440,7 +444,7 @@ public class SingletonGraph extends PDP {
 
     public void processEvent (EventContext eventCtx) throws PMException {
         if (superContext != null) {
-            g.getEPP().processEvent(eventCtx);
+            getPDP().getEPP().processEvent(eventCtx);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -449,7 +453,7 @@ public class SingletonGraph extends PDP {
     // obligation service methods
     public void addObl(Obligation obligation) throws PMException {
         if (superContext != null) {
-            g.getObligationsService(superContext).add(obligation, true);
+            getPDP().getObligationsService(superContext).add(obligation, true);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -457,7 +461,7 @@ public class SingletonGraph extends PDP {
 
     public Obligation getObl(String label) throws PMException {
         if (superContext != null) {
-            return g.getObligationsService(superContext).get(label);
+            return getPDP().getObligationsService(superContext).get(label);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -465,7 +469,7 @@ public class SingletonGraph extends PDP {
 
     public List<Obligation> getAllObls() throws PMException {
         if (superContext != null) {
-            return g.getObligationsService(superContext).getAll();
+            return getPDP().getObligationsService(superContext).getAll();
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -473,7 +477,7 @@ public class SingletonGraph extends PDP {
 
     public void updateObl(String label, Obligation obligation) throws PMException {
         if (superContext != null) {
-            g.getObligationsService(superContext).update(label, obligation);
+            getPDP().getObligationsService(superContext).update(label, obligation);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -481,7 +485,7 @@ public class SingletonGraph extends PDP {
 
     public void deleteObl(String label) throws PMException {
         if (superContext != null) {
-            g.getObligationsService(superContext).delete(label);
+            getPDP().getObligationsService(superContext).delete(label);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -489,7 +493,7 @@ public class SingletonGraph extends PDP {
 
     public void enableObl(String label) throws PMException {
         if (superContext != null) {
-            g.getObligationsService(superContext).setEnable(label, true);
+            getPDP().getObligationsService(superContext).setEnable(label, true);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -497,7 +501,7 @@ public class SingletonGraph extends PDP {
 
     public List<Obligation> getEnabledObls() throws PMException {
         if (superContext != null) {
-            return g.getObligationsService(superContext).getEnabled();
+            return getPDP().getObligationsService(superContext).getEnabled();
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -516,7 +520,7 @@ public class SingletonGraph extends PDP {
     // prohibition service methods
     public List<Prohibition> getAllProhibitions() throws PMException {
         if (superContext != null) {
-            return g.getProhibitionsService(superContext).getAll();
+            return getPDP().getProhibitionsService(superContext).getAll();
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -527,7 +531,7 @@ public class SingletonGraph extends PDP {
                 .setIntersection(intersection);
         containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
         if (superContext != null) {
-            g.getProhibitionsService(superContext).add(builder.build());
+            getPDP().getProhibitionsService(superContext).add(builder.build());
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -535,7 +539,7 @@ public class SingletonGraph extends PDP {
 
     public Prohibition getProhibition(String prohibitionName) throws PMException {
         if (superContext != null) {
-            return g.getProhibitionsService(superContext).get(prohibitionName);
+            return getPDP().getProhibitionsService(superContext).get(prohibitionName);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -543,7 +547,7 @@ public class SingletonGraph extends PDP {
 
     public List<Prohibition> getProhibitionsFor(String subject) throws PMException {
         if (superContext != null) {
-            return g.getProhibitionsService(superContext).getProhibitionsFor(subject);
+            return getPDP().getProhibitionsService(superContext).getProhibitionsFor(subject);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -551,7 +555,7 @@ public class SingletonGraph extends PDP {
 
     public List<Prohibition> getProhibitionsFrom(String target) throws PMException {
         if (superContext != null) {
-            List<Prohibition> allProhibitions = g.getProhibitionsService(superContext).getAll();
+            List<Prohibition> allProhibitions = getPDP().getProhibitionsService(superContext).getAll();
             allProhibitions.removeIf((prohibition) -> !prohibition.getContainers().keySet().contains(target));
             return allProhibitions;
         } else {
@@ -564,7 +568,7 @@ public class SingletonGraph extends PDP {
                 .setIntersection(intersection);
         containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
         if (superContext != null) {
-            g.getProhibitionsService(superContext).update(prohibitionName, builder.build());
+            getPDP().getProhibitionsService(superContext).update(prohibitionName, builder.build());
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -572,7 +576,7 @@ public class SingletonGraph extends PDP {
 
     public void deleteProhibition(String prohibitionName) throws PMException {
         if (superContext != null) {
-            g.getProhibitionsService(superContext).delete(prohibitionName);
+            getPDP().getProhibitionsService(superContext).delete(prohibitionName);
         } else {
             throw new PMException("Super Context is Null");
         }
@@ -606,6 +610,10 @@ public class SingletonGraph extends PDP {
         }
     }
 
+    public Set<String> getResourceOps() throws PMException {
+        return getPDP().getResourceOps();
+    }
+
     public Set<String> getResourceOpsWithStars() throws PMException {
         if (superContext != null) {
             Set<String> ret = getResourceOps();
@@ -615,6 +623,14 @@ public class SingletonGraph extends PDP {
         } else {
             throw new PMException("Super Context is Null");
         }
+    }
+
+    public void addResourceOps (String... ops) throws PMException {
+        getPDP().addResourceOps(ops);
+    }
+
+    public void deleteResourceOps (String... ops) throws PMException {
+        getPDP().deleteResourceOps(ops);
     }
 
 

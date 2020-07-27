@@ -8,9 +8,7 @@ import gov.nist.csd.pm.pdp.audit.model.Path;
 import gov.nist.csd.pm.pdp.audit.model.PolicyClass;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
-import javax.xml.crypto.KeySelector;
 import java.util.*;
 
 public class SptRuleParser{
@@ -280,7 +278,7 @@ public class SptRuleParser{
             Explain explain = null;
 
             try {
-                explain = g.getAnalyticsService((new UserContext(user.getName(), rand.toString()))).explain(user.getName(), target.getName());
+                explain = g.getPDP().getAnalyticsService((new UserContext(user.getName(), rand.toString()))).explain(user.getName(), target.getName());
             } catch (PMException e) {
                 e.printStackTrace();
                 System.out.println(e.getMessage());

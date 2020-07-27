@@ -32,7 +32,7 @@ public class CheckPermission extends Test {
         if (uID != null && targetID != null && permission != null) {
             SingletonGraph g = SingletonGraph.getInstance();
             try {
-                Set<String> perms = g.getAnalyticsService(new UserContext(uID.getName(), rand.toString())).getPermissions(targetID.getName());
+                Set<String> perms = g.getPDP().getAnalyticsService(new UserContext(uID.getName(), rand.toString())).getPermissions(targetID.getName());
                 for (String perm: perms) {
                     if (perm.equals(permission)) {
                         return true;
@@ -56,7 +56,7 @@ public class CheckPermission extends Test {
             Explain explain = null;
 
             try {
-                explain = g.getAnalyticsService(new UserContext(user.getName(), rand.toString())).explain(user.getName(), target.getName());
+                explain = g.getPDP().getAnalyticsService(new UserContext(user.getName(), rand.toString())).explain(user.getName(), target.getName());
             } catch (PMException e) {
                 e.printStackTrace();
                 System.out.println(e.getMessage());

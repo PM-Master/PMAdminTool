@@ -10,19 +10,16 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.function.ValueProvider;
 import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pdp.audit.model.Explain;
 import gov.nist.csd.pm.pdp.audit.model.Path;
 import gov.nist.csd.pm.pdp.audit.model.PolicyClass;
@@ -155,7 +152,7 @@ public class POSTester extends VerticalLayout {
         permissions.add("None");
 
         try {
-            permissions = g.getAnalyticsService(new UserContext(user.getName())).getPermissions(node.getName());
+            permissions = g.getPDP().getAnalyticsService(new UserContext(user.getName())).getPermissions(node.getName());
         } catch (PMException e) {
             e.printStackTrace();
         }
@@ -193,7 +190,7 @@ public class POSTester extends VerticalLayout {
             Set<Node> currNodes = new HashSet<>();
             try {
                 UserContext userContext = new UserContext(user.getName(), rand.toString());
-                currNodes = g.getGraphService(userContext).getNodes();
+                currNodes = g.getPDP().getGraphService(userContext).getNodes();
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -291,7 +288,7 @@ public class POSTester extends VerticalLayout {
         form.setAlignItems(FlexComponent.Alignment.BASELINE);
 
 
-        AnalyticsService analyticsService = g.getAnalyticsService(new UserContext(user.getName()));
+        AnalyticsService analyticsService = g.getPDP().getAnalyticsService(new UserContext(user.getName()));
         String explanation;
         Explain explain = null;
 
