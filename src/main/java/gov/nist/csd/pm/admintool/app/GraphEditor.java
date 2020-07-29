@@ -2,13 +2,9 @@ package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
-import com.vaadin.flow.component.Text;
-import com.vaadin.flow.component.accordion.Accordion;
-import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
-import com.vaadin.flow.component.details.DetailsVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
@@ -16,7 +12,6 @@ import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -24,12 +19,10 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
-import com.vaadin.flow.data.provider.DataProvider;
-import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.*;
-import com.vaadin.flow.dom.Style;
 import gov.nist.csd.pm.admintool.app.blips.*;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
+import gov.nist.csd.pm.admintool.app.customElements.Toggle;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
@@ -51,10 +44,8 @@ public class GraphEditor extends VerticalLayout {
     private Node selectedParentNode;
     private NodeLayout parentNode;
     private GraphButtonGroup buttonGroup;
-    private Random rand;
 
     public GraphEditor() {
-        rand = new Random();
         g = SingletonGraph.getInstance();
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
@@ -83,11 +74,15 @@ public class GraphEditor extends VerticalLayout {
     private class NodeLayout extends VerticalLayout {
         // general fields
         private TreeGrid<Node> grid;
-        private Button backButton;
         private Stack<Collection<Node>> prevNodes; // Contains the nodes for going 'back'
         private Stack<String> prevNodeNames; // Contains the String for going 'back'
         private Collection<Node> currNodes; // The current nodes in the grid
+
+        // for title section
+        private H2 titleText;
         private H3 currNodeName; // The current node whose children are being shown
+        private Button backButton;
+        private Toggle ouToggle;
 
         // for node info section
         private H3 name;
@@ -117,16 +112,25 @@ public class GraphEditor extends VerticalLayout {
             // title layout config
             HorizontalLayout title = new HorizontalLayout();
             title.setAlignItems(Alignment.BASELINE);
-            title.setWidthFull();
             title.setJustifyContentMode(JustifyContentMode.START);
+            title.setWidthFull();
+            title.getStyle()
+                    .set("overflow-y", "hidden")
+                    .set("overflow-x", "scroll");
             add(title);
 
             // title text
+            titleText = new H2();
             if (isSource) {
-                title.add(new H2("Source:"));
+                titleText.setText("Source:");
             } else {
-                title.add(new H2("Destination:"));
+                titleText.setText("Destination:");
             }
+            title.add(titleText);
+
+            // current parent node whose children are being shown
+            currNodeName = new H3("All Nodes");
+            title.add(currNodeName);
 
             // back button
             backButton = new Button(new Icon(VaadinIcon.ARROW_BACKWARD));
@@ -159,11 +163,12 @@ public class GraphEditor extends VerticalLayout {
             backButton.setEnabled(false);
             title.add(backButton);
 
-            // current parent node whose children are being shown
-            currNodeName = new H3("All Nodes");
-
-            title.getStyle().set("overflow-y", "hidden").set("overflow-x", "scroll");
-            title.add(currNodeName);
+            // object/user selector
+            ouToggle = new Toggle("All", "Users", "All", "Objects");
+            ouToggle.addValueChangeListener(event -> {
+                MainView.notify(event.getValue(), MainView.NotificationType.DEFAULT);
+            });
+            add(ouToggle);
         }
         private void addGridLayout () {
             prevNodes = new Stack<>(); // for the navigation system
@@ -622,25 +627,6 @@ public class GraphEditor extends VerticalLayout {
             }
             all_nodes.removeAll(nodes_to_remove);
 
-            //final ListDataProvider<Node> dataProvider = DataProvider.ofCollection(all_nodes);
-
-//            ValueProvider<Node, Collection<Node>> childValueProvider = (node) -> {
-//                Collection<Node> children = new HashSet<>();
-//                try{
-//                    Set<String> childrenNames = g.getChildren(node.getName());
-//                    //System.out.println("getting children nodes");
-//                    for (String name: childrenNames) {
-//                        children.add(g.getNode(name));
-//                    }
-//                } catch (PMException e) {
-//                    e.printStackTrace();
-//                }
-//                return children;
-//            };
-//            TreeData<Node> treeData = new TreeData<>();
-//            treeData.addItems(all_nodes, childValueProvider);
-//            TreeDataProvider<Node> treeDataProvider = new TreeDataProvider<>(treeData);
-//            grid.setDataProvider(treeDataProvider);
 
             HierarchicalDataProvider dataProvider = new AbstractBackEndHierarchicalDataProvider<Node, Void>() {
                 @Override
