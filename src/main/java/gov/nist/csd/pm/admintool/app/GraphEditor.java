@@ -34,6 +34,7 @@ import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
 import org.vaadin.gatanaso.MultiselectComboBox;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,6 +80,7 @@ public class GraphEditor extends VerticalLayout {
         private Stack<Collection<Node>> prevNodes; // Contains the nodes for going 'back'
         private Stack<String> prevNodeNames; // Contains the String for going 'back'
         private Collection<Node> currNodes; // The current nodes in the grid
+        private Map<String, Predicate<? super String>> filters;
 
         // for title section
         private H2 titleText;
@@ -103,9 +105,13 @@ public class GraphEditor extends VerticalLayout {
                 getStyle().set("background", "lightcoral");
             }
 
+            filters = new HashMap<>();
+
             addTitleLayout();
             addGridLayout();
             addNodeInfoLayout();
+
+            refreshGraph();
         }
 
         private void addTitleLayout () {
@@ -171,36 +177,36 @@ public class GraphEditor extends VerticalLayout {
 
                 switch (event.getValue()) {
                     case "Users":
-                        try {
-                            currNodes = g.getNodes().stream()
-                                    .filter(node_k -> node_k.getType() == NodeType.U).collect(Collectors.toList());
-                            System.out.println("users : " + currNodes);
-                            updateGrid(currNodes);
-                            //grid.sort(Arrays.asList(new GridSortOrder<>(grid.getColumnByKey("name"), SortDirection.DESCENDING)));
-                        } catch (PMException e) {
-                            e.printStackTrace();
-                        }
+                        Predicate<? super String> filterUsers = nodeName -> {
+                            try {
+                                return !(g.getNode(nodeName).getType() == NodeType.O || g.getNode(nodeName).getType() == NodeType.OA);
+                            } catch (PMException e) {
+                                e.printStackTrace();
+                                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                                return false;
+                            }
+                        };
+                        filters.clear();
+                        filters.put("Users", filterUsers);
+                        refreshGraph();
                         break;
                     case "Objects":
-                        try {
-                            currNodes = g.getNodes().stream()
-                                    .filter(node_k -> node_k.getType() == NodeType.O).collect(Collectors.toList());
-                            System.out.println("objects : " + currNodes);
-                            updateGrid(currNodes);
-                            //grid.sort(Arrays.asList(new GridSortOrder<>(grid.getColumnByKey("name"), SortDirection.DESCENDING)));
-
-                        } catch (PMException e) {
-                            e.printStackTrace();
-                        }
+                        Predicate<? super String> filterObjects = nodeName -> {
+                            try {
+                                return !(g.getNode(nodeName).getType() == NodeType.U || g.getNode(nodeName).getType() == NodeType.UA);
+                            } catch (PMException e) {
+                                e.printStackTrace();
+                                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                                return false;
+                            }
+                        };
+                        filters.clear();
+                        filters.put("Objects", filterObjects);
+                        refreshGraph();
                         break;
                     case "All":
-                        try {
-                            currNodes = new ArrayList<>(g.getNodes());
-                            System.out.println("all : " + currNodes);
-                            refreshGraph();
-                        } catch (PMException e) {
-                            e.printStackTrace();
-                        }
+                        filters.clear();
+                        refreshGraph();
                 }
                 MainView.notify(event.getValue(), MainView.NotificationType.DEFAULT);
             });
@@ -213,8 +219,6 @@ public class GraphEditor extends VerticalLayout {
             // grid config
             grid = new TreeGrid<>(Node.class);
             createContextMenu(); // adds the content-specific context menu
-
-            refreshGraph();
 
             grid.getStyle()
                     .set("border-radius", "1px")
@@ -628,42 +632,6 @@ public class GraphEditor extends VerticalLayout {
         }
 
         public void updateGrid(Collection<Node> all_nodes){
-            // TODO: filter to only have nodes in the active PC's
-            Set<SingletonGraph.PolicyClassWithActive> pcs = SingletonGraph.getActivePCs();
-            Set<Node> nodes_to_remove = new HashSet<>();
-
-            for (Node node : all_nodes) {
-                for (SingletonGraph.PolicyClassWithActive policyClassWithActive : pcs) {
-                    if (node.getType() == NodeType.PC) {
-                        if (policyClassWithActive.getName().equalsIgnoreCase(node.getName())) {
-                            if (!policyClassWithActive.isActive()) {
-                                //only remove PC's
-                                nodes_to_remove.add(node);
-                            }
-                        }
-                    } else {
-                        if (node.getProperties().get("namespace") != null) {
-                            if (!policyClassWithActive.isActive()) {
-                                if (node.getProperties().get("namespace").equalsIgnoreCase(policyClassWithActive.getName())) {
-                                    //remove nodes UA & OA
-                                    nodes_to_remove.add(node);
-                                }
-                            }
-                        }
-                        if (node.getProperties().get("pc") != null) {
-                            if (!policyClassWithActive.isActive()) {
-                                if (node.getProperties().get("pc").equalsIgnoreCase(policyClassWithActive.getName())) {
-                                    //remove nodes pc properties
-                                    nodes_to_remove.add(node);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            all_nodes.removeAll(nodes_to_remove);
-
-
             HierarchicalDataProvider dataProvider = new AbstractBackEndHierarchicalDataProvider<Node, Void>() {
                 @Override
                 public int getChildCount(HierarchicalQuery<Node, Void> query) {
@@ -677,7 +645,11 @@ public class GraphEditor extends VerticalLayout {
                         } else {
                             Optional<Node> node = query.getParentOptional();
                             if (node.isPresent()) {
-                                return g.getChildren(node.get().getName()).size();
+                                Set<String> children = g.getChildren(node.get().getName());
+                                for(Predicate<? super String> filter: filters.values()) {
+                                    children = children.stream().filter(filter).collect(Collectors.toSet());
+                                }
+                                return children.size();
                             } else {
                                 return all_nodes.size();
                             }
@@ -692,7 +664,11 @@ public class GraphEditor extends VerticalLayout {
                 @Override
                 public boolean hasChildren(Node item) {
                     try {
-                        return g.getChildren(item.getName()).size() > 0;
+                        Set<String> children = g.getChildren(item.getName());
+                        for(Predicate<? super String> filter: filters.values()) {
+                            children = children.stream().filter(filter).collect(Collectors.toSet());
+                        }
+                        return children.size() > 0;
                     } catch (PMException e) {
                         e.printStackTrace();
                         MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -712,6 +688,10 @@ public class GraphEditor extends VerticalLayout {
                             Optional<Node> node = query.getParentOptional();
                             if (node.isPresent()) {
                                 Set<String> childrenNames = g.getChildren(query.getParent().getName());
+                                for(Predicate<? super String> filter: filters.values()) {
+                                    childrenNames = childrenNames.stream().filter(filter).collect(Collectors.toSet());
+                                }
+
                                 for (String name: childrenNames) {
                                     children.add(g.getNode(name));
                                 }
@@ -733,6 +713,7 @@ public class GraphEditor extends VerticalLayout {
         public void refreshGraph() {
             currNodes = new HashSet<>();
             try {
+                // TODO: Filter active PC's
                 Set<String> pcNames = g.getPolicies();
                 for (String name: pcNames) {
                     currNodes.add(g.getNode(name));
@@ -740,12 +721,18 @@ public class GraphEditor extends VerticalLayout {
             } catch (PMException e) {
                 e.printStackTrace();
             }
+            // TODO: Revert back to previous grid state - make this a new class
             updateGrid(currNodes);
             grid.deselectAll();
-            selectedParentNode = null;
+            if (isSource) {
+                selectedChildNode = null;
+            } else {
+                selectedParentNode = null;
+            }
             buttonGroup.refreshNodeTexts();
             buttonGroup.refreshButtonStates();
             backButton.setEnabled(false);
+            updateNodeInfoSection();
         }
 
         private void createContextMenu() {

@@ -153,6 +153,3 @@ public class Toggle extends CustomField<String> {
         LEFT, MIDDLE, RIGHT, SOLO
     }
 }
-
-
-
