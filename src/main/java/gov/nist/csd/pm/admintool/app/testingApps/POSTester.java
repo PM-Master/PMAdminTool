@@ -16,6 +16,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.treegrid.TreeGrid;
+import com.vaadin.flow.data.provider.hierarchy.AbstractBackEndHierarchicalDataProvider;
+import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
+import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery;
 import com.vaadin.flow.function.ValueProvider;
 import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
@@ -29,10 +33,11 @@ import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class POSTester extends VerticalLayout {
     private Select<Node> userSelect;
-    private Grid<Node> grid;
+    private TreeGrid<Node> grid;
     private Node user;
     private SingletonGraph g;
     private static Random rand = new Random();
@@ -54,7 +59,7 @@ public class POSTester extends VerticalLayout {
 
         g = SingletonGraph.getInstance();
         userSelect = new Select<>();
-        grid = new Grid<>(Node.class);
+        grid = new TreeGrid<>(Node.class);
 
         addUserSelectForm();
         addGrid();
@@ -96,7 +101,8 @@ public class POSTester extends VerticalLayout {
     private void addGrid() {
         // grid config
         grid.getStyle()
-                .set("border-radius", "2px");
+                .set("border-radius", "2px")
+                .set("user-select", "none");
 
         ///// context menu /////
         GridContextMenu<Node> contextMenu = new GridContextMenu<>(grid);
@@ -119,10 +125,10 @@ public class POSTester extends VerticalLayout {
         });
         ///// end of context menu /////
 
-        grid.setItems(new HashSet<>());
         grid.setColumnReorderingAllowed(true);
         grid.removeColumnByKey("id");
         grid.removeColumnByKey("properties");
+        grid.setHierarchyColumn("name");
         grid.getColumnByKey("name")
                 .setFlexGrow(2)
                 .setResizable(true);
@@ -132,7 +138,8 @@ public class POSTester extends VerticalLayout {
                 .setHeader("Permissions")
                 .setKey("permissions");
         grid.getColumnByKey("permissions")
-                .setFlexGrow(2);
+                .setFlexGrow(2)
+                .setResizable(true);
 
         grid.removeColumnByKey("type");
         grid.addColumn(Node::getType)
@@ -141,8 +148,6 @@ public class POSTester extends VerticalLayout {
         grid.getColumnByKey("type")
                 .setTextAlign(ColumnTextAlign.END)
                 .setWidth("20%");
-
-
 
         add(grid);
     }
@@ -190,15 +195,125 @@ public class POSTester extends VerticalLayout {
             Set<Node> currNodes = new HashSet<>();
             try {
                 UserContext userContext = new UserContext(user.getName(), rand.toString());
-                currNodes = g.getPDP().getGraphService(userContext).getNodes();
+//                currNodes = g.getPDP().getGraphService(userContext).getNodes();
+                currNodes = g.getPDP().getAnalyticsService(userContext).getPos(userContext);
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
             }
-            grid.setItems(currNodes);
+
+            updateGrid(currNodes);
+            grid.deselectAll();
         } else {
             MainView.notify("Select a User", MainView.NotificationType.DEFAULT);
         }
+    }
+
+    public void updateGrid(Collection<Node> all_nodes){
+        // TODO: filter to only have nodes in the active PC's
+        Set<SingletonGraph.PolicyClassWithActive> pcs = SingletonGraph.getActivePCs();
+        Set<Node> nodes_to_remove = new HashSet<>();
+
+        for (Node node : all_nodes) {
+            for (SingletonGraph.PolicyClassWithActive policyClassWithActive : pcs) {
+                if (node.getType() == NodeType.PC) {
+                    if (policyClassWithActive.getName().equalsIgnoreCase(node.getName())) {
+                        if (!policyClassWithActive.isActive()) {
+                            //only remove PC's
+                            nodes_to_remove.add(node);
+                        }
+                    }
+                } else {
+                    if (node.getProperties().get("namespace") != null) {
+                        if (!policyClassWithActive.isActive()) {
+                            if (node.getProperties().get("namespace").equalsIgnoreCase(policyClassWithActive.getName())) {
+                                //remove nodes UA & OA
+                                nodes_to_remove.add(node);
+                            }
+                        }
+                    }
+                    if (node.getProperties().get("pc") != null) {
+                        if (!policyClassWithActive.isActive()) {
+                            if (node.getProperties().get("pc").equalsIgnoreCase(policyClassWithActive.getName())) {
+                                //remove nodes pc properties
+                                nodes_to_remove.add(node);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        all_nodes.removeAll(nodes_to_remove);
+
+
+        HierarchicalDataProvider dataProvider = new AbstractBackEndHierarchicalDataProvider<Node, Void>() {
+            @Override
+            public int getChildCount(HierarchicalQuery<Node, Void> query) {
+                try {
+                    if (g == null) {
+                        System.out.println("Singleton Graph is null");
+                        return 0;
+                    } else if (query == null) {
+                        System.out.println("query is null");
+                        return 0;
+                    } else {
+                        Optional<Node> node = query.getParentOptional();
+                        if (node.isPresent() && user != null) {
+                            UserContext userContext = new UserContext(user.getName(), rand.toString());
+                            return g.getPDP().getGraphService(userContext).getChildren(node.get().getName()).size();
+                        } else {
+                            return all_nodes.size();
+                        }
+                    }
+                } catch (PMException e) {
+                    e.printStackTrace();
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    return 0;
+                }
+            }
+
+            @Override
+            public boolean hasChildren(Node item) {
+                try {
+                    UserContext userContext = new UserContext(user.getName(), rand.toString());
+                    return g.getPDP().getGraphService(userContext).getChildren(item.getName()).size() > 0;
+                } catch (PMException e) {
+                    e.printStackTrace();
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    return false;
+                }
+            }
+
+            @Override
+            protected Stream<Node> fetchChildrenFromBackEnd(HierarchicalQuery<Node, Void> query) {
+                Collection<Node> children = new HashSet<>();
+                try{
+                    if (g == null) {
+                        System.out.println("Singleton Graph is null");
+                    } else if (query == null) {
+                        System.out.println("query is null");
+                    } else {
+                        Optional<Node> node = query.getParentOptional();
+                        if (node.isPresent() && user != null) {
+                            UserContext userContext = new UserContext(user.getName(), rand.toString());
+                            Set<String> childrenNames = g.getPDP().getGraphService(userContext).getChildren(query.getParent().getName());
+                            System.out.println("getting children nodes");
+                            for (String name: childrenNames) {
+                                children.add(g.getNode(name));
+                            }
+                        } else {
+                            children.addAll(all_nodes);
+                        }
+
+                    }
+                } catch (PMException e) {
+                    e.printStackTrace();
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                }
+                return children.stream();
+            }
+        };
+        grid.setDataProvider(dataProvider);
     }
 
     private void editNode(Node n) {
@@ -284,6 +399,9 @@ public class POSTester extends VerticalLayout {
 
     private void explain(Node user, Node node) {
         Dialog dialog = new Dialog();
+        dialog.setHeight("75%");
+        dialog.getElement().getStyle()
+                .set("overflow-y", "scroll");
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(FlexComponent.Alignment.BASELINE);
 
@@ -347,7 +465,7 @@ public class POSTester extends VerticalLayout {
 
                     // this is the operations in the association between ua1 and oa1
                     Set<String> pathOps = path.getOperations();
-                    ret += " " + pathOps;
+                    ret += ":\n\t\t\t\t" + pathOps;
                     // This is the string representation of the path (i.e. "u1-ua1-oa1-o1 ops=[r, w]")
                     String pathString = path.toString();
                     ret += "\n";
@@ -363,6 +481,7 @@ public class POSTester extends VerticalLayout {
         //explanation = explain.toString();
 
         VerticalLayout auditLayout = new VerticalLayout();
+
         auditLayout.setSizeFull();
         auditLayout.getStyle()
                 .set("padding-bottom", "0px");
