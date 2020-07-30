@@ -8,6 +8,7 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
+import com.vaadin.flow.component.grid.GridSortOrder;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
@@ -19,6 +20,7 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
+import com.vaadin.flow.data.provider.SortDirection;
 import com.vaadin.flow.data.provider.hierarchy.*;
 import gov.nist.csd.pm.admintool.app.blips.*;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
@@ -166,6 +168,40 @@ public class GraphEditor extends VerticalLayout {
             // object/user selector
             ouToggle = new Toggle("All", "Users", "All", "Objects");
             ouToggle.addValueChangeListener(event -> {
+
+                switch (event.getValue()) {
+                    case "Users":
+                        try {
+                            currNodes = g.getNodes().stream()
+                                    .filter(node_k -> node_k.getType() == NodeType.U).collect(Collectors.toList());
+                            System.out.println("users : " + currNodes);
+                            updateGrid(currNodes);
+                            //grid.sort(Arrays.asList(new GridSortOrder<>(grid.getColumnByKey("name"), SortDirection.DESCENDING)));
+                        } catch (PMException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case "Objects":
+                        try {
+                            currNodes = g.getNodes().stream()
+                                    .filter(node_k -> node_k.getType() == NodeType.O).collect(Collectors.toList());
+                            System.out.println("objects : " + currNodes);
+                            updateGrid(currNodes);
+                            //grid.sort(Arrays.asList(new GridSortOrder<>(grid.getColumnByKey("name"), SortDirection.DESCENDING)));
+
+                        } catch (PMException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case "All":
+                        try {
+                            currNodes = new ArrayList<>(g.getNodes());
+                            System.out.println("all : " + currNodes);
+                            refreshGraph();
+                        } catch (PMException e) {
+                            e.printStackTrace();
+                        }
+                }
                 MainView.notify(event.getValue(), MainView.NotificationType.DEFAULT);
             });
             add(ouToggle);
@@ -676,7 +712,6 @@ public class GraphEditor extends VerticalLayout {
                             Optional<Node> node = query.getParentOptional();
                             if (node.isPresent()) {
                                 Set<String> childrenNames = g.getChildren(query.getParent().getName());
-                                System.out.println("getting children nodes");
                                 for (String name: childrenNames) {
                                     children.add(g.getNode(name));
                                 }
@@ -703,7 +738,6 @@ public class GraphEditor extends VerticalLayout {
                     currNodes.add(g.getNode(name));
                 }
             } catch (PMException e) {
-                System.out.println(e.getMessage());
                 e.printStackTrace();
             }
             updateGrid(currNodes);
@@ -1053,7 +1087,6 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.createNode(name, type, props, parent.getName());
                     MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
-                    //g.getPAP().getGraphPAP().createNode(name, type, props, parent.getName());
                     childNode.refreshGraph();
                     parentNode.refreshGraph();
                     dialog.close();
@@ -1654,9 +1687,7 @@ public class GraphEditor extends VerticalLayout {
         button.addThemeVariants(ButtonVariant.LUMO_ERROR);
         form.add(button);
 
-        Button cancel = new Button("Cancel", event -> {
-            dialog.close();
-        });
+        Button cancel = new Button("Cancel", event -> dialog.close());
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
 
@@ -1755,9 +1786,7 @@ public class GraphEditor extends VerticalLayout {
         button.addThemeVariants(ButtonVariant.LUMO_ERROR);
         form.add(button);
 
-        Button cancel = new Button("Cancel", event -> {
-            dialog.close();
-        });
+        Button cancel = new Button("Cancel", event -> dialog.close());
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
 
