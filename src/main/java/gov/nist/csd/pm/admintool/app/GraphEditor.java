@@ -9,6 +9,7 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
+import com.vaadin.flow.component.grid.dnd.GridDropMode;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -45,6 +46,8 @@ public class GraphEditor extends VerticalLayout {
     private Node selectedChildNode;
     private Node selectedParentNode;
     private GraphButtonGroup buttonGroup;
+
+    private Node dragNode;
 
     public GraphEditor() {
         g = SingletonGraph.getInstance();
@@ -102,6 +105,7 @@ public class GraphEditor extends VerticalLayout {
             }
 
             filters = new HashMap<>();
+            dragNode = null;
 
             addTitleLayout();
             addGridLayout();
@@ -127,6 +131,7 @@ public class GraphEditor extends VerticalLayout {
 
             // title text
             titleText = new H2();
+            titleText.getStyle().set("user-select", "none");
             if (isSource) {
                 titleText.setText("Source:");
             } else {
@@ -136,6 +141,7 @@ public class GraphEditor extends VerticalLayout {
 
             // current parent node whose children are being shown
             currNodeName = new H3("All Nodes");
+            currNodeName.getStyle().set("user-select", "none");
             title.add(currNodeName);
 
             // back button
@@ -223,6 +229,8 @@ public class GraphEditor extends VerticalLayout {
             grid.removeColumnByKey("id");
             grid.removeColumnByKey("properties");
             grid.setColumnReorderingAllowed(true);
+            grid.setRowsDraggable(true);
+            grid.setDropMode(GridDropMode.ON_TOP);
             grid.setHierarchyColumn("name");
             grid.getColumnByKey("name")
                     .setWidth("80%")
@@ -277,6 +285,82 @@ public class GraphEditor extends VerticalLayout {
                 buttonGroup.refreshButtonStates();
                 buttonGroup.refreshNodeTexts();
                 updateNodeInfo();
+            });
+
+            // drag + drop action: create assignment or association
+            grid.addDropListener((gridDropEvent) -> {
+                if (dragNode != null) {
+                    Optional<Node> targetNodeOpt = gridDropEvent.getDropTargetItem();
+                    if (targetNodeOpt.isPresent()) {
+                        Node parentNode = targetNodeOpt.get();
+                        if (dragNode != parentNode) {
+                            NodeType parentNodeType = parentNode.getType();
+                            NodeType dragNodeType = dragNode.getType();
+                            if (parentNodeType == NodeType.UA) {
+                                if (dragNodeType == NodeType.UA) {
+                                    // assignment or association?
+                                    Dialog dialog = new Dialog();
+                                    dialog.add("Assignment or Association?");
+
+                                    HorizontalLayout form = new HorizontalLayout();
+                                    form.setAlignItems(Alignment.BASELINE);
+
+                                    Button assignmentButton = new Button("Assignment", event -> {
+                                        // assignment
+                                        addAssignment(dragNode, parentNode);
+                                        dialog.close();
+                                    });
+                                    assignmentButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                                    form.add(assignmentButton);
+
+                                    Button associationButton = new Button("Association", event -> {
+                                        // association
+                                        addAssociation(dragNode, parentNode);
+                                        dialog.close();
+                                    });
+                                    associationButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+                                    form.add(associationButton);
+
+                                    Button cancel = new Button("Cancel", event -> {
+                                        dialog.close();
+                                    });
+                                    cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+                                    form.add(cancel);
+
+                                    dialog.add(form);
+                                    dialog.open();
+                                } else if (dragNodeType == NodeType.U) {
+                                    // assignment
+                                    addAssignment(dragNode, parentNode);
+                                }
+                            } else if (parentNodeType == NodeType.OA) {
+                                if (dragNodeType == NodeType.UA) {
+                                    // association
+                                    addAssociation(dragNode, parentNode);
+                                } else if (dragNodeType == NodeType.O || dragNodeType == NodeType.OA) {
+                                    // assignment
+                                    addAssignment(dragNode, parentNode);
+                                }
+                            } else if (parentNodeType == NodeType.PC) {
+                                if (dragNodeType == NodeType.UA || dragNodeType == NodeType.OA) {
+                                    // assignment
+                                    addAssignment(dragNode, parentNode);
+                                }
+                            } else if (parentNodeType == NodeType.O) {
+                                if (dragNodeType == NodeType.UA) {
+                                    // association
+                                    addAssociation(dragNode, parentNode);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            grid.addDragStartListener((gridDragStartEvent) -> {
+                dragNode = gridDragStartEvent.getDraggedItems().get(0);
+            });
+            grid.addDragEndListener((gridDragEndEvent) -> {
+                dragNode = null;
             });
 
             add(grid);
@@ -735,6 +819,7 @@ public class GraphEditor extends VerticalLayout {
                 e.printStackTrace();
             }
             updateGridNodes(currNodes);
+            // TODO: collapse all nodes
             expandPolicies();
 
 
@@ -786,8 +871,11 @@ public class GraphEditor extends VerticalLayout {
             setJustifyContentMode(JustifyContentMode.START);
 
             childNodeText = new H4("X");
+            childNodeText.getStyle().set("user-select", "none");
             connectorSymbol = new H6(new Icon(VaadinIcon.ARROW_DOWN));
             parentNodeText = new H4("X");
+            parentNodeText.getStyle().set("user-select", "none");
+
 
             add(new Paragraph("\n"));
             add(childNodeText, connectorSymbol, parentNodeText);
@@ -858,7 +946,7 @@ public class GraphEditor extends VerticalLayout {
 
             // Association Buttons
             addAssociationButton = new Button("Add Association", evt -> {
-                addAssociation();
+                addAssociation(selectedChildNode, selectedParentNode);
             });
             addAssociationButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
             addAssociationButton.setEnabled(false);
@@ -866,7 +954,7 @@ public class GraphEditor extends VerticalLayout {
             add(addAssociationButton);
 
             editAssociationButton = new Button("Edit Association", evt -> {
-                editAssociation();
+                editAssociation(selectedChildNode, selectedParentNode);
             });
             editAssociationButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
             editAssociationButton.setEnabled(false);
@@ -874,7 +962,7 @@ public class GraphEditor extends VerticalLayout {
             add(editAssociationButton);
 
             deleteAssociationButton = new Button("Delete Association", evt -> {
-                deleteAssociation();
+                deleteAssociation(selectedChildNode, selectedParentNode);
             });
             deleteAssociationButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
             deleteAssociationButton.setEnabled(false);
@@ -1404,9 +1492,23 @@ public class GraphEditor extends VerticalLayout {
         }
     }
 
-    private void addAssociation() {
+    private void addAssociation(Node source, Node target) {
         Dialog dialog = new Dialog();
         dialog.setWidth("75vh");
+
+//        Paragraph opsParagraph = new Paragraph("[]");
+//        HorizontalLayout name =
+//            new HorizontalLayout(
+//                new NodeDataBlip(source, false),
+//                new Icon(VaadinIcon.ARROW_RIGHT),
+//                opsParagraph,
+//                new Icon(VaadinIcon.ARROW_RIGHT),
+//                new NodeDataBlip(target, true)
+//            );
+//        name.setAlignItems(Alignment.CENTER);
+//        name.setJustifyContentMode(JustifyContentMode.CENTER);
+//        dialog.add(name);
+
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(Alignment.BASELINE);
 
@@ -1421,6 +1523,7 @@ public class GraphEditor extends VerticalLayout {
         opsSelectRessource.setWidth("100%");
 
         MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
+
         opsSelectAdmin.setLabel("Operations");
         opsSelectAdmin.setPlaceholder("Admin operations");
         try {
@@ -1429,6 +1532,17 @@ public class GraphEditor extends VerticalLayout {
             e.printStackTrace();
         }
         opsSelectAdmin.setWidth("100%");
+
+//        opsSelectRessource.addValueChangeListener((evt) -> {
+//            Set<String> tempOps = evt.getValue();
+//            tempOps.addAll(opsSelectAdmin.getValue());
+//            opsParagraph.setText(tempOps.toString());
+//        });
+//        opsSelectAdmin.addValueChangeListener((evt) -> {
+//            Set<String> tempOps = evt.getValue();
+//            tempOps.addAll(opsSelectRessource.getValue());
+//            opsParagraph.setText(tempOps.toString());
+//        });
 
         form.add(opsSelectRessource);
         form.add(opsSelectAdmin);
@@ -1449,8 +1563,8 @@ public class GraphEditor extends VerticalLayout {
                     e.printStackTrace();
                 }
                 try {
-                    g.associate(selectedChildNode.getName(), selectedParentNode.getName(), ops);
-                    MainView.notify(selectedChildNode.getName() + " assigned to " + selectedParentNode.getName(), MainView.NotificationType.SUCCESS);
+                    g.associate(source.getName(), target.getName(), ops);
+                    MainView.notify(source.getName() + " assigned to " + target.getName(), MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();
                     dialog.close();
@@ -1467,7 +1581,7 @@ public class GraphEditor extends VerticalLayout {
         dialog.open();
     }
 
-    private void editAssociation() {
+    private void editAssociation(Node source, Node target) {
         Dialog dialog = new Dialog();
         dialog.setWidth("75vh");
         HorizontalLayout form = new HorizontalLayout();
@@ -1496,11 +1610,11 @@ public class GraphEditor extends VerticalLayout {
         form.add(opsSelectRessource);
         form.add(opsSelectAdmin);
         try {
-            if (selectedChildNode.getType() == NodeType.UA) {
-                Map<String, OperationSet> sourceOps = g.getSourceAssociations(selectedChildNode.getName());
+            if (source.getType() == NodeType.UA) {
+                Map<String, OperationSet> sourceOps = g.getSourceAssociations(source.getName());
                 Set<String> sourceToTargetOps = new HashSet<>();
                 sourceOps.forEach((targetName, targetOps) -> {
-                    if (targetName.equalsIgnoreCase(selectedParentNode.getName())) {
+                    if (targetName.equalsIgnoreCase(target.getName())) {
                         sourceToTargetOps.addAll(targetOps);
                     }
                 });
@@ -1543,8 +1657,8 @@ public class GraphEditor extends VerticalLayout {
                     e.printStackTrace();
                 }
                 try {
-                    g.associate(selectedChildNode.getName(), selectedParentNode.getName(), ops);
-                    MainView.notify("Association between " + selectedChildNode.getName() + " and " + selectedParentNode.getName() + " has been modified", MainView.NotificationType.SUCCESS);
+                    g.associate(source.getName(), target.getName(), ops);
+                    MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been modified", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();
                     dialog.close();
@@ -1561,7 +1675,7 @@ public class GraphEditor extends VerticalLayout {
         dialog.open();
     }
 
-    private void deleteAssociation() {
+    private void deleteAssociation(Node source, Node target) {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(Alignment.BASELINE);
@@ -1570,8 +1684,8 @@ public class GraphEditor extends VerticalLayout {
 
         Button button = new Button("Delete", event -> {
             try {
-                g.dissociate(selectedChildNode.getName(), selectedParentNode.getName());
-                MainView.notify("Association between " + selectedChildNode.getName() + " and " + selectedParentNode.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
+                g.dissociate(source.getName(), target.getName());
+                MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
                 childNode.updateNodeInfo();
                 parentNode.updateNodeInfo();
             } catch (PMException e) {

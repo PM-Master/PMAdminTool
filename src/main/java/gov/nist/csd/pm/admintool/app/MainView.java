@@ -46,6 +46,7 @@ public class MainView extends HorizontalLayout{
                 .set("background", "#FFF3D3");
 
         H3 admintool = new H3("Admin Tool");
+        admintool.getStyle().set("user-select", "none");
         navbar.add(admintool);
 
         Tab  tab1 = new Tab("Graph Editor");

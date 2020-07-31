@@ -30,8 +30,9 @@ public abstract class Blip extends Details {
         style.set("border-radius", "3px")
                 .set("border", "1px grey")
                 .set("padding-left", "10px")
+                .set("padding-right", "10px")
                 .set("margin", "1px")
-                .set("text-align", "left")
+                .set("text-align", "center")
                 .set("user-select", "none");
 
 
