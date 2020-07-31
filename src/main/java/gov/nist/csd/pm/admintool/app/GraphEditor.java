@@ -8,7 +8,6 @@ import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
-import com.vaadin.flow.component.grid.GridSortOrder;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
@@ -20,7 +19,6 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
-import com.vaadin.flow.data.provider.SortDirection;
 import com.vaadin.flow.data.provider.hierarchy.*;
 import gov.nist.csd.pm.admintool.app.blips.*;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
@@ -43,9 +41,9 @@ public class GraphEditor extends VerticalLayout {
     private SingletonGraph g;
     private HorizontalLayout layout;
     private NodeLayout childNode;
+    private NodeLayout parentNode;
     private Node selectedChildNode;
     private Node selectedParentNode;
-    private NodeLayout parentNode;
     private GraphButtonGroup buttonGroup;
 
     public GraphEditor() {
@@ -77,6 +75,7 @@ public class GraphEditor extends VerticalLayout {
     private class NodeLayout extends VerticalLayout {
         // general fields
         private TreeGrid<Node> grid;
+        private boolean isSource;
         private Stack<Collection<Node>> prevNodes; // Contains the nodes for going 'back'
         private Stack<String> prevNodeNames; // Contains the String for going 'back'
         private Collection<Node> currNodes; // The current nodes in the grid
@@ -94,9 +93,6 @@ public class GraphEditor extends VerticalLayout {
         private Div outgoingAssociationList, incomingAssociationList; // for associations
         private Div outgoingProhibitionList, incomingProhibitionList; // for prohibitions
 
-
-        private boolean isSource;
-
         public NodeLayout(boolean isSource){
             this.isSource = isSource;
             if (isSource) {
@@ -111,7 +107,9 @@ public class GraphEditor extends VerticalLayout {
             addGridLayout();
             addNodeInfoLayout();
 
-            refreshGraph();
+            // get data and expand policy classes
+            resetGrid();
+            expandPolicies();
         }
 
         private void addTitleLayout () {
@@ -147,7 +145,7 @@ public class GraphEditor extends VerticalLayout {
                 if (!prevNodes.empty()) {
                     currNodes = prevNodes.pop();
                     //grid.setItems(currNodes);
-                    updateGrid(currNodes);
+                    updateGridNodes(currNodes);
                     grid.deselectAll();
                     if (isSource) {
                         selectedChildNode = null;
@@ -156,7 +154,7 @@ public class GraphEditor extends VerticalLayout {
                     }
                     buttonGroup.refreshNodeTexts();
                     buttonGroup.refreshButtonStates();
-                    updateNodeInfoSection();
+                    updateNodeInfo();
                 }
 
                 if (prevNodes.empty()) {
@@ -188,7 +186,7 @@ public class GraphEditor extends VerticalLayout {
                         };
                         filters.clear();
                         filters.put("Users", filterUsers);
-                        refreshGraph();
+                        resetGrid();
                         break;
                     case "Objects":
                         Predicate<? super String> filterObjects = nodeName -> {
@@ -202,13 +200,12 @@ public class GraphEditor extends VerticalLayout {
                         };
                         filters.clear();
                         filters.put("Objects", filterObjects);
-                        refreshGraph();
+                        resetGrid();
                         break;
                     case "All":
                         filters.clear();
-                        refreshGraph();
+                        resetGrid();
                 }
-                MainView.notify(event.getValue(), MainView.NotificationType.DEFAULT);
             });
             add(ouToggle);
         }
@@ -245,11 +242,11 @@ public class GraphEditor extends VerticalLayout {
                             currNodes = g.getNodes().stream()
                                     .filter(node_k -> children.contains(node_k.getName())).collect(Collectors.toList());
                             //grid.setItems(currNodes);
-                            updateGrid(currNodes);
+                            updateGridNodes(currNodes);
 
                             prevNodeNames.push(currNodeName.getText());
                             currNodeName.setText(currNodeName.getText() + " > " + n.getName());
-                            updateNodeInfoSection();
+                            updateNodeInfo();
 
                             backButton.setEnabled(true);
                         } else {
@@ -279,9 +276,25 @@ public class GraphEditor extends VerticalLayout {
 
                 buttonGroup.refreshButtonStates();
                 buttonGroup.refreshNodeTexts();
-                updateNodeInfoSection();
+                updateNodeInfo();
             });
+
             add(grid);
+        }
+        private void createContextMenu() {
+            GridContextMenu<Node> contextMenu = new GridContextMenu<>(grid);
+
+            //contextMenu.addItem("Add Node", event -> addNode());
+            contextMenu.addItem("Edit Node", event -> {
+                event.getItem().ifPresent(node -> {
+                    editNode(node);
+                });
+            });
+            contextMenu.addItem("Delete Node", event -> {
+                event.getItem().ifPresent(node -> {
+                    deleteNode(node);
+                });
+            });
         }
         private void addNodeInfoLayout () {
             VerticalLayout nodeInfo = new VerticalLayout();
@@ -487,48 +500,6 @@ public class GraphEditor extends VerticalLayout {
             //////////////////////////////////////////////////
         }
 
-        private void updateNodeInfoSection() {
-            Node gridSelecNode;
-            if (isSource) {
-                gridSelecNode = selectedChildNode;
-            } else {
-                gridSelecNode = selectedParentNode;
-            }
-
-            childrenList.removeAll();
-            parentList.removeAll();
-
-            outgoingAssociationList.removeAll();
-            incomingAssociationList.removeAll();
-
-            outgoingProhibitionList.removeAll();
-//            incomingProhibitionList.removeAll();
-
-            if (gridSelecNode != null) {
-                try {
-                    name.setText(gridSelecNode.getName() + " (" + gridSelecNode.getType().toString() + ")");
-
-                    updateAssignmentInfo(gridSelecNode);
-                    updateAssociationInfo(gridSelecNode);
-                    updateProhibitionInfo(gridSelecNode);
-                } catch (PMException e) {
-                    e.printStackTrace();
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                }
-            } else {
-                name.setText("X");
-
-                childrenList.add(new Paragraph("None"));
-                parentList.add(new Paragraph("None"));
-
-                outgoingAssociationList.add(new Paragraph("None"));
-                incomingAssociationList.add(new Paragraph("None"));
-
-                outgoingProhibitionList.add(new Paragraph("None"));
-//                incomingProhibitionList.add(new Paragraph("None"));
-            }
-        }
-
         private void updateAssignmentInfo(Node gridSelecNode) throws PMException {
             // assignments
             Iterator<String> childIter = g.getChildren(gridSelecNode.getName()).iterator();
@@ -631,7 +602,7 @@ public class GraphEditor extends VerticalLayout {
 //            }
         }
 
-        public void updateGrid(Collection<Node> all_nodes){
+        public void updateGridNodes(Collection<Node> all_nodes){
             HierarchicalDataProvider dataProvider = new AbstractBackEndHierarchicalDataProvider<Node, Void>() {
                 @Override
                 public int getChildCount(HierarchicalQuery<Node, Void> query) {
@@ -710,10 +681,52 @@ public class GraphEditor extends VerticalLayout {
             grid.setDataProvider(dataProvider);
         }
 
-        public void refreshGraph() {
+        public void updateNodeInfo() {
+            Node gridSelecNode;
+            if (isSource) {
+                gridSelecNode = selectedChildNode;
+            } else {
+                gridSelecNode = selectedParentNode;
+            }
+
+            childrenList.removeAll();
+            parentList.removeAll();
+
+            outgoingAssociationList.removeAll();
+            incomingAssociationList.removeAll();
+
+            outgoingProhibitionList.removeAll();
+//            incomingProhibitionList.removeAll();
+
+            if (gridSelecNode != null) {
+                try {
+                    name.setText(gridSelecNode.getName() + " (" + gridSelecNode.getType().toString() + ")");
+
+                    updateAssignmentInfo(gridSelecNode);
+                    updateAssociationInfo(gridSelecNode);
+                    updateProhibitionInfo(gridSelecNode);
+                } catch (PMException e) {
+                    e.printStackTrace();
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                }
+            } else {
+                name.setText("X");
+
+                childrenList.add(new Paragraph("None"));
+                parentList.add(new Paragraph("None"));
+
+                outgoingAssociationList.add(new Paragraph("None"));
+                incomingAssociationList.add(new Paragraph("None"));
+
+                outgoingProhibitionList.add(new Paragraph("None"));
+//                incomingProhibitionList.add(new Paragraph("None"));
+            }
+        }
+
+        public void resetGrid() {
+            // get nodes TODO: Filter active PC's
             currNodes = new HashSet<>();
             try {
-                // TODO: Filter active PC's
                 Set<String> pcNames = g.getPolicies();
                 for (String name: pcNames) {
                     currNodes.add(g.getNode(name));
@@ -721,34 +734,40 @@ public class GraphEditor extends VerticalLayout {
             } catch (PMException e) {
                 e.printStackTrace();
             }
-            // TODO: Revert back to previous grid state - make this a new class
-            updateGrid(currNodes);
-            grid.deselectAll();
+            updateGridNodes(currNodes);
+
+            // grid resetting TODO: Reset back to previous grid state - make this a new class
+            expandPolicies();
+
+
+            // general resetting
             if (isSource) {
                 selectedChildNode = null;
             } else {
                 selectedParentNode = null;
             }
+            updateNodeInfo();
+
             buttonGroup.refreshNodeTexts();
             buttonGroup.refreshButtonStates();
             backButton.setEnabled(false);
-            updateNodeInfoSection();
         }
 
-        private void createContextMenu() {
-            GridContextMenu<Node> contextMenu = new GridContextMenu<>(grid);
+        public void refresh() {
+            grid.getDataCommunicator().reset();
+        }
 
-            //contextMenu.addItem("Add Node", event -> addNode());
-            contextMenu.addItem("Edit Node", event -> {
-                event.getItem().ifPresent(node -> {
-                    editNode(node);
-                });
-            });
-            contextMenu.addItem("Delete Node", event -> {
-                event.getItem().ifPresent(node -> {
-                    deleteNode(node);
-                });
-            });
+        public void expandPolicies() {
+            Set<Node> policies = new HashSet<>();
+            try {
+                Set<String> policyNames = g.getPolicies();
+                for (String policiyName: policyNames) {
+                    policies.add(g.getNode(policiyName));
+                }
+            } catch (PMException e) {
+                e.printStackTrace();
+            }
+            grid.expand(policies);
         }
     }
 
@@ -817,8 +836,8 @@ public class GraphEditor extends VerticalLayout {
             addAssignmentButton = new Button("Add Assignment", evt -> {
                 if (selectedChildNode != null && selectedParentNode != null) {
                     addAssignment(selectedChildNode, selectedParentNode);
-                    childNode.updateNodeInfoSection();
-                    parentNode.updateNodeInfoSection();
+                    childNode.updateNodeInfo();
+                    parentNode.updateNodeInfo();
                 }
             });
             addAssignmentButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
@@ -828,8 +847,8 @@ public class GraphEditor extends VerticalLayout {
 
             deleteAssignmentButton = new Button("Delete Assignment", evt -> {
                 deleteAssignment(selectedChildNode, selectedParentNode);
-                childNode.updateNodeInfoSection();
-                parentNode.updateNodeInfoSection();
+                childNode.updateNodeInfo();
+                parentNode.updateNodeInfo();
             });
             deleteAssignmentButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
             deleteAssignmentButton.setEnabled(false);
@@ -1044,16 +1063,11 @@ public class GraphEditor extends VerticalLayout {
         form.add(propsFeild);
 
         Button button = new Button("Submit", event -> {
-//            Long id = idField.getValue().longValue();
             String name = nameField.getValue();
             NodeType type = typeSelect.getValue();
             Node parent = parentSelect.getValue();
             String propString = propsFeild.getValue();
             Map<String, String> props = new HashMap<>();
-//            if (id == null) {
-//                idField.focus();
-//                MainView.notify("ID is Required");
-//            } else
             if (name == null || name == "") {
                 nameField.focus();
                 MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
@@ -1074,8 +1088,8 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.createNode(name, type, props, parent.getName());
                     MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
-                    childNode.refreshGraph();
-                    parentNode.refreshGraph();
+                    childNode.refresh();
+                    parentNode.refresh();
                     dialog.close();
                 } catch (PMException e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1156,8 +1170,8 @@ public class GraphEditor extends VerticalLayout {
                     // What are those nodes used for ?
                     g.createNode(name, NodeType.U, props, parent.getName());
                     MainView.notify("User with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
-                    childNode.refreshGraph();
-                    parentNode.refreshGraph();
+                    childNode.refresh();
+                    parentNode.refresh();
                     dialog.close();
 
                 } catch (Exception e) {
@@ -1234,8 +1248,8 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.createNode(name, NodeType.O, props, parent.getName());
                     MainView.notify("Object with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
-                    childNode.refreshGraph();
-                    parentNode.refreshGraph();
+                    childNode.refresh();
+                    parentNode.refresh();
                     dialog.close();
                 } catch (Exception e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1291,8 +1305,8 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.updateNode(name, props);
                     MainView.notify("Node with name: " + name + " has been edited", MainView.NotificationType.SUCCESS);
-                    childNode.refreshGraph();
-                    parentNode.refreshGraph();
+                    childNode.updateNodeInfo();
+                    parentNode.updateNodeInfo();
                     dialog.close();
                 } catch (Exception e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1323,8 +1337,8 @@ public class GraphEditor extends VerticalLayout {
 //                MainView.notify("You have to delete all assignment on that node first.");
                 e.printStackTrace();
             }
-            childNode.refreshGraph();
-            parentNode.refreshGraph();
+            childNode.refresh();
+            parentNode.refresh();
             dialog.close();
         });
         button.addThemeVariants(ButtonVariant.LUMO_ERROR);
@@ -1345,6 +1359,8 @@ public class GraphEditor extends VerticalLayout {
             try {
                 g.assign(child.getName(), parent.getName());
                 MainView.notify(child.getName() + " assigned to " + parent.getName(), MainView.NotificationType.SUCCESS);
+                childNode.refresh();
+                parentNode.refresh();
             } catch (PMException e) {
                 e.printStackTrace();
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1370,8 +1386,8 @@ public class GraphEditor extends VerticalLayout {
                     System.out.println(e.getMessage());
                     e.printStackTrace();
                 }
-                childNode.refreshGraph();
-                parentNode.refreshGraph();
+                childNode.refresh();
+                parentNode.refresh();
                 dialog.close();
             });
             button.addThemeVariants(ButtonVariant.LUMO_ERROR);
@@ -1437,6 +1453,8 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.associate(selectedChildNode.getName(), selectedParentNode.getName(), ops);
                     MainView.notify(selectedChildNode.getName() + " assigned to " + selectedParentNode.getName(), MainView.NotificationType.SUCCESS);
+                    childNode.updateNodeInfo();
+                    parentNode.updateNodeInfo();
                     dialog.close();
                 } catch (Exception e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1529,6 +1547,8 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.associate(selectedChildNode.getName(), selectedParentNode.getName(), ops);
                     MainView.notify("Association between " + selectedChildNode.getName() + " and " + selectedParentNode.getName() + " has been modified", MainView.NotificationType.SUCCESS);
+                    childNode.updateNodeInfo();
+                    parentNode.updateNodeInfo();
                     dialog.close();
                 } catch (Exception e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1554,6 +1574,8 @@ public class GraphEditor extends VerticalLayout {
             try {
                 g.dissociate(selectedChildNode.getName(), selectedParentNode.getName());
                 MainView.notify("Association between " + selectedChildNode.getName() + " and " + selectedParentNode.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
+                childNode.updateNodeInfo();
+                parentNode.updateNodeInfo();
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
@@ -1629,6 +1651,8 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.addProhibition(nameField.getValue(), selectedChildNode.getName(), containers, ops, intersection);
                     MainView.notify("Prohibition with name: " + nameField.getValue() + " has been created", MainView.NotificationType.SUCCESS);
+                    childNode.updateNodeInfo();
+                    parentNode.updateNodeInfo();
                     dialog.close();
                 } catch (PMException e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1656,7 +1680,8 @@ public class GraphEditor extends VerticalLayout {
             try {
                 g.deleteProhibition(selectedChildNode.getName());
                 MainView.notify("Prohibition with name: " + selectedChildNode.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
-
+                childNode.updateNodeInfo();
+                parentNode.updateNodeInfo();
 //                System.out.println("Deleting prohibition between " + selectedChildNode.getName() + "-" + selectedChildNode.getType()+ " AND " + selectedParentNode.getName());
 //                List<Prohibition> prohibtions = g.getProhibitionsFor(selectedChildNode.getName());
 //                prohibtions.removeIf(prohibition -> !prohibition.getSubject().equals(selectedParentNode.getName()));
@@ -1736,6 +1761,8 @@ public class GraphEditor extends VerticalLayout {
                 try {
 //                    g.updateProhibition(selectedChildNode.getName(), selectedChildNode.getName(), selectedParentNode.getName(), ops, intersection);
 //                    MainView.notify("Prohibition with name: " + );
+                    childNode.updateNodeInfo();
+                    parentNode.updateNodeInfo();
                     dialog.close();
                 } catch (Exception e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1762,8 +1789,10 @@ public class GraphEditor extends VerticalLayout {
                 g.reset();
                 SingletonGraph.resetActivePCs();
                 MainView.notify("Graph has been reset", MainView.NotificationType.SUCCESS);
-                childNode.refreshGraph();
-                parentNode.refreshGraph();
+                childNode.resetGrid();
+                childNode.expandPolicies();
+                parentNode.resetGrid();
+                parentNode.expandPolicies();
             } catch (PMException e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
