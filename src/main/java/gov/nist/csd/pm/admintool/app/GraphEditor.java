@@ -735,8 +735,6 @@ public class GraphEditor extends VerticalLayout {
                 e.printStackTrace();
             }
             updateGridNodes(currNodes);
-
-            // grid resetting TODO: Reset back to previous grid state - make this a new class
             expandPolicies();
 
 
