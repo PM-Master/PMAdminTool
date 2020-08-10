@@ -21,21 +21,30 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.*;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import gov.nist.csd.pm.admintool.app.blips.*;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.app.customElements.Toggle;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
+import gov.nist.csd.pm.pip.graph.dag.searcher.DepthFirstSearcher;
+import gov.nist.csd.pm.pip.graph.dag.searcher.Direction;
+import gov.nist.csd.pm.pip.graph.dag.visitor.Visitor;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
+import gov.nist.csd.pm.pip.graph.model.relationships.Relationship;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DirectedMultigraph;
 import org.vaadin.gatanaso.MultiselectComboBox;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static gov.nist.csd.pm.pip.graph.model.nodes.NodeType.UA;
 
 @Tag("graph-editor")
 public class GraphEditor extends VerticalLayout {
@@ -89,6 +98,7 @@ public class GraphEditor extends VerticalLayout {
         private H3 currNodeName; // The current node whose children are being shown
         private Button backButton;
         private Toggle ouToggle;
+        private TextField searchBar;
 
         // for node info section
         private H3 name;
@@ -178,7 +188,6 @@ public class GraphEditor extends VerticalLayout {
             // object/user selector
             ouToggle = new Toggle("All", "Users", "All", "Objects");
             ouToggle.addValueChangeListener(event -> {
-
                 switch (event.getValue()) {
                     case "Users":
                         Predicate<? super String> filterUsers = nodeName -> {
@@ -190,9 +199,8 @@ public class GraphEditor extends VerticalLayout {
                                 return false;
                             }
                         };
-                        filters.clear();
+                        filters.remove("Objects");
                         filters.put("Users", filterUsers);
-                        resetGrid();
                         break;
                     case "Objects":
                         Predicate<? super String> filterObjects = nodeName -> {
@@ -204,16 +212,34 @@ public class GraphEditor extends VerticalLayout {
                                 return false;
                             }
                         };
-                        filters.clear();
+                        filters.remove("Users");
                         filters.put("Objects", filterObjects);
-                        resetGrid();
                         break;
                     case "All":
-                        filters.clear();
-                        resetGrid();
+                        filters.remove("Users");
+                        filters.remove("Objects");
+                        break;
                 }
+                refresh();
             });
             add(ouToggle);
+
+            // search bar
+            searchBar = new TextField();
+            searchBar.setWidthFull();
+            searchBar.setPlaceholder("Search by name...");
+            searchBar.setClearButtonVisible(true);
+            searchBar.setValueChangeMode(ValueChangeMode.LAZY);
+            searchBar.addValueChangeListener(evt -> {
+                if (evt.getValue() != null && !evt.getValue().isEmpty()) {
+                    Predicate<? super String> filterName = (nodeName -> nodeName.contains(evt.getValue()));
+                    filters.put("Name", filterName);
+                } else {
+                    filters.remove("Name");
+                }
+                refresh();
+            });
+            add(searchBar);
         }
         private void addGridLayout () {
             prevNodes = new Stack<>(); // for the navigation system
@@ -686,7 +712,7 @@ public class GraphEditor extends VerticalLayout {
 //            }
         }
 
-        public void updateGridNodes(Collection<Node> all_nodes){
+        public void updateGridNodes(Collection<Node> all_nodes) {
             HierarchicalDataProvider dataProvider = new AbstractBackEndHierarchicalDataProvider<Node, Void>() {
                 @Override
                 public int getChildCount(HierarchicalQuery<Node, Void> query) {

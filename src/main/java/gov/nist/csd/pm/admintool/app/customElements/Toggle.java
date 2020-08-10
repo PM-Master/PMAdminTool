@@ -94,7 +94,6 @@ public class Toggle extends CustomField<String> {
             this.selected = selected;
 
             setText(text);
-            setHeight("50%");
             setWidth((100.0/numberOfOptions - .5) + "%");
             addClickListener(event -> {
                 toggleOn(text);
