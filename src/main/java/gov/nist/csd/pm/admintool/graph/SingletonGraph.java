@@ -18,11 +18,13 @@ import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import gov.nist.csd.pm.pip.graph.mysql.MySQLConnection;
 import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
 import gov.nist.csd.pm.pip.obligations.MemObligations;
+import gov.nist.csd.pm.pip.obligations.evr.EVRParser;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
 import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
 import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -451,6 +453,10 @@ public class SingletonGraph {
     }
 
     // obligation service methods
+    public void addObl(InputStream oblString) throws PMException {
+        addObl(EVRParser.parse(superContext.getUser(), oblString));
+    }
+
     public void addObl(Obligation obligation) throws PMException {
         if (superContext != null) {
             getPDP().getObligationsService(superContext).add(obligation, true);

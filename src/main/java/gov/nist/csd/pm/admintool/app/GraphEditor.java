@@ -22,6 +22,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.*;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.function.SerializablePredicate;
 import gov.nist.csd.pm.admintool.app.blips.*;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.app.customElements.Toggle;
@@ -123,7 +124,6 @@ public class GraphEditor extends VerticalLayout {
 
             // get data and expand policy classes
             resetGrid();
-            expandPolicies();
         }
 
         private void addTitleLayout () {
@@ -232,7 +232,7 @@ public class GraphEditor extends VerticalLayout {
             searchBar.setValueChangeMode(ValueChangeMode.LAZY);
             searchBar.addValueChangeListener(evt -> {
                 if (evt.getValue() != null && !evt.getValue().isEmpty()) {
-                    Predicate<? super String> filterName = (nodeName -> nodeName.contains(evt.getValue()));
+                    Predicate<? super String> filterName = (nodeName -> recursiveContains(nodeName, evt.getValue()));
                     filters.put("Name", filterName);
                 } else {
                     filters.remove("Name");
@@ -240,6 +240,31 @@ public class GraphEditor extends VerticalLayout {
                 refresh();
             });
             add(searchBar);
+        }
+        private boolean recursiveContains (String nodeName, String searchString) {
+            if (nodeName.contains(searchString)) {
+                return true;
+            } else {
+                Node node;
+                try {
+                    node = g.getNode(nodeName);
+                } catch (PMException e) {
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    e.printStackTrace();
+                    return false;
+                }
+
+                Stream<Node> children = grid.getDataProvider().fetchChildren(new HierarchicalQuery<>(null, node));
+                return children.anyMatch(child -> recursiveContains(child, searchString));
+            }
+        }
+        private boolean recursiveContains (Node node, String searchString) {
+            if (node.getName().contains(searchString)) {
+                return true;
+            } else {
+                Stream<Node> children = grid.getDataProvider().fetchChildren(new HierarchicalQuery<>(null, node));
+                return children.anyMatch(child -> recursiveContains(child.getName(), searchString));
+            }
         }
         private void addGridLayout () {
             prevNodes = new Stack<>(); // for the navigation system
@@ -713,6 +738,7 @@ public class GraphEditor extends VerticalLayout {
         }
 
         public void updateGridNodes(Collection<Node> all_nodes) {
+            // TODO: cache grid
             HierarchicalDataProvider dataProvider = new AbstractBackEndHierarchicalDataProvider<Node, Void>() {
                 @Override
                 public int getChildCount(HierarchicalQuery<Node, Void> query) {
@@ -732,7 +758,14 @@ public class GraphEditor extends VerticalLayout {
                                 }
                                 return children.size();
                             } else {
-                                return all_nodes.size();
+                                Set<String> temp_all_nodes = new HashSet<>();
+                                for (Node n: all_nodes) { // TODO: make function for nodes/strings
+                                    temp_all_nodes.add(n.getName());
+                                }
+                                for(Predicate<? super String> filter: filters.values()) {
+                                    temp_all_nodes = temp_all_nodes.stream().filter(filter).collect(Collectors.toSet());
+                                }
+                                return temp_all_nodes.size();
                             }
                         }
                     } catch (PMException e) {
@@ -777,7 +810,16 @@ public class GraphEditor extends VerticalLayout {
                                     children.add(g.getNode(name));
                                 }
                             } else {
-                                children.addAll(all_nodes);
+                                Set<String> temp_all_nodes = new HashSet<>();
+                                for (Node n: all_nodes) { // TODO: make function for nodes/strings
+                                    temp_all_nodes.add(n.getName());
+                                }
+                                for(Predicate<? super String> filter: filters.values()) {
+                                    temp_all_nodes = temp_all_nodes.stream().filter(filter).collect(Collectors.toSet());
+                                }
+                                for (String name: temp_all_nodes) { // TODO: make function for nodes/strings
+                                    children.add(g.getNode(name));
+                                }
                             }
 
                         }
@@ -845,8 +887,7 @@ public class GraphEditor extends VerticalLayout {
                 e.printStackTrace();
             }
             updateGridNodes(currNodes);
-            // TODO: collapse all nodes
-            expandPolicies();
+//            expandPolicies();
 
 
             // general resetting
@@ -863,7 +904,12 @@ public class GraphEditor extends VerticalLayout {
         }
 
         public void refresh() {
-            grid.getDataCommunicator().reset();
+//            grid.getDataCommunicator().reset();
+            grid.getDataProvider().refreshAll();
+        }
+        public void refresh(Node... nodes) {
+            for (Node node: nodes)
+                grid.getDataProvider().refreshItem(node, true);
         }
 
         public void expandPolicies() {
@@ -1200,8 +1246,8 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.createNode(name, type, props, parent.getName());
                     MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
-                    childNode.refresh();
-                    parentNode.refresh();
+                    childNode.refresh(parent);
+                    parentNode.refresh(parent);
                     dialog.close();
                 } catch (PMException e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1282,8 +1328,8 @@ public class GraphEditor extends VerticalLayout {
                     // What are those nodes used for ?
                     g.createNode(name, NodeType.U, props, parent.getName());
                     MainView.notify("User with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
-                    childNode.refresh();
-                    parentNode.refresh();
+                    childNode.refresh(parent);
+                    parentNode.refresh(parent);
                     dialog.close();
 
                 } catch (Exception e) {
@@ -1360,8 +1406,8 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.createNode(name, NodeType.O, props, parent.getName());
                     MainView.notify("Object with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
-                    childNode.refresh();
-                    parentNode.refresh();
+                    childNode.refresh(parent);
+                    parentNode.refresh(parent);
                     dialog.close();
                 } catch (Exception e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1442,15 +1488,25 @@ public class GraphEditor extends VerticalLayout {
         Button button = new Button("Delete", event -> {
             try {
                 String name = n.getName();
+                Set<String> parentStrings = g.getParents(n.getName());
+                Collection<Node> parents = new HashSet<>();
+                parentStrings.forEach((parentName) -> {
+                    try {
+                        parents.add(g.getNode(parentName));
+                    } catch (PMException e) {
+                        e.printStackTrace();
+                    }
+                });
                 g.deleteNode(name);
                 MainView.notify("Node with name: " + name + " has been deleted", MainView.NotificationType.SUCCESS);
+                childNode.refresh((Node[])parents.toArray());
+                parentNode.refresh((Node[])parents.toArray());
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
 //                MainView.notify("You have to delete all assignment on that node first.");
                 e.printStackTrace();
             }
-            childNode.refresh();
-            parentNode.refresh();
+
             dialog.close();
         });
         button.addThemeVariants(ButtonVariant.LUMO_ERROR);
@@ -1471,8 +1527,8 @@ public class GraphEditor extends VerticalLayout {
             try {
                 g.assign(child.getName(), parent.getName());
                 MainView.notify(child.getName() + " assigned to " + parent.getName(), MainView.NotificationType.SUCCESS);
-                childNode.refresh();
-                parentNode.refresh();
+                childNode.refresh(parent);
+                parentNode.refresh(parent);
             } catch (PMException e) {
                 e.printStackTrace();
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);

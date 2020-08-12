@@ -89,8 +89,7 @@ public class ObligationEditor extends VerticalLayout {
             upload.setHeight("100%");
             upload.addSucceededListener(event -> {
                 try {
-                    UserContext userContext = new UserContext("-1", "-1");
-                    g.addObl(EVRParser.parse(userContext.getUser(), buffer.getInputStream(event.getFileName())));
+                    g.addObl(buffer.getInputStream(event.getFileName()));
 //                    inputJson.clear();
                     obligationViewer.refreshGrid();
                 } catch (Exception e) {
@@ -140,6 +139,7 @@ public class ObligationEditor extends VerticalLayout {
         }
 
         private void createContextMenu() {
+
             GridContextMenu<Obligation> contextMenu = new GridContextMenu<>(obligationGrid);
 
             contextMenu.addItem("Add", event -> addObligation());
@@ -161,7 +161,7 @@ public class ObligationEditor extends VerticalLayout {
             });
             contextMenu.addItem("View Source", event -> {
                 event.getItem().ifPresent(obli -> {
-                    MainView.notify("View Obligaiton Source Method", MainView.NotificationType.DEFAULT);
+                    MainView.notify("View Obligation Source Method", MainView.NotificationType.DEFAULT);
                 });
             });
         }
