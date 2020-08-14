@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
+import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -11,6 +12,12 @@ import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pdp.services.UserContext;
+import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Tag("import-export")
 public class ImportExport extends VerticalLayout {
@@ -114,10 +121,21 @@ public class ImportExport extends VerticalLayout {
 
             inputJson.setHeight("80vh");
             Button importButton = new Button("Import JSON", click -> {
-
                 try {
-                    //SingletonGraph.getInstance().getGraphService(userCtx).fromJson(inputJson.getValue());
                     g.fromJson(inputJson.getValue());
+                    Set<SingletonGraph.PolicyClassWithActive> activesPc = SingletonGraph.getActivePCs();
+                    Set<String> nodeNames = activesPc.stream().map(e -> e.getName()).collect(Collectors.toSet());
+                    Set<SingletonGraph.PolicyClassWithActive> activesPcCopy = new HashSet<>();
+                    for (Node node : g.getNodes()) {
+                        if (node.getType() == NodeType.PC) {
+                            //compare the pc in the graph to the activePCs
+                            if (!nodeNames.contains(node.getName())) {
+                                SingletonGraph.PolicyClassWithActive newPc = new SingletonGraph.PolicyClassWithActive(node);
+                                activesPcCopy.add(newPc);
+                            }
+                        }
+                    }
+                    activesPc.addAll(activesPcCopy);
                     MainView.notify("The Json has been imported", MainView.NotificationType.SUCCESS);
                     //UI.getCurrent().getPage().reload();
                 } catch (PMException e) {
