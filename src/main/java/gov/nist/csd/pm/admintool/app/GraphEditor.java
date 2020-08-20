@@ -1499,8 +1499,8 @@ public class GraphEditor extends VerticalLayout {
                 });
                 g.deleteNode(name);
                 MainView.notify("Node with name: " + name + " has been deleted", MainView.NotificationType.SUCCESS);
-                childNode.refresh((Node[])parents.toArray());
-                parentNode.refresh((Node[])parents.toArray());
+                childNode.resetGrid();
+                parentNode.resetGrid();
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
 //                MainView.notify("You have to delete all assignment on that node first.");
