@@ -72,13 +72,12 @@ public class MainView extends HorizontalLayout{
         VerticalLayout page5 = new ProhibitionEditor();
         page5.setSizeFull();
         page5.setVisible(false);
-        page5.setEnabled(false);
 
         Tab tab6 = new Tab("Obligation Editor");
         VerticalLayout page6 = new ObligationEditor();
         page6.setSizeFull();
         page6.setVisible(false);
-        page6.setEnabled(false);
+        //page6.setEnabled(false);
 
         Tab tab7 = new Tab("Operations Editor");
         VerticalLayout page7 = new OperationsEditor();
