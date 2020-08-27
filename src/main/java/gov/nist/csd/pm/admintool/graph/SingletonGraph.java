@@ -631,6 +631,20 @@ public class SingletonGraph {
         }
     }
 
+    public Set<String> getAllOps() throws PMException {
+        HashSet<String> ops = new HashSet<>();
+        ops.addAll(getAdminOps());
+        ops.addAll(getResourceOps());
+        return ops;
+    }
+
+    public Set<String> getAllOpsWithStars() throws PMException {
+        HashSet<String> ops = new HashSet<>();
+        ops.addAll(getAdminOpsWithStars());
+        ops.addAll(getResourceOpsWithStars());
+        return ops;
+    }
+
     public void addResourceOps (String... ops) throws PMException {
         getPDP().addResourceOps(ops);
     }

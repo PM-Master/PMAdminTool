@@ -930,7 +930,7 @@ public class GraphEditor extends VerticalLayout {
         private Button addNodeButton, addUserButton, addObjectButton,
                     addAssignmentButton, deleteAssignmentButton,
                     addAssociationButton, editAssociationButton, deleteAssociationButton,
-                    addProhibitionButton, editProhibitionButton, deleteProhibitionButton,
+                    addProhibitionButton,
                     resetButton;
         private H4 parentNodeText, childNodeText;
         private Component connectorSymbol;
@@ -1051,22 +1051,6 @@ public class GraphEditor extends VerticalLayout {
             addProhibitionButton.setEnabled(false);
             addProhibitionButton.setWidthFull();
             add(addProhibitionButton);
-
-            editProhibitionButton = new Button("Edit Prohibition", evt -> {
-                editProhibition();
-            });
-            editProhibitionButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-            editProhibitionButton.setEnabled(false);
-            editProhibitionButton.setWidthFull();
-            add(editProhibitionButton);
-
-            deleteProhibitionButton = new Button("Delete Prohibition", evt -> {
-                deleteProhibition();
-            });
-            deleteProhibitionButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            deleteProhibitionButton.setEnabled(false);
-            deleteProhibitionButton.setWidthFull();
-            add(deleteProhibitionButton);
             add(new Paragraph("\n"));
 
 
@@ -1126,12 +1110,8 @@ public class GraphEditor extends VerticalLayout {
 
                 if ((childType == NodeType.UA || childType == NodeType.U) && (parentType == NodeType.OA || parentType == NodeType.O)) {
                     addProhibitionButton.setEnabled(true);
-                    editProhibitionButton.setEnabled(true);
-                    deleteProhibitionButton.setEnabled(true);
                 } else {
                     addProhibitionButton.setEnabled(false);
-                    editProhibitionButton.setEnabled(false);
-                    deleteProhibitionButton.setEnabled(false);
                 }
             } else {
                 addAssignmentButton.setEnabled(false);
@@ -1140,8 +1120,6 @@ public class GraphEditor extends VerticalLayout {
                 editAssociationButton.setEnabled(false);
                 deleteAssociationButton.setEnabled(false);
                 addProhibitionButton.setEnabled(false);
-                editProhibitionButton.setEnabled(false);
-                deleteProhibitionButton.setEnabled(false);
             }
         }
     }
@@ -1150,13 +1128,6 @@ public class GraphEditor extends VerticalLayout {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(Alignment.BASELINE);
-
-//        NumberField idField = new NumberField("ID");
-//        idField.setRequiredIndicatorVisible(true);
-//        idField.setValue(rand.nextLong() * 1.0);
-//        idField.setMin(1);
-//        idField.setHasControls(true);
-//        form.add(idField);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
@@ -1168,19 +1139,12 @@ public class GraphEditor extends VerticalLayout {
         types[1] = NodeType.UA;
         types[2] = NodeType.O;
         types[3] = NodeType.OA;
-        Select<NodeType> typeSelect = new Select<>(types);
+        Select<NodeType> typeSelect = new Select<>();
         typeSelect.setRequiredIndicatorVisible(true);
         typeSelect.setLabel("Type");
         typeSelect.setPlaceholder("Select Type...");
+        typeSelect.setItems(types);
         form.add(typeSelect);
-
-        Collection<Node> nodesCol;
-        try {
-            nodesCol = new HashSet<>(g.getActiveNodes());
-        } catch (PMException e) {
-            nodesCol = new HashSet<>();
-            e.printStackTrace();
-        }
 
         Select<Node> parentSelect = new Select<>();
         typeSelect.addValueChangeListener(event -> {
@@ -1207,12 +1171,13 @@ public class GraphEditor extends VerticalLayout {
                     break;
             }
             parentSelect.setItems(finalNodeCollection);
+            parentSelect.setEnabled(true);
         });
         parentSelect.setRequiredIndicatorVisible(true);
         parentSelect.setLabel("Parent");
         parentSelect.setPlaceholder("Select a parent node...");
         parentSelect.setItemLabelGenerator(Node::getName);
-        parentSelect.setItems(nodesCol);
+        parentSelect.setEnabled(false);
 
         form.add(parentSelect);
 
@@ -1594,6 +1559,7 @@ public class GraphEditor extends VerticalLayout {
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(Alignment.BASELINE);
 
+        // resource ops multi-select
         MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
         opsSelectRessource.setLabel("Operations");
         opsSelectRessource.setPlaceholder("Resources operations");
@@ -1604,8 +1570,8 @@ public class GraphEditor extends VerticalLayout {
         }
         opsSelectRessource.setWidth("100%");
 
+        // admin ops multi-select
         MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
-
         opsSelectAdmin.setLabel("Operations");
         opsSelectAdmin.setPlaceholder("Admin operations");
         try {
@@ -1810,7 +1776,38 @@ public class GraphEditor extends VerticalLayout {
         opsFeild.setPlaceholder("Enter Operations...");
         form.add(opsFeild);
 
-        MapInput<String, Boolean> containerField = new MapInput<>(TextField.class, Checkbox.class);
+        HashSet<String> targets = new HashSet<>();
+        HashSet<Node> targetNodes = new HashSet<>();
+        try {
+            targetNodes.addAll(g.getNodes());
+        } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+            e.printStackTrace();
+        }
+        targetNodes.removeIf(curr -> !(curr.getType() == NodeType.OA || curr.getType() == NodeType.O));
+        targetNodes.forEach((n) -> targets.add(n.getName()));
+
+        MapInput<String, Boolean> containerField = new MapInput<>((new Select<String>()).getClass(), Checkbox.class,
+                (keyField) -> {
+                    if (keyField instanceof Select) {
+                        Select<String> temp = (Select<String>)keyField;
+                        temp.setItems(targets);
+                        temp.setItemLabelGenerator((nodeName) -> {
+                            Node node = null;
+                            try {
+                                node = g.getNode(nodeName);
+                            } catch (PMException e) {
+                                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                                e.printStackTrace();
+                            }
+                            return node.getName() + " (" + node.getType() + ")";
+                        });
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                    }
+                }, null,
+                null, null
+        );
         containerField.setLabel("Containers (Target, Complement)");
         containerField.setInputRowValues(selectedParentNode.getName(), false);
         form.add (containerField);
@@ -1856,115 +1853,6 @@ public class GraphEditor extends VerticalLayout {
         });
         VerticalLayout submitLayout = new VerticalLayout(submit);
         form.add(submitLayout);
-
-        dialog.add(form);
-        dialog.open();
-        opsFeild.focus();
-    }
-
-    private void deleteProhibition() {
-        // TODO: is currently broken
-        Dialog dialog = new Dialog();
-        HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
-
-        form.add(new Paragraph("Are You Sure?"));
-
-        Button button = new Button("Delete", event -> {
-            try {
-                g.deleteProhibition(selectedChildNode.getName());
-                MainView.notify("Prohibition with name: " + selectedChildNode.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
-                childNode.updateNodeInfo();
-                parentNode.updateNodeInfo();
-//                System.out.println("Deleting prohibition between " + selectedChildNode.getName() + "-" + selectedChildNode.getType()+ " AND " + selectedParentNode.getName());
-//                List<Prohibition> prohibtions = g.getProhibitionsFor(selectedChildNode.getName());
-//                prohibtions.removeIf(prohibition -> !prohibition.getSubject().equals(selectedParentNode.getName()));
-//                if (!prohibtions.isEmpty()) {
-//                    for (Prohibition p: prohibtions) {
-//                        g.deleteProhibition(p.getName());
-//                    }
-//                }
-            } catch (PMException e) {
-                System.out.println(e.getMessage());
-                e.printStackTrace();
-            }
-            dialog.close();
-        });
-        button.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        form.add(button);
-
-        Button cancel = new Button("Cancel", event -> dialog.close());
-        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        form.add(cancel);
-
-        dialog.add(form);
-        dialog.open();
-    }
-
-    private void editProhibition() {
-        Dialog dialog = new Dialog();
-        HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
-
-        // getting previous values
-        String sourceToTargetOpsString = "";
-        boolean intersectionOldValue = false;
-        try {
-            Set<String> sourceToTargetOps = new HashSet<>();
-            List<Prohibition> prohibtions = g.getProhibitionsFor(selectedParentNode.getName());
-            for (Prohibition p: prohibtions) {
-                if (p.getName().equals(selectedChildNode.getName())) {
-                    sourceToTargetOps.addAll(p.getOperations());
-                    intersectionOldValue = p.isIntersection();
-                }
-            }
-
-            sourceToTargetOpsString = sourceToTargetOps.toString();
-            sourceToTargetOpsString = sourceToTargetOpsString.substring(1, sourceToTargetOpsString.length() - 1);
-        } catch (PMException e) {
-            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-            e.printStackTrace();
-        }
-
-        TextArea opsFeild = new TextArea("Operations (Op1, Op2, ...)");
-        opsFeild.setValue(sourceToTargetOpsString);
-        opsFeild.setPlaceholder("Enter Operations...");
-        form.add(opsFeild);
-
-        Checkbox intersectionFeild = new Checkbox("Intersection");
-        intersectionFeild.setValue(intersectionOldValue);
-        form.add(intersectionFeild);
-
-
-        Button submit = new Button("Submit", event -> {
-            String opString = opsFeild.getValue();
-            OperationSet ops = new OperationSet();
-            boolean intersection = intersectionFeild.getValue();
-            if (opString == null || opString.equals("")) {
-                opsFeild.focus();
-                MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
-            } else {
-                try {
-                    for (String op : opString.split(",")) {
-                        ops.add(op.replaceAll(" ", ""));
-                    }
-                } catch (Exception e) {
-                    MainView.notify("Incorrect Formatting of Operations", MainView.NotificationType.ERROR);
-                    e.printStackTrace();
-                }
-                try {
-//                    g.updateProhibition(selectedChildNode.getName(), selectedChildNode.getName(), selectedParentNode.getName(), ops, intersection);
-//                    MainView.notify("Prohibition with name: " + );
-                    childNode.updateNodeInfo();
-                    parentNode.updateNodeInfo();
-                    dialog.close();
-                } catch (Exception e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
-                }
-            }
-        });
-        form.add(submit);
 
         dialog.add(form);
         dialog.open();

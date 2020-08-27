@@ -160,7 +160,7 @@ public class MainView extends HorizontalLayout{
         }
     }
 
-    public static void notify(String message, NotificationType type){
+    public static void notify(String message, NotificationType type) {
         Paragraph text = new Paragraph(message);
         switch(type) {
             case SUCCESS:
@@ -176,6 +176,10 @@ public class MainView extends HorizontalLayout{
         Notification notif = new Notification(text);
         notif.setDuration(3000);
         notif.open();
+    }
+
+    public static void notify(String message) {
+        notify(message, NotificationType.DEFAULT);
     }
 
     public enum NotificationType {

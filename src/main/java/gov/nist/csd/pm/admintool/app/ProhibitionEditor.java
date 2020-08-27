@@ -3,16 +3,27 @@ package gov.nist.csd.pm.admintool.app;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.*;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
+import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
+import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.operations.OperationSet;
+import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
+import org.vaadin.gatanaso.MultiselectComboBox;
 
 import java.util.*;
 
@@ -50,25 +61,9 @@ public class ProhibitionEditor extends VerticalLayout {
     private class ProhibitionViewer extends VerticalLayout {
         private Grid<Prohibition> grid;
 
-        // for prohibition info section
-        private H3 name;
-        private Div childrenList, parentList;   // for relations
-        private Div outgoingAssociationList, incomingAssociationList; // for associations
-        private Div outgoingProhibitionList, incomingProhibitionList; // for prohibitions
-
         public ProhibitionViewer() {
             grid = new Grid<>(Prohibition.class);
-            name = new H3("X");
-            childrenList = new Div();
-            parentList = new Div();
-            outgoingAssociationList = new Div();
-            incomingAssociationList = new Div();
-            outgoingProhibitionList = new Div();
-            incomingProhibitionList = new Div();
-
             setupProhibitionTableSection();
-            setupProhibitionInfoSection();
-
         }
 
         public void setupProhibitionTableSection() {
@@ -79,18 +74,16 @@ public class ProhibitionEditor extends VerticalLayout {
             grid.getStyle()
                     .set("border-radius", "1px")
                     .set("user-select", "none");
-            grid.setColumns("name", "subject", "operations", "containers", "intersection");
+            grid.setColumns("name", "operations", "subject", "containers", "intersection");
 
             // Single Click Action: select node
             grid.addItemClickListener(evt -> {
-//                selectedProhibition = grid.getSelectedItems().iterator().next();
-//                selectedProhibition = evt.getItem();
-//
-//                buttonGroup.refreshButtonStates();
-//                buttonGroup.refreshProhibitionText();
-//
-//                updateProhibitionInfoSection();
-                MainView.notify("in item click listener", MainView.NotificationType.DEFAULT);
+                selectedProhibition = grid.getSelectedItems().iterator().next();
+                selectedProhibition = evt.getItem();
+
+                if (buttonGroup != null) {
+                    buttonGroup.refresh();
+                }
             });
 
             createContextMenu(); // adds the content-specific context menu
@@ -98,361 +91,6 @@ public class ProhibitionEditor extends VerticalLayout {
             refreshGraph();
 
             add(grid);
-        }
-
-        public void setupProhibitionInfoSection () {
-            /// PROHIBITION INFO START ///
-            VerticalLayout nodeInfo = new VerticalLayout();
-            nodeInfo.setWidthFull();
-            nodeInfo.setHeight("30%");
-            nodeInfo.getStyle()
-                    .set("background", "white")
-                    .set("border-radius", "2px")
-                    .set("border", "1px solid lightgrey")
-                    .set("padding", "10px")
-                    .set("line-height", "1px")
-                    .set("text-align", "center")
-                    .set("overflow-y", "scroll")
-                    .set("overflow-x", "hidden");
-
-
-
-            name.setWidthFull();
-            nodeInfo.add(name);
-
-            nodeInfo.add(new Hr());
-
-
-            ///// section with assignments
-            Paragraph assignmentsText = new Paragraph("Assignments:");
-            assignmentsText.setWidthFull();
-            assignmentsText.getStyle().set("font-weight", "bold");
-            nodeInfo.add(assignmentsText);
-
-            HorizontalLayout assignments = new HorizontalLayout();
-            assignments.setMargin(true);
-            assignments.getStyle().set("margin-top", "0");
-            assignments.getStyle().set("margin-bottom", "0");
-            assignments.setWidthFull();
-
-            // children layout
-            VerticalLayout children = new VerticalLayout();
-            children.setSizeFull();
-            children.setMargin(true);
-            children.getStyle().set("margin-top", "0");
-            children.getStyle().set("margin-bottom", "0");
-
-            children.add(new Paragraph("Children:"));
-
-
-            childrenList.setSizeFull();
-            childrenList.getStyle()
-                    .set("margin-top", "0")
-                    .set("margin-bottom", "0")
-                    .set("overflow","scroll");
-
-
-            children.add(childrenList);
-
-
-            // parent layout
-            VerticalLayout parents = new VerticalLayout();
-            parents.setMargin(true);
-            parents.setSizeFull();
-            parents.getStyle().set("margin-top", "0");
-            parents.getStyle().set("margin-bottom", "0");
-
-            parents.add(new Paragraph("Parents: "));
-
-
-            parentList.setSizeFull();
-            parentList.getStyle()
-                    .set("margin-top", "0")
-                    .set("margin-bottom", "0")
-                    .set("overflow","scroll");
-//                    .set("background","green");
-
-            parents.add(parentList);
-
-            // adding it all together
-            assignments.add(children);
-            assignments.add(parents);
-
-            nodeInfo.add(assignments);
-            ///// end section with assignments
-
-
-
-            nodeInfo.add(new Hr());
-
-
-
-            ///// section with associations
-            Paragraph associationsText = new Paragraph("Associations:");
-            associationsText.setWidthFull();
-            associationsText.getStyle().set("font-weight", "bold");
-            nodeInfo.add(associationsText);
-
-            HorizontalLayout associations = new HorizontalLayout();
-            associations.setMargin(true);
-            associations.getStyle().set("margin-top", "0");
-            associations.getStyle().set("margin-bottom", "0");
-            associations.setWidthFull();
-
-            // outgoing layout
-            VerticalLayout outgoing = new VerticalLayout();
-            outgoing.setSizeFull();
-            outgoing.setMargin(true);
-            outgoing.getStyle().set("margin-top", "0");
-            outgoing.getStyle().set("margin-bottom", "0");
-
-            outgoing.add(new Paragraph("Outgoing:"));
-
-
-            outgoingAssociationList.setSizeFull();
-            outgoingAssociationList.getStyle()
-                    .set("margin-top", "0")
-                    .set("margin-bottom", "0")
-                    .set("overflow","scroll");
-
-            outgoing.add(outgoingAssociationList);
-
-
-            // incoming layout
-            VerticalLayout incoming = new VerticalLayout();
-            incoming.setMargin(true);
-            incoming.setSizeFull();
-            incoming.getStyle().set("margin-top", "0");
-            incoming.getStyle().set("margin-bottom", "0");
-
-            incoming.add(new Paragraph("Incoming: "));
-
-
-            incomingAssociationList.setSizeFull();
-            incomingAssociationList.getStyle()
-                    .set("margin-top", "0")
-                    .set("margin-bottom", "0")
-                    .set("overflow","scroll");
-
-            incoming.add(incomingAssociationList);
-
-            // adding it all together
-            associations.add(outgoing);
-            associations.add(incoming);
-
-            nodeInfo.add(associations);
-            ///// end section of associations
-
-
-            nodeInfo.add(new Hr());
-
-            ///// section with prohibitions
-            Paragraph ProhibitonsText = new Paragraph("Prohibitions:");
-            ProhibitonsText.setWidthFull();
-            ProhibitonsText.getStyle().set("font-weight", "bold");
-            nodeInfo.add(ProhibitonsText);
-
-            HorizontalLayout prohibitions = new HorizontalLayout();
-            prohibitions.setMargin(true);
-            prohibitions.getStyle().set("margin-top", "0");
-            prohibitions.getStyle().set("margin-bottom", "0");
-            prohibitions.setWidthFull();
-
-            // outgoing layout
-            VerticalLayout outgoingProhibitions = new VerticalLayout();
-            outgoingProhibitions.setSizeFull();
-            outgoingProhibitions.setMargin(true);
-            outgoingProhibitions.getStyle().set("margin-top", "0");
-            outgoingProhibitions.getStyle().set("margin-bottom", "0");
-
-            outgoingProhibitions.add(new Paragraph("Outgoing:"));
-
-
-            outgoingProhibitionList.setSizeFull();
-            outgoingProhibitionList.getStyle()
-                    .set("margin-top", "0")
-                    .set("margin-bottom", "0")
-                    .set("overflow","scroll");
-
-            outgoingProhibitions.add(outgoingProhibitionList);
-
-
-            // incoming layout
-            VerticalLayout incomingProhibitions = new VerticalLayout();
-            incomingProhibitions.setMargin(true);
-            incomingProhibitions.setSizeFull();
-            incomingProhibitions.getStyle().set("margin-top", "0");
-            incomingProhibitions.getStyle().set("margin-bottom", "0");
-
-            incomingProhibitions.add(new Paragraph("Incoming: "));
-
-
-            incomingProhibitionList.setSizeFull();
-            incomingProhibitionList.getStyle()
-                    .set("margin-top", "0")
-                    .set("margin-bottom", "0")
-                    .set("overflow","scroll");
-
-            incomingProhibitions.add(incomingProhibitionList);
-
-            // adding it all together
-            prohibitions.add(outgoingProhibitions);
-            prohibitions.add(incomingProhibitions);
-
-            nodeInfo.add(prohibitions);
-            ////// end section with prohibitions
-
-
-            add(nodeInfo);
-            /// PROHIBITION INFO END ///
-        }
-
-        private void updateProhibitionInfoSection() {
-            childrenList.removeAll();
-            parentList.removeAll();
-
-            outgoingAssociationList.removeAll();
-            incomingAssociationList.removeAll();
-
-            outgoingProhibitionList.removeAll();
-            incomingProhibitionList.removeAll();
-
-            if (selectedProhibition != null) {
-//                try {
-//                    name.setText(selectedProhibition.getName() + " (" + selectedProhibition.getType().toString() + ")");
-//
-//                    //TODO: find a more expandable way to do this
-//
-//                    // assignments
-//                    Iterator<String> childIter = SingletonGraph.getPap().getGraphPAP().getChildren(gridSelecNode.getName()).iterator();
-//                    if (!childIter.hasNext()) {
-//                        childrenList.add(new Paragraph("None"));
-//                    } else {
-//                        while (childIter.hasNext()) {
-//                            String child = childIter.next();
-//                            Node childParent = SingletonGraph.getPap().getGraphPAP().getNode(child);
-//                            childrenList.add(new NodeDataBlip(childParent.getName(), childParent.getType()));
-////                            children.setText(children.getText() + "{" + id + ": " + g.getNode(id).getName() + "},");
-//                        }
-//                    }
-//
-//                    Iterator<String> parentIter = SingletonGraph.getPap().getGraphPAP().getParents(gridSelecNode.getName()).iterator();
-//                    if (!parentIter.hasNext()) {
-//                        parentList.add(new Paragraph("None"));
-//                    } else {
-//                        while (parentIter.hasNext()) {
-//                            String parent = parentIter.next();
-//                            Node parentNode = SingletonGraph.getPap().getGraphPAP().getNode(parent);
-//                            parentList.add(new NodeDataBlip(parentNode.getName(), parentNode.getType()));
-////                            parents.setText(parents.getText() + "{" + id + ": " + g.getNode(id).getName() + "},");
-//                        }
-//                    }
-//
-//                    // associations
-//                    if (gridSelecNode.getType() == NodeType.UA) {
-//                        Map<String, OperationSet> outgoingMap = SingletonGraph.getPap().getGraphPAP().getSourceAssociations(gridSelecNode.getName());
-//                        Iterator<String> outgoingKeySet = outgoingMap.keySet().iterator();
-//                        if (!outgoingKeySet.hasNext()) {
-//                            outgoingAssociationList.add(new Paragraph("None"));
-//                        } else {
-//                            while (outgoingKeySet.hasNext()) {
-//                                String name = outgoingKeySet.next();
-//                                Node node = SingletonGraph.getPap().getGraphPAP().getNode(name);
-//                                outgoingAssociationList.add(new AssociationBlip(name, node.getType(), true, outgoingMap.get(name)));
-//                            }
-//                        }
-//                    }
-//
-//                    if (gridSelecNode.getType() == NodeType.UA || gridSelecNode.getType() == NodeType.OA) {
-//                        Map<String, OperationSet> incomingMap = SingletonGraph.getPap().getGraphPAP().getTargetAssociations(gridSelecNode.getName());
-//                        Iterator<String> incomingKeySet = incomingMap.keySet().iterator();
-//                        if (!incomingKeySet.hasNext()) {
-//                            incomingAssociationList.add(new Paragraph("None"));
-//                        } else {
-//                            while (incomingKeySet.hasNext()) {
-//                                String name = incomingKeySet.next();
-//                                Node node = SingletonGraph.getPap().getGraphPAP().getNode(name);
-//                                incomingAssociationList.add(new AssociationBlip(name, node.getType(), false, incomingMap.get(name)));
-//                            }
-//                        }
-//                    }
-//
-//                    // prohibitions
-//                    if (gridSelecNode.getType() == NodeType.UA || gridSelecNode.getType() == NodeType.U) {
-//                        List<Prohibition> outgoingList = SingletonGraph.getPap().getProhibitionsPAP().getProhibitionsFor(gridSelecNode.getName());
-//                        Iterator<Prohibition> outgoingIterator = outgoingList.iterator();
-//                        if (!outgoingIterator.hasNext()) {
-//                            outgoingProhibitionList.add(new Paragraph("None"));
-//                        } else {
-//                            while (outgoingIterator.hasNext()) {
-//                                Prohibition prohibition = outgoingIterator.next();
-//                                Iterator<String> containerKeySetIterator = prohibition.getContainers().keySet().iterator();
-//                                while (containerKeySetIterator.hasNext()) {
-//                                    String targetName = containerKeySetIterator.next();
-//                                    boolean isComplement = prohibition.getContainers().get(targetName);
-//                                    Node target = SingletonGraph.getPap().getGraphPAP().getNode(targetName);
-//                                    outgoingProhibitionList.add(
-//                                            new ProhibitonBlip(
-//                                                    gridSelecNode,
-//                                                    target,
-//                                                    isComplement,
-//                                                    prohibition.getOperations(),
-//                                                    prohibition.isIntersection(),
-//                                                    true
-//                                            )
-//                                    );
-//                                }
-//                            }
-//                        }
-//                    }
-//
-//                    if (gridSelecNode.getType() == NodeType.UA || gridSelecNode.getType() == NodeType.OA
-//                            || gridSelecNode.getType() == NodeType.U || gridSelecNode.getType() == NodeType.O) {
-//                        List<Prohibition> incomingList = SingletonGraph.getPap().getProhibitionsPAP().getAll();
-//                        incomingList.removeIf(prohibition -> !prohibition.getContainers().keySet().contains(gridSelecNode.getName()));
-//                        Iterator<Prohibition> incomingIterator = incomingList.iterator();
-//                        if (!incomingIterator.hasNext()) {
-//                            incomingProhibitionList.add(new Paragraph("None"));
-//                        } else {
-//                            while (incomingIterator.hasNext()) {
-//                                Prohibition prohibition = incomingIterator.next();
-//                                Iterator<String> containerKeySetIterator = prohibition.getContainers().keySet().iterator();
-//                                while (containerKeySetIterator.hasNext()) {
-//                                    String targetName = containerKeySetIterator.next();
-//                                    boolean isComplement = prohibition.getContainers().get(targetName);
-//                                    if (targetName.equals(gridSelecNode.getName())) {
-//                                        Node subject = SingletonGraph.getPap().getGraphPAP().getNode(prohibition.getSubject());
-//                                        incomingProhibitionList.add(
-//                                                new ProhibitonBlip(
-//                                                        subject,
-//                                                        gridSelecNode,
-//                                                        isComplement,
-//                                                        prohibition.getOperations(),
-//                                                        prohibition.isIntersection(),
-//                                                        false
-//                                                )
-//                                        );
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                } catch (PMException e) {
-//                    e.printStackTrace();
-//                    MainView.notify(e.getMessage());
-//                }
-            } else {
-                name.setText("X");
-
-                childrenList.add(new Paragraph("None"));
-                parentList.add(new Paragraph("None"));
-
-                outgoingAssociationList.add(new Paragraph("None"));
-                incomingAssociationList.add(new Paragraph("None"));
-
-                outgoingProhibitionList.add(new Paragraph("None"));
-                incomingProhibitionList.add(new Paragraph("None"));
-            }
         }
 
         public void updateGrid() {
@@ -470,24 +108,18 @@ public class ProhibitionEditor extends VerticalLayout {
             updateGrid();
             selectedProhibition = null;
             if (buttonGroup != null) {
-                buttonGroup.refreshProhibitionText();
-                buttonGroup.refreshButtonStates();
+                buttonGroup.refresh();
             }
         }
 
         private void createContextMenu() {
             GridContextMenu<Prohibition> contextMenu = new GridContextMenu<>(grid);
 
-            //contextMenu.addItem("Add Node", event -> addNode());
-            contextMenu.addItem("Edit Node", event -> {
-                event.getItem().ifPresent(prohibition -> {
-                    editProhibition(prohibition);
-                });
+            contextMenu.addItem("Edit Prohibition", event -> {
+                event.getItem().ifPresent(prohibition -> editProhibition(prohibition));
             });
-            contextMenu.addItem("Delete Node", event -> {
-                event.getItem().ifPresent(prohibition -> {
-                    deleteProhibition(prohibition);
-                });
+            contextMenu.addItem("Delete Prohibition", event -> {
+                event.getItem().ifPresent(prohibition -> deleteProhibition(prohibition));
             });
 
 
@@ -510,6 +142,8 @@ public class ProhibitionEditor extends VerticalLayout {
             add(new Paragraph("\n"), new Paragraph("\n"));
 
             createButtons();
+
+            refresh();
         }
 
         private void createButtons() {
@@ -518,7 +152,6 @@ public class ProhibitionEditor extends VerticalLayout {
                 addProhibition();
             });
             addProhibitionButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-            addProhibitionButton.setEnabled(true);
             addProhibitionButton.setWidthFull();
             add(addProhibitionButton);
 
@@ -526,7 +159,6 @@ public class ProhibitionEditor extends VerticalLayout {
                 editProhibition(selectedProhibition);
             });
             editProhibitionButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-            editProhibitionButton.setEnabled(true);
             editProhibitionButton.setWidthFull();
             add(editProhibitionButton);
 
@@ -534,98 +166,328 @@ public class ProhibitionEditor extends VerticalLayout {
                 deleteProhibition(selectedProhibition);
             });
             deleteProhibitionButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            deleteProhibitionButton.setEnabled(true);
             deleteProhibitionButton.setWidthFull();
             add(deleteProhibitionButton);
             add(new Paragraph("\n"));
         }
 
-        public void refreshProhibitionText() {
+        public void refresh() {
             if (selectedProhibition != null) {
                 selectedProhibitionText.setText(selectedProhibition.getName());
+                editProhibitionButton.setEnabled(true);
+                deleteProhibitionButton.setEnabled(true);
             } else {
                 selectedProhibitionText.setText("X");
-            }
-        }
-
-        public void refreshButtonStates() {
-            if (selectedProhibitionText != null) {
-                editProhibitionButton.setEnabled(true);
-                deleteProhibitionButton.setEnabled(true);
-            } else {
-                editProhibitionButton.setEnabled(true);
-                deleteProhibitionButton.setEnabled(true);
+                editProhibitionButton.setEnabled(false);
+                deleteProhibitionButton.setEnabled(false);
             }
         }
     }
 
     private void addProhibition() {
-//        Dialog dialog = new Dialog();
-//
-//        HorizontalLayout form = new HorizontalLayout();
-//        // form.setAlignItems(Alignment.BASELINE);
-//
-//        TextField nameField = new TextField("Prohibition Name");
-//        form.add(nameField);
-//
-//        TextField subjectName = new TextField("Subject Name");
-//        form.add(subjectName);
-//
-//        TextArea opsFeild = new TextArea("Operations (Op1, Op2, ...)");
-//        opsFeild.setPlaceholder("Enter Operations...");
-//        form.add(opsFeild);
-//
-//        MapInput<String, Boolean> containerField = new MapInput<>(TextField.class, Checkbox.class);
-//        containerField.setLabel("Containers (Target, Complement)");
-//        form.add (containerField);
-//
-//        Checkbox intersectionFeild = new Checkbox("Intersection");
-//        VerticalLayout intersectionFeildLayout = new VerticalLayout(intersectionFeild);
-//        form.add(intersectionFeildLayout);
-//
-//        Button submit = new Button("Submit", event -> {
-//            String name = nameField.getValue();
-//            String opString = opsFeild.getValue();
-//            OperationSet ops = new OperationSet();
-//            boolean intersection = intersectionFeild.getValue();
-//            Map<String, Boolean> containers = containerField.getValue();
-//            if (opString == null || opString.equals("")) {
-//                opsFeild.focus();
-//                MainView.notify("Operations are Required");
-//            } else if (name == null || name.equals("")) {
-//                nameField.focus();
-//                MainView.notify("Name is Required");
-//            } else if (containers.isEmpty()) {
-//                MainView.notify("Containers are Required");
-//            } else {
-//                try {
-//                    for (String op : opString.split(",")) {
-//                        ops.add(op.replaceAll(" ", ""));
-//                    }
-//                } catch (Exception e) {
-//                    MainView.notify("Incorrect Formatting of Operations");
-//                    e.printStackTrace();
-//                }
-//                try {
-//                    g.addProhibition(nameField.getValue(), subjectName.getValue(), containers, ops, intersection);
-//                    dialog.close();
-//                } catch (PMException e) {
-//                    MainView.notify(e.getMessage());
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
-//        VerticalLayout submitLayout = new VerticalLayout(submit);
-//        form.add(submitLayout);
-//
-//        dialog.add(form);
-//        dialog.open();
-//        opsFeild.focus();
+        // get all current nodes
+        HashSet<Node> nodesCol = new HashSet<>();
+        try {
+            nodesCol.addAll(g.getActiveNodes());
+        } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+            e.printStackTrace();
+        }
+
+        // actual dialog box
+        Dialog dialog = new Dialog();
+
+        // the form layout
+        HorizontalLayout form = new HorizontalLayout();
+
+        // prohibition name input - automatically filled by subject change
+        TextField nameField = new TextField("Prohibition Name");
+        nameField.setPlaceholder("Name...");
+        form.add(nameField);
+
+        // getting list of subjects
+        HashSet<String> subjects = new HashSet<>();
+        HashSet<Node> subjectNodes = new HashSet<>(nodesCol);
+        subjectNodes.removeIf(curr -> !(curr.getType() == NodeType.UA || curr.getType() == NodeType.U));
+        subjectNodes.forEach((n) -> subjects.add(n.getName()));
+
+        // subject selector
+        Select<String> subjectSelect = new Select();
+        subjectSelect.setItems(subjects);
+        subjectSelect.setRequiredIndicatorVisible(true);
+        subjectSelect.setLabel("Subject");
+        subjectSelect.setPlaceholder("Subject...");
+        subjectSelect.setItemLabelGenerator((nodeName) -> {
+            try {
+                Node node = g.getNode(nodeName);
+                return node.getName() + " (" + node.getType() + ")";
+            } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+                return "";
+            }
+        });
+        subjectSelect.addValueChangeListener((nodeName) -> {
+            int numOfProhibitionsForSubject = 0;
+            try {
+                numOfProhibitionsForSubject = g.getProhibitionsFor(nodeName.getValue()).size();
+            } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+            }
+            String initialName = "deny_" + nodeName.getValue() + "-" + (numOfProhibitionsForSubject + 1);
+            nameField.setValue(initialName);
+        });
+        form.add(subjectSelect);
+
+        // operations multi-select
+        MultiselectComboBox<String> opsField = new MultiselectComboBox<>();
+        opsField.setLabel("Operations");
+        opsField.setPlaceholder("Operations...");
+        try {
+            opsField.setItems(g.getAllOpsWithStars());
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
+        form.add(opsField);
+
+        // getting list of targets
+        HashSet<String> targets = new HashSet<>();
+        HashSet<Node> targetNodes = new HashSet<>(nodesCol);
+        targetNodes.removeIf(curr -> !(curr.getType() == NodeType.OA || curr.getType() == NodeType.O));
+        targetNodes.forEach((n) -> targets.add(n.getName()));
+
+        // targets (+ compliment) selector
+        MapInput<String, Boolean> containerField = new MapInput<>((new Select<String>()).getClass(), Checkbox.class,
+            (keyField) -> {
+                if (keyField instanceof Select) {
+                    Select<String> temp = (Select<String>)keyField;
+                    temp.setItems(targets);
+                    temp.setItemLabelGenerator((nodeName) -> {
+                        Node node = null;
+                        try {
+                            node = g.getNode(nodeName);
+                        } catch (PMException e) {
+                            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                            e.printStackTrace();
+                        }
+                        return node.getName() + " (" + node.getType() + ")";
+                    });
+                    temp.setPlaceholder("Container...");
+                } else {
+                    MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                }
+            }, null,
+            null, null
+        );
+        containerField.setLabel("Containers (Target, Complement)");
+        form.add (containerField);
+
+        // intersection checkbox
+        Checkbox intersectionFeild = new Checkbox("Intersection");
+        VerticalLayout intersectionFeildLayout = new VerticalLayout(intersectionFeild);
+        form.add(intersectionFeildLayout);
+
+        // submit button
+        Button submit = new Button("Submit", event -> {
+            String name = nameField.getValue();
+            String subject = subjectSelect.getValue();
+            Map<String, Boolean> containers = containerField.getValue();
+            OperationSet ops = new OperationSet(opsField.getValue());
+            boolean intersection = intersectionFeild.getValue();
+            if (ops == null || ops.isEmpty()) {
+                MainView.notify("Operations are Required");
+            } else if (name == null || name.equals("")) {
+                nameField.focus();
+                MainView.notify("Name is Required");
+            } else if (subject == null || subject.equals("")) {
+                subjectSelect.focus();
+                MainView.notify("Subject is Required");
+            } else if (containers.isEmpty()) {
+                MainView.notify("Containers are Required");
+            } else {
+                try {
+                    g.addProhibition(name, subject, containers, ops, intersection);
+                    prohibitionViewer.refreshGraph();
+                    dialog.close();
+                } catch (PMException e) {
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    e.printStackTrace();
+                }
+            }
+        });
+        VerticalLayout submitLayout = new VerticalLayout(submit);
+        form.add(submitLayout);
+
+        // putting it all together
+        dialog.add(form);
+        dialog.open();
+        subjectSelect.focus();
     }
 
-    private void editProhibition(Prohibition prohibition) {}
+    private void editProhibition(Prohibition prohibition) {
+        // get all current nodes
+        HashSet<Node> nodesCol = new HashSet<>();
+        try {
+            nodesCol.addAll(g.getActiveNodes());
+        } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+            e.printStackTrace();
+        }
 
-    private void deleteProhibition(Prohibition prohibition) {}
+        // actual dialog box
+        Dialog dialog = new Dialog();
 
+        // the form layout
+        HorizontalLayout form = new HorizontalLayout();
+
+        // prohibition name input - automatically filled by subject change
+        TextField nameField = new TextField("Prohibition Name");
+        form.add(nameField);
+        nameField.setValue(prohibition.getName());
+        nameField.setEnabled(false);
+
+        // getting list of subjects
+        HashSet<String> subjects = new HashSet<>();
+        HashSet<Node> subjectNodes = new HashSet<>(nodesCol);
+        subjectNodes.removeIf(curr -> !(curr.getType() == NodeType.UA || curr.getType() == NodeType.U));
+        subjectNodes.forEach((n) -> subjects.add(n.getName()));
+
+        // subject selector
+        Select<String> subjectSelect = new Select();
+        subjectSelect.setItems(subjects);
+        subjectSelect.setRequiredIndicatorVisible(true);
+        subjectSelect.setLabel("Subject");
+        subjectSelect.setPlaceholder("Subject...");
+        subjectSelect.setItemLabelGenerator((nodeName) -> {
+            try {
+                Node node = g.getNode(nodeName);
+                return node.getName() + " (" + node.getType() + ")";
+            } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+                return "";
+            }
+        });
+        form.add(subjectSelect);
+        subjectSelect.setValue(prohibition.getSubject());
+        subjectSelect.setEnabled(false);
+
+        // operations multi-select
+        MultiselectComboBox<String> opsField = new MultiselectComboBox<>();
+        opsField.setLabel("Operations");
+        opsField.setPlaceholder("Operations...");
+        try {
+            opsField.setItems(g.getAllOpsWithStars());
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
+        form.add(opsField);
+        opsField.setValue(prohibition.getOperations());
+
+        // getting list of targets
+        HashSet<String> targets = new HashSet<>();
+        HashSet<Node> targetNodes = new HashSet<>(nodesCol);
+        targetNodes.removeIf(curr -> !(curr.getType() == NodeType.OA || curr.getType() == NodeType.O));
+        targetNodes.forEach((n) -> targets.add(n.getName()));
+
+        // targets (+ compliment) selector
+        MapInput<String, Boolean> containerField = new MapInput<>((new Select<String>()).getClass(), Checkbox.class,
+                (keyField) -> {
+                    if (keyField instanceof Select) {
+                        Select<String> temp = (Select<String>)keyField;
+                        temp.setItems(targets);
+                        temp.setItemLabelGenerator((nodeName) -> {
+                            Node node = null;
+                            try {
+                                node = g.getNode(nodeName);
+                            } catch (PMException e) {
+                                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                                e.printStackTrace();
+                            }
+                            return node.getName() + " (" + node.getType() + ")";
+                        });
+                        temp.setPlaceholder("Container...");
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                    }
+                }, null,
+                null, null
+        );
+        containerField.setLabel("Containers (Target, Complement)");
+        form.add(containerField);
+        containerField.setValue(prohibition.getContainers());
+
+        // intersection checkbox
+        Checkbox intersectionField = new Checkbox("Intersection");
+        VerticalLayout intersectionFieldLayout = new VerticalLayout(intersectionField);
+        form.add(intersectionFieldLayout);
+        intersectionField.setValue(prohibition.isIntersection());
+
+        // submit button
+        Button submit = new Button("Submit", event -> {
+            String name = nameField.getValue();
+            String subject = subjectSelect.getValue();
+            Map<String, Boolean> containers = containerField.getValue();
+            OperationSet ops = new OperationSet(opsField.getValue());
+            boolean intersection = intersectionField.getValue();
+            if (ops == null || ops.isEmpty()) {
+                MainView.notify("Operations are Required");
+            } else if (name == null || name.equals("")) {
+                nameField.focus();
+                MainView.notify("Name is Required");
+            } else if (subject == null || subject.equals("")) {
+                subjectSelect.focus();
+                MainView.notify("Subject is Required");
+            } else if (containers.isEmpty()) {
+                MainView.notify("Containers are Required");
+            } else {
+                try {
+                    g.updateProhibition(name, subject, containers, ops, intersection);
+                    prohibitionViewer.refreshGraph();
+                    dialog.close();
+                } catch (PMException e) {
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    e.printStackTrace();
+                }
+            }
+        });
+        VerticalLayout submitLayout = new VerticalLayout(submit);
+        form.add(submitLayout);
+
+        // putting it all together
+        dialog.add(form);
+        dialog.open();
+        subjectSelect.focus();
+    }
+
+    private void deleteProhibition(Prohibition prohibition) {
+        Dialog dialog = new Dialog();
+        HorizontalLayout form = new HorizontalLayout();
+        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+
+        form.add(new Paragraph("Are You Sure?"));
+
+        Button button = new Button("Delete", event -> {
+            try {
+                g.deleteProhibition(prohibition.getName());
+                MainView.notify("Prohibition with name: " + prohibition.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
+                prohibitionViewer.refreshGraph();
+            } catch (PMException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
+            dialog.close();
+        });
+        button.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        form.add(button);
+
+        Button cancel = new Button("Cancel", event -> dialog.close());
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        form.add(cancel);
+
+        dialog.add(form);
+        dialog.open();
+    }
 }
 
