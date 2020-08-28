@@ -15,6 +15,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.provider.ListDataProvider;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 
@@ -241,15 +242,20 @@ public class ProhibitionEditor extends VerticalLayout {
         form.add(subjectSelect);
 
         // operations multi-select
-        MultiselectComboBox<String> opsField = new MultiselectComboBox<>();
-        opsField.setLabel("Operations");
-        opsField.setPlaceholder("Operations...");
+        MultiselectComboBox<String> rOpsField = new MultiselectComboBox<>();
+        rOpsField.setLabel("Operations");
+        rOpsField.setPlaceholder("Resource...");
+        MultiselectComboBox<String> aOpsField = new MultiselectComboBox<>();
+        aOpsField.setPlaceholder("Admin...");
         try {
-            opsField.setItems(g.getAllOpsWithStars());
+            rOpsField.setItems(g.getResourceOpsWithStars());
+            aOpsField.setItems(g.getAdminOpsWithStars());
         } catch (PMException e) {
             e.printStackTrace();
         }
-        form.add(opsField);
+        VerticalLayout opsFields = new VerticalLayout(rOpsField, aOpsField);
+        opsFields.getStyle().set("padding-top", "0");
+        form.add(opsFields);
 
         // getting list of targets
         HashSet<String> targets = new HashSet<>();
@@ -286,14 +292,15 @@ public class ProhibitionEditor extends VerticalLayout {
         // intersection checkbox
         Checkbox intersectionFeild = new Checkbox("Intersection");
         VerticalLayout intersectionFeildLayout = new VerticalLayout(intersectionFeild);
-        form.add(intersectionFeildLayout);
+        form.add(new VerticalLayout(intersectionFeildLayout));
 
         // submit button
         Button submit = new Button("Submit", event -> {
             String name = nameField.getValue();
             String subject = subjectSelect.getValue();
             Map<String, Boolean> containers = containerField.getValue();
-            OperationSet ops = new OperationSet(opsField.getValue());
+            OperationSet ops = new OperationSet(rOpsField.getValue());
+            ops.addAll(aOpsField.getValue());
             boolean intersection = intersectionFeild.getValue();
             if (ops == null || ops.isEmpty()) {
                 MainView.notify("Operations are Required");
@@ -317,7 +324,7 @@ public class ProhibitionEditor extends VerticalLayout {
             }
         });
         VerticalLayout submitLayout = new VerticalLayout(submit);
-        form.add(submitLayout);
+        form.add(new VerticalLayout(submitLayout));
 
         // putting it all together
         dialog.add(form);

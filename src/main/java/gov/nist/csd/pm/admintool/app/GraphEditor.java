@@ -1761,6 +1761,7 @@ public class GraphEditor extends VerticalLayout {
         HorizontalLayout form = new HorizontalLayout();
         // form.setAlignItems(Alignment.BASELINE);
 
+        // prohibition name input
         TextField nameField = new TextField("Prohibition Name");
         int numOfProhibtionsForSubject = 0;
         try {
@@ -1772,10 +1773,23 @@ public class GraphEditor extends VerticalLayout {
         nameField.setValue(initialName);
         form.add(nameField);
 
-        TextArea opsFeild = new TextArea("Operations (Op1, Op2, ...)");
-        opsFeild.setPlaceholder("Enter Operations...");
-        form.add(opsFeild);
+        // operations multi-selectors
+        MultiselectComboBox<String> rOpsField = new MultiselectComboBox<>();
+        rOpsField.setLabel("Operations");
+        rOpsField.setPlaceholder("Resource...");
+        MultiselectComboBox<String> aOpsField = new MultiselectComboBox<>();
+        aOpsField.setPlaceholder("Admin...");
+        try {
+            rOpsField.setItems(g.getResourceOpsWithStars());
+            aOpsField.setItems(g.getAdminOpsWithStars());
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
+        VerticalLayout opsFields = new VerticalLayout(rOpsField, aOpsField);
+        opsFields.getStyle().set("padding-top", "0");
+        form.add(opsFields);
 
+        // containers select
         HashSet<String> targets = new HashSet<>();
         HashSet<Node> targetNodes = new HashSet<>();
         try {
@@ -1812,18 +1826,19 @@ public class GraphEditor extends VerticalLayout {
         containerField.setInputRowValues(selectedParentNode.getName(), false);
         form.add (containerField);
 
+        // intersection checkbox
         Checkbox intersectionFeild = new Checkbox("Intersection");
         VerticalLayout intersectionFeildLayout = new VerticalLayout(intersectionFeild);
-        form.add(intersectionFeildLayout);
+        form.add(new VerticalLayout(intersectionFeildLayout));
 
+        // submit button
         Button submit = new Button("Submit", event -> {
             String name = nameField.getValue();
-            String opString = opsFeild.getValue();
-            OperationSet ops = new OperationSet();
+            OperationSet ops = new OperationSet(rOpsField.getValue());
+            ops.addAll(aOpsField.getValue());
             boolean intersection = intersectionFeild.getValue();
             Map<String, Boolean> containers = containerField.getValue();
-            if (opString == null || opString.equals("")) {
-                opsFeild.focus();
+            if (ops == null || ops.isEmpty()) {
                 MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
             } else if (name == null || name.equals("")) {
                 nameField.focus();
@@ -1831,14 +1846,6 @@ public class GraphEditor extends VerticalLayout {
             } else if (containers.isEmpty()) {
                 MainView.notify("Containers are Required", MainView.NotificationType.DEFAULT);
             } else {
-                try {
-                    for (String op : opString.split(",")) {
-                        ops.add(op.replaceAll(" ", ""));
-                    }
-                } catch (Exception e) {
-                    MainView.notify("Incorrect Formatting of Operations", MainView.NotificationType.ERROR);
-                    e.printStackTrace();
-                }
                 try {
                     g.addProhibition(nameField.getValue(), selectedChildNode.getName(), containers, ops, intersection);
                     MainView.notify("Prohibition with name: " + nameField.getValue() + " has been created", MainView.NotificationType.SUCCESS);
@@ -1852,11 +1859,11 @@ public class GraphEditor extends VerticalLayout {
             }
         });
         VerticalLayout submitLayout = new VerticalLayout(submit);
-        form.add(submitLayout);
+        form.add(new VerticalLayout(submitLayout));
 
+        // putting it all together
         dialog.add(form);
         dialog.open();
-        opsFeild.focus();
     }
 
     private void resetGraph() {
