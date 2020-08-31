@@ -453,8 +453,12 @@ public class SingletonGraph {
     }
 
     // obligation service methods
+    public Obligation parseObligationYaml (InputStream oblString) throws PMException {
+        return EVRParser.parse(superContext.getUser(), oblString);
+    }
+
     public void addObl(InputStream oblString) throws PMException {
-        addObl(EVRParser.parse(superContext.getUser(), oblString));
+        addObl(parseObligationYaml(oblString));
     }
 
     public void addObl(Obligation obligation) throws PMException {

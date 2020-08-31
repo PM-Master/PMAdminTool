@@ -1,14 +1,16 @@
 package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -18,20 +20,21 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.pdp.services.GraphService;
-import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.obligations.evr.EVRException;
-import gov.nist.csd.pm.pip.obligations.evr.EVRParser;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.CharBuffer;
 import java.util.*;
 
 @Tag("obligation-editor")
 public class ObligationEditor extends VerticalLayout {
     private SingletonGraph g;
     private HorizontalLayout layout;
-    private YamlEditor yamlEditor;
+    private YamlImporter yamlImporter;
     private ObligationViewer obligationViewer;
 
     public ObligationEditor() {
@@ -51,46 +54,24 @@ public class ObligationEditor extends VerticalLayout {
         obligationViewer.getStyle().set("height","100vh");
         layout.add(obligationViewer);
 
-        yamlEditor = new YamlEditor();
-        yamlEditor.setWidth("35%");
-        yamlEditor.getStyle().set("height","100vh");
-        layout.add(yamlEditor);
+        yamlImporter = new YamlImporter();
+        yamlImporter.setWidth("35%");
+        yamlImporter.getStyle().set("height","100vh");
+        layout.add(yamlImporter);
     }
 
-    private class YamlEditor extends VerticalLayout {
-        public YamlEditor () {
+    private class YamlImporter extends VerticalLayout {
+        public YamlImporter() {
             getStyle().set("background", "lightcoral");
             setAlignItems(Alignment.STRETCH);
-
-//            TextArea inputJson = new TextArea();
-//            inputJson.setHeight("90%");
-//
-//            Button importButton = new Button("Export YAML", click -> {
-//                try {
-//                    g.addObl(EVRParser.parse(new ByteArrayInputStream(inputJson.getValue().getBytes())));
-//                    inputJson.clear();
-//                    obligationViewer.refreshGrid();
-//                } catch (EVRException e) {
-//                    e.printStackTrace();
-//                    System.out.println(e.getMessage());
-//                } catch (PMException e) {
-//                    e.printStackTrace();
-//                    System.out.println(e.getMessage());
-//                }
-//            });
-//            importButton.setHeight("10%");
-//            add(inputJson);
-//            add(importButton);
-
-
 
             MultiFileMemoryBuffer buffer = new MultiFileMemoryBuffer();
             Upload upload = new Upload(buffer);
             upload.setHeight("100%");
             upload.addSucceededListener(event -> {
                 try {
-                    g.addObl(buffer.getInputStream(event.getFileName()));
-//                    inputJson.clear();
+                    String source = readInputStream(buffer.getInputStream(event.getFileName()));
+                    addObligation(true, event.getFileName(), source);
                     obligationViewer.refreshGrid();
                 } catch (Exception e) {
                     MainView.notify(event.getFileName() + " failed to parse", MainView.NotificationType.ERROR);
@@ -139,10 +120,9 @@ public class ObligationEditor extends VerticalLayout {
         }
 
         private void createContextMenu() {
-
             GridContextMenu<Obligation> contextMenu = new GridContextMenu<>(obligationGrid);
 
-            contextMenu.addItem("Add", event -> addObligation());
+            contextMenu.addItem("Add", event -> addObligation(true, "", ""));
             contextMenu.addItem("Toggle", event -> {
                 event.getItem().ifPresent(obli -> {
                     toggleObligation(obli);
@@ -161,131 +141,215 @@ public class ObligationEditor extends VerticalLayout {
             });
             contextMenu.addItem("View Source", event -> {
                 event.getItem().ifPresent(obli -> {
-                    MainView.notify("View Obligation Source Method", MainView.NotificationType.DEFAULT);
+                    viewSource(obli);
                 });
             });
         }
+    }
 
-        private void addObligation() {
-            Dialog dialog = new Dialog();
-            dialog.setHeight("90vh");
-            dialog.setWidth("100vh");
-            VerticalLayout form = new VerticalLayout();
-            form.setSizeFull();
-            form.setAlignItems(FlexComponent.Alignment.BASELINE);
+    private void addObligation(boolean enabledValue, String labelValue, String sourceValue) {
+        Dialog dialog = new Dialog();
+        dialog.setHeight("90vh");
+        dialog.setWidth("100vh");
 
-            TextArea inputYaml = new TextArea();
-            inputYaml.setPlaceholder("Type YAML code here:");
-            inputYaml.setSizeFull();
-            form.add(inputYaml);
+        VerticalLayout form = new VerticalLayout();
+        form.setSizeFull();
+        form.setAlignItems(FlexComponent.Alignment.BASELINE);
 
-            Button importButton = new Button("Parse YAML", event -> {
+        TextArea sourceField = new TextArea();
+        sourceField.setPlaceholder("Type YAML code here:");
+        sourceField.setValue(sourceValue);
+        sourceField.setWidthFull();
+        sourceField.setHeight("97%");
+        sourceField.setMaxHeight("97%");
+        form.add(sourceField);
+
+        Checkbox enabledField = new Checkbox("Enabled");
+        enabledField.setValue(enabledValue);
+        enabledField.setWidth("20%");
+
+        TextField labelField = new TextField();
+        labelField.setPlaceholder("Label...");
+        labelField.setValue(labelValue);
+        labelField.setWidth("60%");
+
+        Button importButton = new Button("Parse YAML", event -> {
+            boolean enabled = enabledField.getValue();
+            String label = labelField.getValue();
+            String source = sourceField.getValue();
+            if (label == null || label.equals("")) {
+                labelField.focus();
+                MainView.notify("Must Choose a label");
+            } if (source == null || source.equals("")) {
+                sourceField.focus();
+                MainView.notify("Must have a source");
+            } else {
                 try {
-                    /*
-                    YAML script :
-                    label: homes/inboxes/outboxes
-                    rules:
-                        - label: test
-                        event:
-                        subject:
-                        operations:
-                            - assign to
-                            target:
-                            policyElements:
-                                - name: users
-                                type: UA
-                                response:
-                                actions:
-                                    - function:
-                                        name: create_dac_user
-                                        args:
-                                            - function:
-                                            name: child_of_assign
-                     */
-
-
-                    UserContext userContext = new UserContext("-1", "-1");
-                    g.addObl(EVRParser.parse(userContext.getUser(), new ByteArrayInputStream(inputYaml.getValue().getBytes())));
+                    Obligation obligation = g.parseObligationYaml(new ByteArrayInputStream(source.getBytes()));
+                    obligation.setEnabled(enabled);
+                    obligation.setLabel(label);
+                    obligation.setSource(source);
+                    g.addObl(obligation);
                     MainView.notify("Successfully imported obligation!", MainView.NotificationType.SUCCESS);
-                    inputYaml.clear();
+                    sourceField.clear();
                     dialog.close();
                     obligationViewer.refreshGrid();
                 } catch (EVRException e) {
                     e.printStackTrace();
-                    System.out.println(e.getMessage());
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 } catch (PMException e) {
                     e.printStackTrace();
-                    System.out.println(e.getMessage());
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 }
-            });
-            importButton.setWidthFull();
-            form.add(importButton);
+            }
+        });
+        importButton.setWidth("20%");
 
-            dialog.add(form);
-            dialog.open();
-            inputYaml.focus();
-        }
+        HorizontalLayout horizontalLayout = new HorizontalLayout(enabledField, labelField, importButton);
+        horizontalLayout.setPadding(false);
+        horizontalLayout.setWidthFull();
+        horizontalLayout.setAlignItems(Alignment.CENTER);
+        form.add(horizontalLayout);
 
-        private void toggleObligation(Obligation obligation) {
+        dialog.add(form);
+        dialog.open();
+        sourceField.focus();
+    }
+
+    private void toggleObligation(Obligation obligation) {
+//        obligation.setEnabled(!obligation.isEnabled());
+
+        try {
+//            g.deleteObl(obligation.getLabel());
+//            obligation.setEnabled(!obligation.isEnabled());
+//            g.addObl(obligation);
+
+            String oldLabel = obligation.getLabel();
             obligation.setEnabled(!obligation.isEnabled());
+            g.updateObl(oldLabel, obligation);
+
+            obligationViewer.refreshGrid();
+        } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+            e.printStackTrace();
         }
+    }
 
-        private void editLabel(Obligation obli) {
-            Dialog dialog = new Dialog();
-            HorizontalLayout form = new HorizontalLayout();
-            form.setAlignItems(FlexComponent.Alignment.BASELINE);
+    private void editLabel(Obligation obli) {
+        Dialog dialog = new Dialog();
+        HorizontalLayout form = new HorizontalLayout();
+        form.setAlignItems(FlexComponent.Alignment.BASELINE);
 
-            TextField labelField = new TextField("Label");
-            labelField.setRequiredIndicatorVisible(true);
-            labelField.setPlaceholder("Enter Label...");
-            form.add(labelField);
+        TextField labelField = new TextField("Label");
+        labelField.setRequiredIndicatorVisible(true);
+        labelField.setPlaceholder("Enter Label...");
+        form.add(labelField);
 
-            Button button = new Button("Submit", event -> {
-                String label = labelField.getValue();
-                if (label == null || label == "") {
-                    labelField.focus();
-                    MainView.notify("Label is Required", MainView.NotificationType.DEFAULT);
-                } else {
-                    obli.setLabel(label);
-                    refreshGrid();
-                    dialog.close();
-                }
-            });
-            form.add(button);
+        Button button = new Button("Submit", event -> {
+            String label = labelField.getValue();
+            if (label == null || label == "") {
+                labelField.focus();
+                MainView.notify("Label is Required", MainView.NotificationType.DEFAULT);
+            } else {
+//                obli.setLabel(label);
 
-            dialog.add(form);
-            dialog.open();
-            labelField.focus();
-        }
-
-        private void deleteObligation(Obligation n) {
-            Dialog dialog = new Dialog();
-            HorizontalLayout form = new HorizontalLayout();
-            form.setAlignItems(FlexComponent.Alignment.BASELINE);
-
-            form.add(new Paragraph("Are You Sure?"));
-
-            Button button = new Button("Delete", event -> {
                 try {
-                    g.deleteObl(n.getLabel());
+//                    g.deleteObl(obli.getLabel());
+//                    obli.setLabel(label);
+//                    g.addObl(obli);
+
+                    String oldLabel = obli.getLabel();
+                    obli.setLabel(label);
+                    g.updateObl(oldLabel, obli);
+
+                    obligationViewer.refreshGrid();
                 } catch (PMException e) {
-                    System.out.println(e.getMessage());
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();
                 }
-                refreshGrid();
                 dialog.close();
-            });
-            button.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            form.add(button);
+            }
+        });
+        form.add(button);
 
-            Button cancel = new Button("Cancel", event -> {
-                dialog.close();
-            });
-            cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-            form.add(cancel);
+        dialog.add(form);
+        dialog.open();
+        labelField.focus();
+    }
 
-            dialog.add(form);
-            dialog.open();
+    private void deleteObligation(Obligation n) {
+        Dialog dialog = new Dialog();
+        HorizontalLayout form = new HorizontalLayout();
+        form.setAlignItems(FlexComponent.Alignment.BASELINE);
+
+        form.add(new Paragraph("Are You Sure?"));
+
+        Button button = new Button("Delete", event -> {
+            try {
+                g.deleteObl(n.getLabel());
+            } catch (PMException e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
+            obligationViewer.refreshGrid();
+            dialog.close();
+        });
+        button.addThemeVariants(ButtonVariant.LUMO_ERROR);
+        form.add(button);
+
+        Button cancel = new Button("Cancel", event -> {
+            dialog.close();
+        });
+        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        form.add(cancel);
+
+        dialog.add(form);
+        dialog.open();
+    }
+
+    private void viewSource(Obligation obli) {
+        Dialog dialog = new Dialog();
+        dialog.setHeight("90vh");
+        dialog.setWidth("100vh");
+
+        String obligationSource = obli.getSource();
+
+        VerticalLayout sourceLayout = new VerticalLayout();
+        sourceLayout.setSizeFull();
+        sourceLayout.getStyle()
+                .set("padding-bottom", "0px");
+        String[] split = obligationSource.split("\n");
+        if (split.length > 1) {
+            for (String line : split) {
+                Span lineSpan = new Span(line);
+                int tabs = 0;
+                while (line.startsWith("\t")) {
+                    tabs++;
+                    line = line.substring(1);
+                }
+                lineSpan.getStyle()
+                        .set("margin", "0")
+                        .set("padding-left", ((Integer) (tabs * 25)).toString() + "px")
+                        .set("padding", "0");
+                sourceLayout.add(lineSpan);
+            }
+        } else {
+            sourceLayout.add(new Span(obligationSource));
         }
+        dialog.add(sourceLayout);
+
+        dialog.open();
+    }
+
+    private String readInputStream(InputStream in) {
+        //Creating a Scanner object
+        Scanner sc = new Scanner(in);
+        //Reading line by line from scanner to StringBuffer
+        StringBuffer sb = new StringBuffer();
+        while(sc.hasNext()){
+            sb.append(sc.nextLine());
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 }

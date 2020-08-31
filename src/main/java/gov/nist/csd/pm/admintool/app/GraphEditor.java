@@ -1596,7 +1596,6 @@ public class GraphEditor extends VerticalLayout {
         form.add(opsSelectAdmin);
 
         Button submit = new Button("Submit", event -> {
-
             List<String> opString = new ArrayList<>();
             opString.addAll(opsSelectRessource.getValue());
             opString.addAll(opsSelectAdmin.getValue());
