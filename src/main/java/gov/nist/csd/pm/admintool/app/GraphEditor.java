@@ -107,7 +107,10 @@ public class GraphEditor extends VerticalLayout {
         private Div outgoingAssociationList, incomingAssociationList; // for associations
         private Div outgoingProhibitionList, incomingProhibitionList; // for prohibitions
 
-        public NodeLayout(boolean isSource){
+        // debugging things
+        private int calls;
+
+        public NodeLayout(boolean isSource) {
             this.isSource = isSource;
             if (isSource) {
                 getStyle().set("background", "lightblue");
@@ -232,7 +235,10 @@ public class GraphEditor extends VerticalLayout {
             searchBar.setValueChangeMode(ValueChangeMode.LAZY);
             searchBar.addValueChangeListener(evt -> {
                 if (evt.getValue() != null && !evt.getValue().isEmpty()) {
-                    Predicate<? super String> filterName = (nodeName -> recursiveContains(nodeName, evt.getValue()));
+                    calls = 0;
+                    Predicate<? super String> filterName = (nodeName ->  {
+                        return recursiveContains(nodeName, evt.getValue());
+                    });
                     filters.put("Name", filterName);
                 } else {
                     filters.remove("Name");
@@ -242,28 +248,20 @@ public class GraphEditor extends VerticalLayout {
             add(searchBar);
         }
         private boolean recursiveContains (String nodeName, String searchString) {
+            System.out.println(++calls + " " + nodeName);
             if (nodeName.contains(searchString)) {
                 return true;
             } else {
-                Node node;
+                Set<String> children;
                 try {
-                    node = g.getNode(nodeName);
+                    children = g.getChildren(nodeName); // TODO: using this function is fine for U's and O's but will show false positives for PC's
                 } catch (PMException e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();
                     return false;
                 }
-
-                Stream<Node> children = grid.getDataProvider().fetchChildren(new HierarchicalQuery<>(null, node));
-                return children.anyMatch(child -> recursiveContains(child, searchString));
-            }
-        }
-        private boolean recursiveContains (Node node, String searchString) {
-            if (node.getName().contains(searchString)) {
-                return true;
-            } else {
-                Stream<Node> children = grid.getDataProvider().fetchChildren(new HierarchicalQuery<>(null, node));
-                return children.anyMatch(child -> recursiveContains(child.getName(), searchString));
+//                Stream<Node> children = grid.getDataProvider().fetchChildren(new HierarchicalQuery<>(null, node));
+                return children.stream().anyMatch(child -> recursiveContains(child, searchString));
             }
         }
         private void addGridLayout () {
