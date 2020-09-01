@@ -1,5 +1,6 @@
 package gov.nist.csd.pm.admintool.app;
 
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
@@ -18,6 +19,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
+import com.vaadin.flow.data.renderer.Renderer;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pip.obligations.evr.EVRException;
@@ -65,9 +67,16 @@ public class ObligationEditor extends VerticalLayout {
             getStyle().set("background", "lightcoral");
             setAlignItems(Alignment.STRETCH);
 
+            Button addObligationButton = new Button("Add Obligation");
+            addObligationButton.addClickListener((clickEvent) -> {
+                addObligation(true, "", "");
+            });
+            addObligationButton.setWidthFull();
+            add(addObligationButton);
+
             MultiFileMemoryBuffer buffer = new MultiFileMemoryBuffer();
             Upload upload = new Upload(buffer);
-            upload.setHeight("100%");
+            upload.setHeightFull();
             upload.addSucceededListener(event -> {
                 try {
                     String source = readInputStream(buffer.getInputStream(event.getFileName()));
@@ -122,7 +131,7 @@ public class ObligationEditor extends VerticalLayout {
         private void createContextMenu() {
             GridContextMenu<Obligation> contextMenu = new GridContextMenu<>(obligationGrid);
 
-            contextMenu.addItem("Add", event -> addObligation(true, "", ""));
+//            contextMenu.addItem("Add", event -> addObligation(true, "", ""));
             contextMenu.addItem("Toggle", event -> {
                 event.getItem().ifPresent(obli -> {
                     toggleObligation(obli);
@@ -185,10 +194,9 @@ public class ObligationEditor extends VerticalLayout {
                 MainView.notify("Must have a source");
             } else {
                 try {
-                    Obligation obligation = g.parseObligationYaml(new ByteArrayInputStream(source.getBytes()));
+                    Obligation obligation = g.parseObligationYaml(source);
                     obligation.setEnabled(enabled);
                     obligation.setLabel(label);
-                    obligation.setSource(source);
                     g.addObl(obligation);
                     MainView.notify("Successfully imported obligation!", MainView.NotificationType.SUCCESS);
                     sourceField.clear();
@@ -217,16 +225,9 @@ public class ObligationEditor extends VerticalLayout {
     }
 
     private void toggleObligation(Obligation obligation) {
-//        obligation.setEnabled(!obligation.isEnabled());
-
         try {
-//            g.deleteObl(obligation.getLabel());
-//            obligation.setEnabled(!obligation.isEnabled());
-//            g.addObl(obligation);
-
-            String oldLabel = obligation.getLabel();
             obligation.setEnabled(!obligation.isEnabled());
-            g.updateObl(oldLabel, obligation);
+            g.updateObl(obligation.getLabel(), obligation);
 
             obligationViewer.refreshGrid();
         } catch (PMException e) {
@@ -251,13 +252,7 @@ public class ObligationEditor extends VerticalLayout {
                 labelField.focus();
                 MainView.notify("Label is Required", MainView.NotificationType.DEFAULT);
             } else {
-//                obli.setLabel(label);
-
                 try {
-//                    g.deleteObl(obli.getLabel());
-//                    obli.setLabel(label);
-//                    g.addObl(obli);
-
                     String oldLabel = obli.getLabel();
                     obli.setLabel(label);
                     g.updateObl(oldLabel, obli);
@@ -321,12 +316,13 @@ public class ObligationEditor extends VerticalLayout {
         String[] split = obligationSource.split("\n");
         if (split.length > 1) {
             for (String line : split) {
-                Span lineSpan = new Span(line);
                 int tabs = 0;
                 while (line.startsWith("\t")) {
                     tabs++;
                     line = line.substring(1);
                 }
+
+                Span lineSpan = new Span(line);
                 lineSpan.getStyle()
                         .set("margin", "0")
                         .set("padding-left", ((Integer) (tabs * 25)).toString() + "px")
@@ -344,6 +340,7 @@ public class ObligationEditor extends VerticalLayout {
     private String readInputStream(InputStream in) {
         //Creating a Scanner object
         Scanner sc = new Scanner(in);
+
         //Reading line by line from scanner to StringBuffer
         StringBuffer sb = new StringBuffer();
         while(sc.hasNext()){

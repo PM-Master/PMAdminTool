@@ -281,7 +281,7 @@ public class ProhibitionEditor extends VerticalLayout {
                     });
                     temp.setPlaceholder("Container...");
                 } else {
-                    MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                    MainView.notify("Not an instance of a Select", MainView.NotificationType.ERROR);
                 }
             }, null,
             null, null

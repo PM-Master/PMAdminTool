@@ -100,7 +100,7 @@
         <dependency>
             <groupId>com.github.PM-Master</groupId>
             <artifactId>policy-machine-core</artifactId>
-            <version>002379a666a320bf7f6da8f3751773fa4a537268</version>
+            <version>8a221ba20518345aaa0522d9b33b7a263a3f3a97</version>
         </dependency>
     </dependencies>
 
