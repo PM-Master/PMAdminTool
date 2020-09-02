@@ -454,7 +454,8 @@ public class SingletonGraph {
 
     // obligation service methods
     public void addObl(InputStream oblString) throws PMException {
-        addObl(EVRParser.parse(superContext.getUser(), oblString));
+        EVRParser evrParser = new EVRParser();
+        addObl(evrParser.parse(superContext.getUser(), oblString.toString()));
     }
 
     public void addObl(Obligation obligation) throws PMException {

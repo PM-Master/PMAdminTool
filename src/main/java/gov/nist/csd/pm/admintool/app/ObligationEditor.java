@@ -205,14 +205,12 @@ public class ObligationEditor extends VerticalLayout {
 
 
                     UserContext userContext = new UserContext("-1", "-1");
-                    g.addObl(EVRParser.parse(userContext.getUser(), new ByteArrayInputStream(inputYaml.getValue().getBytes())));
+                    EVRParser evrParser = new EVRParser();
+                    g.addObl(evrParser.parse(userContext.getUser(), new ByteArrayInputStream(inputYaml.getValue().getBytes()).toString()));
                     MainView.notify("Successfully imported obligation!", MainView.NotificationType.SUCCESS);
                     inputYaml.clear();
                     dialog.close();
                     obligationViewer.refreshGrid();
-                } catch (EVRException e) {
-                    e.printStackTrace();
-                    System.out.println(e.getMessage());
                 } catch (PMException e) {
                     e.printStackTrace();
                     System.out.println(e.getMessage());
