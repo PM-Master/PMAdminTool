@@ -1146,7 +1146,13 @@ public class GraphEditor extends VerticalLayout {
         typeSelect.setItems(types);
         form.add(typeSelect);
 
-        Select<Node> parentSelect = new Select<>();
+        Collection<Node> nodes = new ArrayList<>();
+        MultiselectComboBox<Node> parentSelect = new MultiselectComboBox<>();
+        parentSelect.setRequiredIndicatorVisible(true);
+        parentSelect.setLabel("Parent");
+        parentSelect.setPlaceholder("Select a parent node...");
+        parentSelect.setItemLabelGenerator(Node::getName);
+
         typeSelect.addValueChangeListener(event -> {
             Collection<Node> nodeCollection;
             try {
@@ -1169,15 +1175,14 @@ public class GraphEditor extends VerticalLayout {
                 case O:
                     finalNodeCollection.removeIf(curr -> !(curr.getType() == NodeType.OA));
                     break;
+                default:
+                    finalNodeCollection = nodeCollection;
             }
+            nodes.clear();
+            nodes.addAll(finalNodeCollection);
             parentSelect.setItems(finalNodeCollection);
             parentSelect.setEnabled(true);
         });
-        parentSelect.setRequiredIndicatorVisible(true);
-        parentSelect.setLabel("Parent");
-        parentSelect.setPlaceholder("Select a parent node...");
-        parentSelect.setItemLabelGenerator(Node::getName);
-        parentSelect.setEnabled(false);
 
         form.add(parentSelect);
 
@@ -1188,7 +1193,7 @@ public class GraphEditor extends VerticalLayout {
         Button button = new Button("Submit", event -> {
             String name = nameField.getValue();
             NodeType type = typeSelect.getValue();
-            Node parent = parentSelect.getValue();
+            Set<Node> parents = parentSelect.getSelectedItems();
             String propString = propsFeild.getValue();
             Map<String, String> props = new HashMap<>();
             if (name == null || name == "") {
@@ -1209,10 +1214,38 @@ public class GraphEditor extends VerticalLayout {
                     }
                 }
                 try {
-                    g.createNode(name, type, props, parent.getName());
+                    g.createNode(name, type, props, parents.iterator().next().getName());
+                    for (Node parent: parents) {
+                        switch (type) {
+                            case UA:
+                                if (!g.getParents(name).contains(parent.getName())) {
+                                    if (parent.getType() == NodeType.UA || parent.getType() == NodeType.PC ) {
+                                        g.assign(name, parent.getName());
+                                    }
+                                }
+                                break;
+                            case O:
+                                if (parent.getType() == NodeType.OA && !g.getParents(name).contains(parent.getName())) {
+                                    g.assign(name, parent.getName());
+                                }
+                                break;
+                            case U:
+                                if (parent.getType() == NodeType.UA && !g.getParents(name).contains(parent.getName())) {
+                                    g.assign(name, parent.getName());
+                                }
+                                break;
+                            case OA:
+                                if (!g.getParents(name).contains(parent.getName())) {
+                                    if (parent.getType() == NodeType.OA || parent.getType() == NodeType.PC ) {
+                                        g.assign(name, parent.getName());
+                                    }
+                                }
+                                break;
+                        }
+                    }
                     MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
-                    childNode.refresh(parent);
-                    parentNode.refresh(parent);
+                    childNode.refresh(parents.toArray(new Node[0]));
+                    parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
                 } catch (PMException e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1247,7 +1280,7 @@ public class GraphEditor extends VerticalLayout {
         }
 
         nodeCollection.removeIf(curr -> !(curr.getType() == NodeType.UA || curr.getType() == NodeType.PC));
-        Select<Node> parentSelect = new Select<>();
+        MultiselectComboBox<Node> parentSelect = new MultiselectComboBox<>();
         /*if (nodeCollection.size() == 0) {
             parentSelect.setEnabled(false);
         }
@@ -1267,16 +1300,13 @@ public class GraphEditor extends VerticalLayout {
 
         Button button = new Button("Submit", event -> {
             String name = nameField.getValue();
-            Node parent = parentSelect.getValue();
+            Set<Node> parents = parentSelect.getSelectedItems();
             String propString = propsFeild.getValue();
             Map<String, String> props = new HashMap<>();
             if (name == null || name == "") {
                 nameField.focus();
                 MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
-            } else if (parent == null) {
-                parentSelect.focus();
-                MainView.notify("Parent is Required", MainView.NotificationType.DEFAULT);
-            } else {
+            }else {
                 if (propString != null && !propString.equals("")) {
                     try {
                         for (String prop : propString.split("\n")) {
@@ -1290,11 +1320,16 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     //Node home = g.createNode(name + " Home", NodeType.OA, props, SingletonGraph.getSuperOAId());
                     //Node attr = g.createNode(name + " Attr", NodeType.UA, props, SingletonGraph.getSuperUAId());
-                    // What are those nodes used for ?
-                    g.createNode(name, NodeType.U, props, parent.getName());
+                    g.createNode(name, NodeType.U, props, parents.iterator().next().getName());
+                    for (Node parent: parents) {
+                        if (parent.getType() == NodeType.UA && !g.getParents(name).contains(parent.getName())) {
+                            g.assign(name, parent.getName());
+                        }
+                    }
                     MainView.notify("User with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
-                    childNode.refresh(parent);
-                    parentNode.refresh(parent);
+
+                    childNode.refresh(parents.toArray(new Node[0]));
+                    parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
 
                 } catch (Exception e) {
@@ -1333,7 +1368,8 @@ public class GraphEditor extends VerticalLayout {
             e.printStackTrace();
         }
         nodeCollection.removeIf(curr -> curr.getType() != NodeType.OA);
-        ComboBox<Node> parentSelect = new ComboBox<Node>("Parent", nodeCollection);
+
+        MultiselectComboBox<Node> parentSelect = new MultiselectComboBox<Node>("Parent", nodeCollection);
         if (nodeCollection.size() == 0) {
             parentSelect.setEnabled(false);
         }
@@ -1348,15 +1384,12 @@ public class GraphEditor extends VerticalLayout {
         Button button = new Button("Submit", event -> {
 
             String name = nameField.getValue();
-            Node parent = parentSelect.getValue();
+            Set<Node> parents = parentSelect.getSelectedItems();
             String propString = propsFeild.getValue();
             Map<String, String> props = new HashMap<>();
             if (name == null || name == "") {
                 nameField.focus();
                 MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
-            } else if (parent == null) {
-                parentSelect.focus();
-                MainView.notify("Parent is Required", MainView.NotificationType.DEFAULT);
             } else {
                 if (propString != null && !propString.equals("")) {
                     try {
@@ -1369,10 +1402,15 @@ public class GraphEditor extends VerticalLayout {
                     }
                 }
                 try {
-                    g.createNode(name, NodeType.O, props, parent.getName());
+                    g.createNode(name, NodeType.O, props, parents.iterator().next().getName());
+                    for (Node parent: parents) {
+                        if (parent.getType() == NodeType.OA && !g.getParents(name).contains(parent.getName())) {
+                            g.assign(name, parent.getName());
+                        }
+                    }
                     MainView.notify("Object with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
-                    childNode.refresh(parent);
-                    parentNode.refresh(parent);
+                    childNode.refresh(parents.toArray(new Node[0]));
+                    parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
                 } catch (Exception e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1516,7 +1554,6 @@ public class GraphEditor extends VerticalLayout {
                     g.deassign(child.getName(), parent.getName());
                     MainView.notify(child.getName() + " un-assigned from " + parent.getName(), MainView.NotificationType.SUCCESS);
                 } catch (PMException e) {
-                    System.out.println(e.getMessage());
                     e.printStackTrace();
                 }
                 childNode.refresh();
@@ -1666,7 +1703,6 @@ public class GraphEditor extends VerticalLayout {
                         sourceToTargetOps.addAll(targetOps);
                     }
                 });
-                System.out.println("ops = " + sourceToTargetOps);
                 HashSet<String> existingResourcesOp = new HashSet<>();
                 HashSet<String> existingAdminsOp = new HashSet<>();
                 sourceToTargetOps.forEach(op -> {
@@ -1737,7 +1773,6 @@ public class GraphEditor extends VerticalLayout {
                 childNode.updateNodeInfo();
                 parentNode.updateNodeInfo();
             } catch (PMException e) {
-                System.out.println(e.getMessage());
                 e.printStackTrace();
             }
             dialog.close();
@@ -1876,7 +1911,6 @@ public class GraphEditor extends VerticalLayout {
                 parentNode.resetGrid();
                 parentNode.expandPolicies();
             } catch (PMException e) {
-                System.out.println(e.getMessage());
                 e.printStackTrace();
             }
             dialog.close();
