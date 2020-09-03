@@ -2,6 +2,7 @@ package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -1546,13 +1547,44 @@ public class GraphEditor extends VerticalLayout {
             Dialog dialog = new Dialog();
             HorizontalLayout form = new HorizontalLayout();
             form.setAlignItems(Alignment.BASELINE);
-
             form.add(new Paragraph("Are You Sure?"));
 
             Button button = new Button("Delete", event -> {
                 try {
-                    g.deassign(child.getName(), parent.getName());
-                    MainView.notify(child.getName() + " un-assigned from " + parent.getName(), MainView.NotificationType.SUCCESS);
+                    if (g.getParents(child.getName()).size() != 1) {
+                        g.deassign(child.getName(), parent.getName());
+                        MainView.notify(child.getName() + " un-assigned from " + parent.getName(), MainView.NotificationType.SUCCESS);
+
+                    } else {
+                        Dialog dialog2 =  new Dialog();
+                        VerticalLayout form2 = new VerticalLayout();
+                        form2.setAlignItems(Alignment.BASELINE);
+
+                        form2.add(new Header(new Span("You cannot un-assigned " + child.getName() + " from " + parent.getName() + " otherwise " + child.getName() + " will become a standalone node.")));
+                        form2.add(new Span("Do you want to delete " + child.getName() + " instead ?"));
+
+                        Button button2 = new Button("Delete", event2 -> {
+                            try {
+                                g.deleteNode(child.getName());
+                            } catch (PMException e) {
+                                e.printStackTrace();
+                            }
+                            childNode.resetGrid();
+                            parentNode.resetGrid();
+                            dialog2.close();
+                            dialog.close();
+                        });
+
+                        Button button_cancel_all = new Button("Cancel", event_cancel -> {
+                            dialog2.close();
+                            dialog.close();
+                        });
+
+                        button2.addThemeVariants(ButtonVariant.LUMO_ERROR);
+                        dialog2.add(form2);
+                        form2.add(new Span(button2, button_cancel_all));
+                        dialog2.open();
+                    }
                 } catch (PMException e) {
                     e.printStackTrace();
                 }
@@ -1560,6 +1592,7 @@ public class GraphEditor extends VerticalLayout {
                 parentNode.refresh();
                 dialog.close();
             });
+
             button.addThemeVariants(ButtonVariant.LUMO_ERROR);
             form.add(button);
 
