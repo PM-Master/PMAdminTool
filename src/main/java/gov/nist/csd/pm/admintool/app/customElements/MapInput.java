@@ -1,6 +1,5 @@
 package gov.nist.csd.pm.admintool.app.customElements;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
