@@ -6,7 +6,6 @@ import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 
 import java.util.Map;
-import java.util.Set;
 
 public class AssertAssociation extends Test {
     public AssertAssociation() {

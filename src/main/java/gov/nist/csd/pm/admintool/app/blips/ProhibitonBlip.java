@@ -1,8 +1,8 @@
 package gov.nist.csd.pm.admintool.app.blips;
 
 import com.vaadin.flow.component.html.ListItem;
-import com.vaadin.flow.component.html.UnorderedList;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.UnorderedList;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
 

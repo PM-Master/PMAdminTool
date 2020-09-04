@@ -3,9 +3,8 @@ package gov.nist.csd.pm.admintool.spt.parser;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
 
 import java.io.*;
-import java.util.HashMap;
-
 import java.nio.charset.Charset;
+import java.util.HashMap;
 /**
  * @author gavrila@nist.gov
  * @version $Revision: 1.1 $, $Date: 2008/07/16 17:02:58 $

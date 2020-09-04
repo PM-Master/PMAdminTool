@@ -24,7 +24,6 @@ import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
 import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 
-import java.io.InputStream;
 import java.util.*;
 
 /**

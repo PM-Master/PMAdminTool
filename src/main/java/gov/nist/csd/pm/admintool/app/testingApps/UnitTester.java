@@ -1,12 +1,11 @@
 package gov.nist.csd.pm.admintool.app.testingApps;
 
-import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.accordion.Accordion;
+import com.vaadin.flow.component.accordion.AccordionPanel;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.details.DetailsVariant;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -17,13 +16,16 @@ import gov.nist.csd.pm.admintool.actions.events.AssignEvent;
 import gov.nist.csd.pm.admintool.actions.events.DeassignEvent;
 import gov.nist.csd.pm.admintool.actions.events.DeassignFromEvent;
 import gov.nist.csd.pm.admintool.actions.events.Event;
+import gov.nist.csd.pm.admintool.actions.tests.AssertAssignment;
+import gov.nist.csd.pm.admintool.actions.tests.AssertAssociation;
+import gov.nist.csd.pm.admintool.actions.tests.CheckPermission;
+import gov.nist.csd.pm.admintool.actions.tests.Test;
 import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
-import gov.nist.csd.pm.admintool.actions.tests.*;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 
-import java.util.*;
+import java.util.Map;
 
 public class UnitTester extends VerticalLayout {
     private SingletonGraph g;

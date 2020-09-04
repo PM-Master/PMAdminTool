@@ -7,7 +7,6 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -97,16 +96,6 @@ public class PolicyClassEditor extends VerticalLayout {
                     refreshGrid();
                 });
             });
-//            contextMenu.addItem("Edit Label", event -> {
-//                event.getItem().ifPresent(obli -> {
-//                    editLabel(obli);
-//                });
-//            });
-//            contextMenu.addItem("Delete", event -> {
-//                event.getItem().ifPresent(obli -> {
-//                    deleteObligation(obli);
-//                });
-//            });
         }
 
         private void addPolicyClass() {
