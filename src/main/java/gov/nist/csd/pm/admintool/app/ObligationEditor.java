@@ -1,5 +1,6 @@
 package gov.nist.csd.pm.admintool.app;
 
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -75,7 +76,11 @@ public class ObligationEditor extends VerticalLayout {
             upload.addSucceededListener(event -> {
                 try {
                     String source = readInputStream(buffer.getInputStream(event.getFileName()));
-                    addObligation(true, event.getFileName(), source);
+                    String fileName = event.getFileName();
+                    if (fileName.endsWith(".yml")) {
+                        fileName = fileName.substring(0, fileName.length() - 4);
+                    }
+                    addObligation(true, fileName, source);
                     obligationViewer.refreshGrid();
                 } catch (Exception e) {
                     MainView.notify(event.getFileName() + " failed to parse", MainView.NotificationType.ERROR);
@@ -160,12 +165,13 @@ public class ObligationEditor extends VerticalLayout {
         form.setSizeFull();
         form.setAlignItems(FlexComponent.Alignment.BASELINE);
 
-        TextArea sourceField = new TextArea();
+        TextArea sourceField = new TextArea("YAML Code: (type four spaces instead of using tab)");
         sourceField.setPlaceholder("Type YAML code here:");
         sourceField.setValue(sourceValue);
         sourceField.setWidthFull();
         sourceField.setHeight("97%");
         sourceField.setMaxHeight("97%");
+        sourceField.getStyle().set("font-family", "monospace");
         form.add(sourceField);
 
         Checkbox enabledField = new Checkbox("Enabled");
@@ -305,22 +311,29 @@ public class ObligationEditor extends VerticalLayout {
         String obligationSource = obli.getSource();
 
         VerticalLayout sourceLayout = new VerticalLayout();
-        sourceLayout.setSizeFull();
+        sourceLayout.setWidthFull();
+        sourceLayout.setHeight("95%");
         sourceLayout.getStyle()
-                .set("padding-bottom", "0px");
+                .set("padding-bottom", "0px")
+                .set("overflow-y", "scroll")
+                .set("border", "1px #E5E4E2")
+                .set("border-radius", "3px")
+                .set("background", "#E5E4E2")
+                .set("padding", "30px")
+                .set("font-family", "Courier, monospace");;
         String[] split = obligationSource.split("\n");
         if (split.length > 1) {
             for (String line : split) {
-                int tabs = 0;
-                while (line.startsWith("\t")) {
-                    tabs++;
+                int spaces = 0;
+                while (line.startsWith(" ")) {
+                    spaces++;
                     line = line.substring(1);
                 }
 
                 Span lineSpan = new Span(line);
                 lineSpan.getStyle()
                         .set("margin", "0")
-                        .set("padding-left", ((Integer) (tabs * 25)).toString() + "px")
+                        .set("padding-left", ((Integer) (spaces * 10)).toString() + "px")
                         .set("padding", "0");
                 sourceLayout.add(lineSpan);
             }
@@ -328,6 +341,12 @@ public class ObligationEditor extends VerticalLayout {
             sourceLayout.add(new Span(obligationSource));
         }
         dialog.add(sourceLayout);
+
+        Button okButton = new Button("Continue");
+        okButton.setWidthFull();
+        okButton.addClickListener(clickEvent -> dialog.close());
+        okButton.addClickShortcut(Key.ENTER);
+        dialog.add(okButton);
 
         dialog.open();
     }
