@@ -5,6 +5,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Paragraph;
@@ -20,14 +21,21 @@ public class Settings extends VerticalLayout {
 
     public SingletonGraph g;
     private SettingsViewer settingsViewer;
-    public Boolean mysqlBool;
+    public static boolean hidePolicy;
+    public boolean mysqlBool;
 
-    public Boolean getMysqlBool() {
+    public boolean getMysqlBool() {
         return mysqlBool;
     }
-
-    public void setMysqlBool(Boolean mysqlBool) {
+    public void setMysqlBool(boolean mysqlBool) {
         this.mysqlBool = mysqlBool;
+    }
+
+    public boolean isHidePolicy() {
+        return hidePolicy;
+    }
+    public void setHidePolicy(boolean hidePolicy) {
+        this.hidePolicy = hidePolicy;
     }
 
     public Settings() {
@@ -51,6 +59,9 @@ public class Settings extends VerticalLayout {
             getStyle().set("background", "lightblue");
             setAlignItems(Alignment.STRETCH);
             add(new H2("Settings:"));
+
+            HorizontalLayout layout = new HorizontalLayout();
+            add(layout);
 
             RadioButtonGroup<String> databaseRadio = new RadioButtonGroup<>();
             databaseRadio.setLabel("What kind of database do you want to use ?");
@@ -81,10 +92,7 @@ public class Settings extends VerticalLayout {
                     form.add(button);
 
                 Button cancel = new Button("Cancel", eventCancel -> {
-                    //radioGroup.setValue(event.getOldValue());
                     dialog.close();
-
-                    //radioGroup.clear();
                 });
                 cancel.addThemeVariants(ButtonVariant.LUMO_ERROR);
                 form.add(cancel);
@@ -92,7 +100,24 @@ public class Settings extends VerticalLayout {
                 dialog.open();
             });
 
-            add(databaseRadio);
+            layout.add(databaseRadio);
+
+            RadioButtonGroup<String> toggleHidePolicy = new RadioButtonGroup<>();
+            toggleHidePolicy.setLabel("Do you want to hide the super policy configuration ?");
+            toggleHidePolicy.setItems("Hide", "Show");
+            toggleHidePolicy.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
+
+            if (hidePolicy) {
+                toggleHidePolicy.setValue("Hide");
+            } else {
+                toggleHidePolicy.setValue("Show");
+            }
+
+            toggleHidePolicy.addValueChangeListener(event -> {
+                    setHidePolicy(event.getValue().equalsIgnoreCase("Hide"));
+                    UI.getCurrent().getPage().reload();
+                    });
+            layout.add(toggleHidePolicy);
 
 //            CheckboxGroup<SingletonGraph.PolicyClassWithActive> checkboxGroup = new CheckboxGroup<>();
 //            checkboxGroup.setLabel("Which Policy Classes do you want to be active?");

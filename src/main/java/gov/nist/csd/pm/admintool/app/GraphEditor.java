@@ -49,6 +49,7 @@ public class GraphEditor extends VerticalLayout {
     private Node selectedChildNode;
     private Node selectedParentNode;
     private GraphButtonGroup buttonGroup;
+    private final boolean hideSuperPolicy = Settings.hidePolicy;
 
     private Node dragNode;
 
@@ -745,6 +746,9 @@ public class GraphEditor extends VerticalLayout {
                             Optional<Node> node = query.getParentOptional();
                             if (node.isPresent()) {
                                 Set<String> children = g.getChildren(node.get().getName());
+                                if (hideSuperPolicy) {
+                                    children = g.getChildrenNoSuperPolicy(node.get().getName());
+                                }
                                 for (Predicate<? super String> filter : filters.values()) {
                                     children = children.stream().filter(filter).collect(Collectors.toSet());
                                 }
@@ -771,6 +775,9 @@ public class GraphEditor extends VerticalLayout {
                 public boolean hasChildren(Node item) {
                     try {
                         Set<String> children = g.getChildren(item.getName());
+                        if (hideSuperPolicy) {
+                            children = g.getChildrenNoSuperPolicy(item.getName());
+                        }
                         for (Predicate<? super String> filter : filters.values()) {
                             children = children.stream().filter(filter).collect(Collectors.toSet());
                         }
@@ -794,6 +801,10 @@ public class GraphEditor extends VerticalLayout {
                             Optional<Node> node = query.getParentOptional();
                             if (node.isPresent()) {
                                 Set<String> childrenNames = g.getChildren(query.getParent().getName());
+
+                                if (hideSuperPolicy) {
+                                    childrenNames = g.getChildrenNoSuperPolicy(query.getParent().getName());
+                                }
                                 for (Predicate<? super String> filter : filters.values()) {
                                     childrenNames = childrenNames.stream().filter(filter).collect(Collectors.toSet());
                                 }
@@ -801,6 +812,7 @@ public class GraphEditor extends VerticalLayout {
                                 for (String name : childrenNames) {
                                     children.add(g.getNode(name));
                                 }
+
                             } else {
                                 Set<String> temp_all_nodes = new HashSet<>();
                                 for (Node n : all_nodes) { // TODO: make function for nodes/strings
@@ -813,7 +825,6 @@ public class GraphEditor extends VerticalLayout {
                                     children.add(g.getNode(name));
                                 }
                             }
-
                         }
                     } catch (PMException e) {
                         e.printStackTrace();

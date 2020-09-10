@@ -352,6 +352,19 @@ public class SingletonGraph {
         }
     }
 
+    public Set<String> getChildrenNoSuperPolicy(String name) throws PMException {
+        if (superContext != null) {
+            Set<String> children_noSuperPolicy = getPDP().getGraphService(superContext).getChildren(name);
+            Collection<String> superPolicyNames = new ArrayList<>();
+            superPolicyNames.add("super_ua1");
+            superPolicyNames.add("super_ua2");
+            children_noSuperPolicy.removeAll(superPolicyNames);
+            return children_noSuperPolicy;
+        } else {
+            throw new PMException("Super Context is Null");
+        }
+    }
+
     public Set<String> getParents(String node) throws PMException {
         if (superContext != null) {
             return getPDP().getGraphService(superContext).getParents(node);
