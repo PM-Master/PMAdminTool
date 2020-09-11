@@ -1,6 +1,8 @@
 package gov.nist.csd.pm.admintool.app;
 
-import com.vaadin.flow.component.*;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -291,7 +293,7 @@ public class GraphEditor extends VerticalLayout {
                         Set<String> children = g.getChildren(n.getName());
                         if (!children.isEmpty()) {
                             prevNodes.push(currNodes);
-                            currNodes = g.getNodes().stream()
+                            currNodes = g.getActiveNodes().stream()
                                     .filter(node_k -> children.contains(node_k.getName())).collect(Collectors.toList());
                             //grid.setItems(currNodes);
                             updateGridNodes(currNodes);
@@ -878,11 +880,16 @@ public class GraphEditor extends VerticalLayout {
         }
 
         public void resetGrid() {
-            // get nodes TODO: Filter active PC's
             currNodes = new HashSet<>();
             try {
-                Set<String> pcNames = g.getPolicies();
-                for (String name : pcNames) {
+                //retrieve active PC's
+                List<String> pcs = new ArrayList<>();
+                for (SingletonGraph.PolicyClassWithActive pc: SingletonGraph.getActivePCs()) {
+                    if (pc.isActive()){
+                        pcs.add(pc.getName());
+                    }
+                }
+                for (String name : pcs) {
                     currNodes.add(g.getNode(name));
                 }
             } catch (PMException e) {
@@ -1214,10 +1221,14 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.createNode(name, type, props, parents.iterator().next().getName());
                     for (Node parent : parents) {
+                        if (parent.getType() == NodeType.PC) {
+                            continue;
+                        }
+
                         switch (type) {
                             case UA:
                                 if (!g.getParents(name).contains(parent.getName())) {
-                                    if (parent.getType() == NodeType.UA || parent.getType() == NodeType.PC) {
+                                    if (parent.getType() == NodeType.UA) {
                                         g.assign(name, parent.getName());
                                     }
                                 }
@@ -1234,7 +1245,7 @@ public class GraphEditor extends VerticalLayout {
                                 break;
                             case OA:
                                 if (!g.getParents(name).contains(parent.getName())) {
-                                    if (parent.getType() == NodeType.OA || parent.getType() == NodeType.PC) {
+                                    if (parent.getType() == NodeType.OA) {
                                         g.assign(name, parent.getName());
                                     }
                                 }
@@ -2012,9 +2023,11 @@ public class GraphEditor extends VerticalLayout {
         totalTitleLayout.setWidthFull();
         return totalTitleLayout;
     }
+
     private HorizontalLayout titleFactory(String titleText, Button submitButton) {
         return titleFactory(titleText, null, submitButton);
     }
+
     private HorizontalLayout titleFactory(String titleText, String subtitleText) {
         return titleFactory(titleText, subtitleText, null);
     }
