@@ -78,7 +78,7 @@ public class MainView extends HorizontalLayout{
         page6.setVisible(false);
         //page6.setEnabled(false);
 
-        Tab tab7 = new Tab("Operations Editor");
+        Tab tab7 = new Tab("Access Rights Editor");
         VerticalLayout page7 = new OperationsEditor();
         page7.setSizeFull();
         page7.setVisible(false);

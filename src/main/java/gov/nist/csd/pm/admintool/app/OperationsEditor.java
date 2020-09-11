@@ -69,9 +69,9 @@ public class OperationsEditor extends VerticalLayout {
             add(title);
 
             if (isResourceOps) {
-                title.add(new H2("Resources Operations:"));
+                title.add(new H2("Resources Access Rights:"));
             } else {
-                title.add(new H2("Admin Operations:"));
+                title.add(new H2("Admin Access Rights:"));
             }
 
             grid = new Grid<>(String.class);
@@ -81,7 +81,7 @@ public class OperationsEditor extends VerticalLayout {
                     .set("user-select", "none");
 
             grid.removeAllColumns();
-            grid.addColumn(String::toString).setHeader("Existing Operations");
+            grid.addColumn(String::toString).setHeader("Existing Access Rights");
 
 //            grid.setSelectionMode(Grid.SelectionMode.MULTI);
 
@@ -91,7 +91,7 @@ public class OperationsEditor extends VerticalLayout {
 
         private void createContextMenu() {
             GridContextMenu<String> contextMenu = new GridContextMenu<>(grid);
-            contextMenu.addItem("Add Operation", event -> {
+            contextMenu.addItem("Add Access Right", event -> {
                     addOperation();
             });
 //            contextMenu.addItem("Edit Operation", event -> {
@@ -99,7 +99,7 @@ public class OperationsEditor extends VerticalLayout {
 //                    editOperation(op);
 //                });
 //            });
-            contextMenu.addItem("Delete Operation", event -> {
+            contextMenu.addItem("Delete Access Right", event -> {
                 event.getItem().ifPresent(op -> {
                     deleteOperation(op);
                 });
@@ -164,7 +164,7 @@ public class OperationsEditor extends VerticalLayout {
         HorizontalLayout form = new HorizontalLayout();
         form.setAlignItems(Alignment.BASELINE);
 
-        TextField nameField = new TextField("Operation");
+        TextField nameField = new TextField("Access Right");
         nameField.setRequiredIndicatorVisible(true);
         nameField.setValue(ops);
         form.add(nameField);
@@ -200,7 +200,7 @@ public class OperationsEditor extends VerticalLayout {
         form.setAlignItems(Alignment.BASELINE);
         dialog.open();
 
-        TextField nameField = new TextField("Operation");
+        TextField nameField = new TextField("Access Right");
         nameField.setRequiredIndicatorVisible(true);
         nameField.focus();
         form.add(nameField);

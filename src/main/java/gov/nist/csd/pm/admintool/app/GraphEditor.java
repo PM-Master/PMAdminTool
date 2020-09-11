@@ -1651,8 +1651,8 @@ public class GraphEditor extends VerticalLayout {
 
         // resource ops multi-select
         MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
-        opsSelectRessource.setLabel("Operations");
-        opsSelectRessource.setPlaceholder("Resources operations");
+        opsSelectRessource.setLabel("Resource Access Rights");
+        opsSelectRessource.setPlaceholder("Choose Access Rights");
         try {
             opsSelectRessource.setItems(g.getResourceOpsWithStars());
         } catch (PMException e) {
@@ -1662,8 +1662,8 @@ public class GraphEditor extends VerticalLayout {
 
         // admin ops multi-select
         MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
-        opsSelectAdmin.setLabel("Operations");
-        opsSelectAdmin.setPlaceholder("Admin operations");
+        opsSelectAdmin.setLabel("Admin Access Rights");
+        opsSelectAdmin.setPlaceholder("Choose Access Rights");
         try {
             opsSelectAdmin.setItems(g.getAdminOpsWithStars());
         } catch (PMException e) {
@@ -1690,16 +1690,10 @@ public class GraphEditor extends VerticalLayout {
             List<String> opString = new ArrayList<>();
             opString.addAll(opsSelectRessource.getValue());
             opString.addAll(opsSelectAdmin.getValue());
-            OperationSet ops = new OperationSet();
-            if (opString == null || opString.equals("")) {
-                MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
+            OperationSet ops = new OperationSet(opString);
+            if (opString == null) {
+                MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
             } else {
-                try {
-                    ops.addAll(opString);
-                } catch (Exception e) {
-                    MainView.notify("Incorrect Formatting of Operations", MainView.NotificationType.ERROR);
-                    e.printStackTrace();
-                }
                 try {
                     g.associate(source.getName(), target.getName(), ops);
                     MainView.notify(source.getName() + " assigned to " + target.getName(), MainView.NotificationType.SUCCESS);
@@ -1726,8 +1720,8 @@ public class GraphEditor extends VerticalLayout {
         form.setAlignItems(Alignment.BASELINE);
 
         MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
-        opsSelectRessource.setLabel("Operations");
-        opsSelectRessource.setPlaceholder("Resources operations");
+        opsSelectRessource.setLabel("Resource Access Rights");
+        opsSelectRessource.setPlaceholder("Choose Access Rights");
         try {
             opsSelectRessource.setItems(g.getResourceOpsWithStars());
         } catch (PMException e) {
@@ -1736,8 +1730,8 @@ public class GraphEditor extends VerticalLayout {
         opsSelectRessource.setWidth("100%");
 
         MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
-        opsSelectAdmin.setLabel("Admin");
-        opsSelectAdmin.setPlaceholder("Admin operations");
+        opsSelectAdmin.setLabel("Admin Access Rights");
+        opsSelectAdmin.setPlaceholder("Choose Access Rights");
         try {
             opsSelectAdmin.setItems(g.getAdminOpsWithStars());
         } catch (PMException e) {
@@ -1780,20 +1774,13 @@ public class GraphEditor extends VerticalLayout {
 
         // ----- Title Section -----
         Button submit = new Button("Submit", event -> {
-
             List<String> opString = new ArrayList<>();
             opString.addAll(opsSelectRessource.getValue());
             opString.addAll(opsSelectAdmin.getValue());
-            OperationSet ops = new OperationSet();
-            if (opString == null || opString.equals("")) {
-                MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
+            OperationSet ops = new OperationSet(opString);
+            if (opString == null) {
+                MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
             } else {
-                try {
-                    ops.addAll(opString);
-                } catch (Exception e) {
-                    MainView.notify("Incorrect Formatting of Operations", MainView.NotificationType.ERROR);
-                    e.printStackTrace();
-                }
                 try {
                     g.associate(source.getName(), target.getName(), ops);
                     MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been modified", MainView.NotificationType.SUCCESS);
@@ -1867,7 +1854,7 @@ public class GraphEditor extends VerticalLayout {
 
         // operations multi-selectors
         MultiselectComboBox<String> rOpsField = new MultiselectComboBox<>();
-        rOpsField.setLabel("Operations");
+        rOpsField.setLabel("Access Rights");
         rOpsField.setPlaceholder("Resource...");
         MultiselectComboBox<String> aOpsField = new MultiselectComboBox<>();
         aOpsField.setPlaceholder("Admin...");
@@ -1934,7 +1921,7 @@ public class GraphEditor extends VerticalLayout {
             try {
                 Map<String, Boolean> containers = containerField.getValue();
                 if (ops == null || ops.isEmpty()) {
-                    MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
+                    MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
                 } else if (name == null || name.equals("")) {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);

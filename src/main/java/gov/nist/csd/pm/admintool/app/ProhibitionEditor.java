@@ -244,7 +244,7 @@ public class ProhibitionEditor extends VerticalLayout {
 
         // operations multi-select
         MultiselectComboBox<String> rOpsField = new MultiselectComboBox<>();
-        rOpsField.setLabel("Operations");
+        rOpsField.setLabel("Access Rights");
         rOpsField.setPlaceholder("Resource...");
         MultiselectComboBox<String> aOpsField = new MultiselectComboBox<>();
         aOpsField.setPlaceholder("Admin...");
@@ -305,7 +305,7 @@ public class ProhibitionEditor extends VerticalLayout {
             try {
                 Map<String, Boolean> containers = containerField.getValue();
                 if (ops == null || ops.isEmpty()) {
-                    MainView.notify("Operations are Required");
+                    MainView.notify("Access Rights are Required");
                 } else if (name == null || name.equals("")) {
                     nameField.focus();
                     MainView.notify("Name is Required");
@@ -378,8 +378,8 @@ public class ProhibitionEditor extends VerticalLayout {
 
         // operations multi-select
         MultiselectComboBox<String> opsField = new MultiselectComboBox<>();
-        opsField.setLabel("Operations");
-        opsField.setPlaceholder("Operations...");
+        opsField.setLabel("Access Rights");
+        opsField.setPlaceholder("Choose...");
         try {
             opsField.setItems(g.getAllOpsWithStars());
         } catch (PMException e) {
@@ -436,7 +436,7 @@ public class ProhibitionEditor extends VerticalLayout {
             try {
                 Map<String, Boolean> containers = containerField.getValue();
                 if (ops == null || ops.isEmpty()) {
-                    MainView.notify("Operations are Required");
+                    MainView.notify("Access Rights are Required");
                 } else if (subject == null || subject.equals("")) {
                     subjectSelect.focus();
                     MainView.notify("Subject is Required");
