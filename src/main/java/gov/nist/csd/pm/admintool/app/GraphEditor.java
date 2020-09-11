@@ -1184,6 +1184,9 @@ public class GraphEditor extends VerticalLayout {
                 default:
                     finalNodeCollection = nodeCollection;
             }
+            //TODO: for now we remove PCs - we could remove the default nodes instead ?
+
+            finalNodeCollection.removeIf(curr -> curr.getType() == NodeType.PC);
             parentSelect.setItems(finalNodeCollection);
             parentSelect.setEnabled(true);
         });
@@ -1221,9 +1224,6 @@ public class GraphEditor extends VerticalLayout {
                 try {
                     g.createNode(name, type, props, parents.iterator().next().getName());
                     for (Node parent : parents) {
-                        if (parent.getType() == NodeType.PC) {
-                            continue;
-                        }
 
                         switch (type) {
                             case UA:
