@@ -326,7 +326,7 @@ public class ProhibitionEditor extends VerticalLayout {
         });
 
         // title layout
-        HorizontalLayout titleLayout = GraphEditor.titleFactory("Add Prohibition", submit);
+        HorizontalLayout titleLayout = TitleFactory.generate("Add Prohibition", submit);
 
         // putting it all together
         dialog.add(titleLayout, new Hr(), form);
@@ -454,7 +454,7 @@ public class ProhibitionEditor extends VerticalLayout {
         });
 
         // title layout
-        HorizontalLayout titleLayout = GraphEditor.titleFactory("Edit Prohibition", prohibition.getName(), submit);
+        HorizontalLayout titleLayout = TitleFactory.generate("Edit Prohibition", prohibition.getName(), submit);
 
         // putting it all together
         dialog.add(titleLayout, new Hr(), form);
@@ -487,7 +487,7 @@ public class ProhibitionEditor extends VerticalLayout {
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
 
-        HorizontalLayout titleLayout = GraphEditor.titleFactory("Delete Prohibtion",
+        HorizontalLayout titleLayout = TitleFactory.generate("Delete Prohibtion",
                 prohibition.getName());
 
         dialog.add(titleLayout, new Hr(), form);

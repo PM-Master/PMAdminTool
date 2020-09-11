@@ -6,19 +6,15 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph.PolicyClassWithActive;
-import gov.nist.csd.pm.exceptions.PMException;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -145,7 +141,7 @@ public class PolicyClassEditor extends VerticalLayout {
                     e.printStackTrace();
                 }
             });
-            HorizontalLayout titleLayout = GraphEditor.titleFactory(
+            HorizontalLayout titleLayout = TitleFactory.generate(
                     "Add Policy Class",
                     "Make's a new PC with Default UA and OA",
                     button);
@@ -201,7 +197,7 @@ public class PolicyClassEditor extends VerticalLayout {
                 form.add(checkbox);
             }
 
-            HorizontalLayout titleLayout = GraphEditor.titleFactory(
+            HorizontalLayout titleLayout = TitleFactory.generate(
                     "Choose Active Policy Classes");
 
             dialog.add(titleLayout, new Hr(), form);

@@ -2,7 +2,6 @@ package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Tag;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
@@ -16,7 +15,6 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.AbstractBackEndHierarchicalDataProvider;
@@ -1263,7 +1261,7 @@ public class GraphEditor extends VerticalLayout {
                 e.printStackTrace();
             }
         });
-        HorizontalLayout titleLayout = titleFactory("Add Node", submitButton);
+        HorizontalLayout titleLayout = TitleFactory.generate("Add Node", submitButton);
 
         dialog.add(titleLayout, new Hr(), form);
         dialog.open();
@@ -1350,7 +1348,7 @@ public class GraphEditor extends VerticalLayout {
         if (nodeCollection.size() == 0) {
             button.setEnabled(false);
         }
-        HorizontalLayout titleLayout = titleFactory("Add User", button);
+        HorizontalLayout titleLayout = TitleFactory.generate("Add User", button);
 
         dialog.add(titleLayout, new Hr(), form);
         dialog.open();
@@ -1433,7 +1431,7 @@ public class GraphEditor extends VerticalLayout {
         if (nodeCollection.size() == 0) {
             button.setEnabled(false);
         }
-        HorizontalLayout titleLayout = titleFactory("Add Object", button);
+        HorizontalLayout titleLayout = TitleFactory.generate("Add Object", button);
 
         dialog.add(titleLayout, new Hr(), form);
         dialog.open();
@@ -1494,7 +1492,7 @@ public class GraphEditor extends VerticalLayout {
                 e.printStackTrace();
             }
         });
-        HorizontalLayout titleLayout = titleFactory("Edit Node", n.getName(), submitButton);
+        HorizontalLayout titleLayout = TitleFactory.generate("Edit Node", n.getName(), submitButton);
 
         dialog.add(titleLayout, new Hr(), form);
         dialog.open();
@@ -1540,7 +1538,7 @@ public class GraphEditor extends VerticalLayout {
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
 
-        HorizontalLayout titleLayout = titleFactory("Delete Node", n.getName());
+        HorizontalLayout titleLayout = TitleFactory.generate("Delete Node", n.getName());
 
         dialog.add(titleLayout, new Hr(), form);
         dialog.open();
@@ -1622,7 +1620,7 @@ public class GraphEditor extends VerticalLayout {
             cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
             form.add(cancel);
 
-            HorizontalLayout titleLayout = titleFactory("Delete Assignment", child.getName() + " -> " + parent.getName());
+            HorizontalLayout titleLayout = TitleFactory.generate("Delete Assignment", child.getName() + " -> " + parent.getName());
 
             dialog.add(titleLayout, new Hr(), form);
             dialog.open();
@@ -1714,7 +1712,7 @@ public class GraphEditor extends VerticalLayout {
                 }
             }
         });
-        HorizontalLayout titleLayout = titleFactory("Add Association",
+        HorizontalLayout titleLayout = TitleFactory.generate("Add Association",
                 source.getName() + " -> " + target.getName(), submit);
 
         dialog.add(titleLayout, new Hr(), form);
@@ -1808,7 +1806,7 @@ public class GraphEditor extends VerticalLayout {
                 }
             }
         });
-        HorizontalLayout titleLayout = titleFactory("Edit Association",
+        HorizontalLayout titleLayout = TitleFactory.generate("Edit Association",
                 source.getName() + " -> " + target.getName(), submit);
 
         dialog.add(titleLayout, new Hr(), form);
@@ -1842,7 +1840,7 @@ public class GraphEditor extends VerticalLayout {
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
 
-        HorizontalLayout titleLayout = titleFactory("Delete Association",
+        HorizontalLayout titleLayout = TitleFactory.generate("Delete Association",
                 source.getName() + " -> " + target.getName());
 
         dialog.add(titleLayout, new Hr(), form);
@@ -1954,7 +1952,7 @@ public class GraphEditor extends VerticalLayout {
                 e.printStackTrace();
             }
         });
-        HorizontalLayout titleLayout = titleFactory("Add Prohibition",
+        HorizontalLayout titleLayout = TitleFactory.generate("Add Prohibition",
                 "Denying " + selectedChildNode.getName(), submit);
 
         dialog.add(titleLayout, new Hr(), form);
@@ -1989,7 +1987,7 @@ public class GraphEditor extends VerticalLayout {
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
 
-        HorizontalLayout titleLayout = titleFactory("Reset Graph", "This will delete all Nodes");
+        HorizontalLayout titleLayout = TitleFactory.generate("Reset Graph", "This will delete all Nodes");
 
         dialog.add(titleLayout, new Hr(), form);
 
@@ -1997,46 +1995,4 @@ public class GraphEditor extends VerticalLayout {
         dialog.open();
 
     }
-
-    public static HorizontalLayout titleFactory(String titleText, String subtitleText, Button submitButton) {
-        VerticalLayout titleLayout1 = new VerticalLayout();
-        titleLayout1.setJustifyContentMode(JustifyContentMode.END);
-        titleLayout1.setAlignItems(Alignment.START);
-        titleLayout1.setPadding(false);
-        titleLayout1.setWidth("85%");
-        H3 title = new H3(titleText);
-        title.getStyle().set("margin-bottom", "0px");
-        if (subtitleText != null) {
-            Text subtitle = new Text(subtitleText);
-            titleLayout1.add(title, subtitle);
-        } else {
-            titleLayout1.add(title);
-        }
-
-        HorizontalLayout totalTitleLayout = new HorizontalLayout();
-        if (submitButton != null) {
-            VerticalLayout titleLayout2 = new VerticalLayout();
-            titleLayout2.setJustifyContentMode(JustifyContentMode.END);
-            titleLayout2.setAlignItems(Alignment.END);
-            titleLayout2.setPadding(false);
-            titleLayout2.setWidth("15%");
-            titleLayout2.add(submitButton);
-            totalTitleLayout.add(titleLayout1, titleLayout2);
-        } else {
-            totalTitleLayout.add(titleLayout1);
-        }
-        totalTitleLayout.setWidthFull();
-        return totalTitleLayout;
-    }
-    public static HorizontalLayout titleFactory(String titleText, Button submitButton) {
-        return titleFactory(titleText, null, submitButton);
-    }
-    public static HorizontalLayout titleFactory(String titleText, String subtitleText) {
-        return titleFactory(titleText, subtitleText, null);
-    }
-    public static HorizontalLayout titleFactory(String titleText) {
-        return titleFactory(titleText, null, null);
-    }
 }
-
-
