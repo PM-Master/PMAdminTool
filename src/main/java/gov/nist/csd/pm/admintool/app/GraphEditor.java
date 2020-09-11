@@ -1134,7 +1134,6 @@ public class GraphEditor extends VerticalLayout {
     private void addNode() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(Alignment.BASELINE);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
@@ -1193,35 +1192,37 @@ public class GraphEditor extends VerticalLayout {
 
         form.add(parentSelect);
 
-        TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
-        propsFeild.setPlaceholder("Enter Properties...");
-        form.add(propsFeild);
+        MapInput<String, String> propsField = new MapInput<>(
+            TextField.class, TextField.class,
+            null, null,
+            (keyFieldInstance) -> {
+                if (keyFieldInstance instanceof TextField) {
+                    TextField temp = (TextField) keyFieldInstance;
+                    String value = temp.getValue();
+                    return (value != null && !value.isEmpty()) ? value : null;
+                } else {
+                    MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                    return null;
+                }
+            }, null
+        );
+        propsField.setLabel("Properties");
+        form.add(propsField);
 
         // ----- Title Section -----
         Button submitButton = new Button("Submit", event -> {
             String name = nameField.getValue();
             NodeType type = typeSelect.getValue();
             Set<Node> parents = parentSelect.getSelectedItems();
-            String propString = propsFeild.getValue();
-            Map<String, String> props = new HashMap<>();
-            if (name == null || name.equals("")) {
+            try {
+                Map<String, String> props = propsField.getValue();
+                if (name == null || name.equals("")) {
                 nameField.focus();
                 MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
             } else if (type == null) {
                 typeSelect.focus();
                 MainView.notify("Type is Required", MainView.NotificationType.DEFAULT);
             } else {
-                if (propString != null && !propString.equals("")) {
-                    try {
-                        for (String prop : propString.split("\n")) {
-                            props.put(prop.split("=")[0], prop.split("=")[1]);
-                        }
-                    } catch (Exception e) {
-                        MainView.notify("Incorrect Formatting of Properties", MainView.NotificationType.ERROR);
-                        e.printStackTrace();
-                    }
-                }
-                try {
                     g.createNode(name, type, props, parents.iterator().next().getName());
                     for (Node parent : parents) {
 
@@ -1256,10 +1257,10 @@ public class GraphEditor extends VerticalLayout {
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
-                } catch (PMException e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
             }
         });
         HorizontalLayout titleLayout = titleFactory("Add Node", submitButton);
@@ -1272,7 +1273,6 @@ public class GraphEditor extends VerticalLayout {
     private void addUser() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(Alignment.BASELINE);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
@@ -1303,33 +1303,33 @@ public class GraphEditor extends VerticalLayout {
         parentSelect.setItems(nodes);
         form.add(parentSelect);
 
-        TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
-        propsFeild.setPlaceholder("Enter Properties...");
-        form.add(propsFeild);
+        MapInput<String, String> propsField = new MapInput<>(
+                TextField.class, TextField.class,
+                null, null,
+                (keyFieldInstance) -> {
+                    if (keyFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) keyFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }, null
+        );
+        propsField.setLabel("Properties");
+        form.add(propsField);
 
         // ----- Title Section -----
         Button button = new Button("Submit", event -> {
             String name = nameField.getValue();
             Set<Node> parents = parentSelect.getSelectedItems();
-            String propString = propsFeild.getValue();
-            Map<String, String> props = new HashMap<>();
-            if (name == null || name == "") {
-                nameField.focus();
-                MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
-            } else {
-                if (propString != null && !propString.equals("")) {
-                    try {
-                        for (String prop : propString.split("\n")) {
-                            props.put(prop.split("=")[0], prop.split("=")[1]);
-                        }
-                    } catch (Exception e) {
-                        MainView.notify("Incorrect Formatting of Properties", MainView.NotificationType.ERROR);
-                        e.printStackTrace();
-                    }
-                }
-                try {
-                    //Node home = g.createNode(name + " Home", NodeType.OA, props, SingletonGraph.getSuperOAId());
-                    //Node attr = g.createNode(name + " Attr", NodeType.UA, props, SingletonGraph.getSuperUAId());
+            try {
+                Map<String, String> props = propsField.getValue();
+                if (name == null || name == "") {
+                    nameField.focus();
+                    MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                } else {
                     g.createNode(name, NodeType.U, props, parents.iterator().next().getName());
                     for (Node parent : parents) {
                         if (parent.getType() == NodeType.UA && !g.getParents(name).contains(parent.getName())) {
@@ -1341,11 +1341,10 @@ public class GraphEditor extends VerticalLayout {
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
-
-                } catch (Exception e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
             }
         });
         if (nodeCollection.size() == 0) {
@@ -1361,7 +1360,6 @@ public class GraphEditor extends VerticalLayout {
     private void addObject() {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(Alignment.BASELINE);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
@@ -1389,32 +1387,33 @@ public class GraphEditor extends VerticalLayout {
         parentSelect.setPlaceholder("Select OA...");
         form.add(parentSelect);
 
-        TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
-        propsFeild.setPlaceholder("Enter Properties...");
-        form.add(propsFeild);
+        MapInput<String, String> propsField = new MapInput<>(
+                TextField.class, TextField.class,
+                null, null,
+                (keyFieldInstance) -> {
+                    if (keyFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) keyFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }, null
+        );
+        propsField.setLabel("Properties");
+        form.add(propsField);
 
         // ----- Title Section -----
         Button button = new Button("Submit", event -> {
-
             String name = nameField.getValue();
             Set<Node> parents = parentSelect.getSelectedItems();
-            String propString = propsFeild.getValue();
-            Map<String, String> props = new HashMap<>();
-            if (name == null || name == "") {
-                nameField.focus();
-                MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
-            } else {
-                if (propString != null && !propString.equals("")) {
-                    try {
-                        for (String prop : propString.split("\n")) {
-                            props.put(prop.split("=")[0], prop.split("=")[1]);
-                        }
-                    } catch (Exception e) {
-                        MainView.notify("Incorrect Formatting of Properties", MainView.NotificationType.ERROR);
-                        e.printStackTrace();
-                    }
-                }
-                try {
+            try {
+                Map<String, String> props = propsField.getValue();
+                if (name == null || name == "") {
+                    nameField.focus();
+                    MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                } else {
                     g.createNode(name, NodeType.O, props, parents.iterator().next().getName());
                     for (Node parent : parents) {
                         if (parent.getType() == NodeType.OA && !g.getParents(name).contains(parent.getName())) {
@@ -1425,10 +1424,10 @@ public class GraphEditor extends VerticalLayout {
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
-                } catch (Exception e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
             }
         });
         if (nodeCollection.size() == 0) {
@@ -1444,7 +1443,6 @@ public class GraphEditor extends VerticalLayout {
     private void editNode(Node n) {
         Dialog dialog = new Dialog();
         HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(Alignment.BASELINE);
 
         TextField nameField = new TextField("Name");
         nameField.setRequiredIndicatorVisible(true);
@@ -1452,41 +1450,48 @@ public class GraphEditor extends VerticalLayout {
         nameField.setEnabled(false);
         form.add(nameField);
 
-        TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
-        propsFeild.setPlaceholder("Enter Properties...");
-        String pStr = n.getProperties().toString().replaceAll(", ", "\n");
-        propsFeild.setValue(pStr.substring(1, pStr.length() - 1));
-        form.add(propsFeild);
+//        TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
+//        propsFeild.setPlaceholder("Enter Properties...");
+//        String pStr = n.getProperties().toString().replaceAll(", ", "\n");
+//        propsFeild.setValue(pStr.substring(1, pStr.length() - 1));
+//        form.add(propsFeild);
+
+        MapInput<String, String> propsField = new MapInput<>(
+                TextField.class, TextField.class,
+                null, null,
+                (keyFieldInstance) -> {
+                    if (keyFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) keyFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }, null
+        );
+        propsField.setLabel("Properties");
+        propsField.setValue(n.getProperties());
+        form.add(propsField);
 
         // ----- Title Section -----
         Button submitButton = new Button("Submit", event -> {
             String name = nameField.getValue();
-            String propString = propsFeild.getValue();
-            Map<String, String> props = new HashMap<>();
-            if (name == null || name == "") {
-                nameField.focus();
-                MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
-            } else {
-                if (propString != null) {
-                    try {
-                        for (String prop : propString.split("\n")) {
-                            props.put(prop.split("=")[0], prop.split("=")[1]);
-                        }
-                    } catch (Exception e) {
-                        MainView.notify("Incorrect Formatting of Properties", MainView.NotificationType.ERROR);
-                        e.printStackTrace();
-                    }
-                }
-                try {
+            try {
+                Map<String, String> props = propsField.getValue();
+                if (name == null || name == "") {
+                    nameField.focus();
+                    MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                } else {
                     g.updateNode(name, props);
                     MainView.notify("Node with name: " + name + " has been edited", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();
                     dialog.close();
-                } catch (Exception e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
             }
         });
         HorizontalLayout titleLayout = titleFactory("Edit Node", n.getName(), submitButton);
@@ -1548,9 +1553,9 @@ public class GraphEditor extends VerticalLayout {
                 MainView.notify(child.getName() + " assigned to " + parent.getName(), MainView.NotificationType.SUCCESS);
                 childNode.refresh(parent);
                 parentNode.refresh(parent);
-            } catch (PMException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
             }
         } else {
             MainView.notify("Must choose both a parent and a child for assignment", MainView.NotificationType.DEFAULT);
@@ -1817,11 +1822,6 @@ public class GraphEditor extends VerticalLayout {
 
         form.add(new Paragraph("Are You Sure?"));
 
-        HorizontalLayout titleLayout = titleFactory("Delete Association",
-                source.getName() + " -> " + target.getName());
-
-        dialog.add(titleLayout, new Hr(), form);
-
         Button button = new Button("Delete", event -> {
             try {
                 g.dissociate(source.getName(), target.getName());
@@ -1842,7 +1842,10 @@ public class GraphEditor extends VerticalLayout {
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
 
-        dialog.add(form);
+        HorizontalLayout titleLayout = titleFactory("Delete Association",
+                source.getName() + " -> " + target.getName());
+
+        dialog.add(titleLayout, new Hr(), form);
         dialog.open();
     }
 
@@ -1914,7 +1917,9 @@ public class GraphEditor extends VerticalLayout {
                 null, null
         );
         containerField.setLabel("Containers (Target, Complement)");
-        containerField.setInputRowValues(selectedParentNode.getName(), false);
+        Map<String, Boolean> temp = new HashMap<>();
+        temp.put(selectedParentNode.getName(), false);
+        containerField.setValue(temp);
         form.add(containerField);
 
         // intersection checkbox
@@ -1928,25 +1933,25 @@ public class GraphEditor extends VerticalLayout {
             OperationSet ops = new OperationSet(rOpsField.getValue());
             ops.addAll(aOpsField.getValue());
             boolean intersection = intersectionFeild.getValue();
-            Map<String, Boolean> containers = containerField.getValue();
-            if (ops == null || ops.isEmpty()) {
-                MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
-            } else if (name == null || name.equals("")) {
-                nameField.focus();
-                MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
-            } else if (containers.isEmpty()) {
-                MainView.notify("Containers are Required", MainView.NotificationType.DEFAULT);
-            } else {
-                try {
+            try {
+                Map<String, Boolean> containers = containerField.getValue();
+                if (ops == null || ops.isEmpty()) {
+                    MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
+                } else if (name == null || name.equals("")) {
+                    nameField.focus();
+                    MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                } else if (containers.isEmpty()) {
+                    MainView.notify("Containers are Required", MainView.NotificationType.DEFAULT);
+                } else {
                     g.addProhibition(nameField.getValue(), selectedChildNode.getName(), containers, ops, intersection);
                     MainView.notify("Prohibition with name: " + nameField.getValue() + " has been created", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();
                     dialog.close();
-                } catch (PMException e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
             }
         });
         HorizontalLayout titleLayout = titleFactory("Add Prohibition",
@@ -1963,7 +1968,7 @@ public class GraphEditor extends VerticalLayout {
 
         form.add(new Paragraph("Are You Sure?"));
 
-        Button button = new Button("Delete", event -> {
+        Button button = new Button("Reset", event -> {
             try {
                 g.reset();
                 SingletonGraph.resetActivePCs();
@@ -1984,7 +1989,7 @@ public class GraphEditor extends VerticalLayout {
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
 
-        HorizontalLayout titleLayout = titleFactory("Reset Graph", "Deletes all Nodes");
+        HorizontalLayout titleLayout = titleFactory("Reset Graph", "This will delete all Nodes");
 
         dialog.add(titleLayout, new Hr(), form);
 
@@ -1993,7 +1998,7 @@ public class GraphEditor extends VerticalLayout {
 
     }
 
-    private HorizontalLayout titleFactory(String titleText, String subtitleText, Button submitButton) {
+    public static HorizontalLayout titleFactory(String titleText, String subtitleText, Button submitButton) {
         VerticalLayout titleLayout1 = new VerticalLayout();
         titleLayout1.setJustifyContentMode(JustifyContentMode.END);
         titleLayout1.setAlignItems(Alignment.START);
@@ -2023,13 +2028,14 @@ public class GraphEditor extends VerticalLayout {
         totalTitleLayout.setWidthFull();
         return totalTitleLayout;
     }
-
-    private HorizontalLayout titleFactory(String titleText, Button submitButton) {
+    public static HorizontalLayout titleFactory(String titleText, Button submitButton) {
         return titleFactory(titleText, null, submitButton);
     }
-
-    private HorizontalLayout titleFactory(String titleText, String subtitleText) {
+    public static HorizontalLayout titleFactory(String titleText, String subtitleText) {
         return titleFactory(titleText, subtitleText, null);
+    }
+    public static HorizontalLayout titleFactory(String titleText) {
+        return titleFactory(titleText, null, null);
     }
 }
 

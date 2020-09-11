@@ -9,6 +9,7 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H4;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -298,36 +299,37 @@ public class ProhibitionEditor extends VerticalLayout {
         Button submit = new Button("Submit", event -> {
             String name = nameField.getValue();
             String subject = subjectSelect.getValue();
-            Map<String, Boolean> containers = containerField.getValue();
             OperationSet ops = new OperationSet(rOpsField.getValue());
             ops.addAll(aOpsField.getValue());
             boolean intersection = intersectionFeild.getValue();
-            if (ops == null || ops.isEmpty()) {
-                MainView.notify("Operations are Required");
-            } else if (name == null || name.equals("")) {
-                nameField.focus();
-                MainView.notify("Name is Required");
-            } else if (subject == null || subject.equals("")) {
-                subjectSelect.focus();
-                MainView.notify("Subject is Required");
-            } else if (containers.isEmpty()) {
-                MainView.notify("Containers are Required");
-            } else {
-                try {
+            try {
+                Map<String, Boolean> containers = containerField.getValue();
+                if (ops == null || ops.isEmpty()) {
+                    MainView.notify("Operations are Required");
+                } else if (name == null || name.equals("")) {
+                    nameField.focus();
+                    MainView.notify("Name is Required");
+                } else if (subject == null || subject.equals("")) {
+                    subjectSelect.focus();
+                    MainView.notify("Subject is Required");
+                } else if (containers.isEmpty()) {
+                    MainView.notify("Containers are Required");
+                } else {
                     g.addProhibition(name, subject, containers, ops, intersection);
                     prohibitionViewer.refreshGraph();
                     dialog.close();
-                } catch (PMException e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
             }
         });
-        VerticalLayout submitLayout = new VerticalLayout(submit);
-        form.add(new VerticalLayout(submitLayout));
+
+        // title layout
+        HorizontalLayout titleLayout = GraphEditor.titleFactory("Add Prohibition", submit);
 
         // putting it all together
-        dialog.add(form);
+        dialog.add(titleLayout, new Hr(), form);
         dialog.open();
         subjectSelect.focus();
     }
@@ -347,12 +349,6 @@ public class ProhibitionEditor extends VerticalLayout {
 
         // the form layout
         HorizontalLayout form = new HorizontalLayout();
-
-        // prohibition name input - automatically filled by subject change
-        TextField nameField = new TextField("Prohibition Name");
-        form.add(nameField);
-        nameField.setValue(prohibition.getName());
-        nameField.setEnabled(false);
 
         // getting list of subjects
         HashSet<String> subjects = new HashSet<>();
@@ -433,37 +429,35 @@ public class ProhibitionEditor extends VerticalLayout {
 
         // submit button
         Button submit = new Button("Submit", event -> {
-            String name = nameField.getValue();
+            String name = prohibition.getName();
             String subject = subjectSelect.getValue();
-            Map<String, Boolean> containers = containerField.getValue();
             OperationSet ops = new OperationSet(opsField.getValue());
             boolean intersection = intersectionField.getValue();
-            if (ops == null || ops.isEmpty()) {
-                MainView.notify("Operations are Required");
-            } else if (name == null || name.equals("")) {
-                nameField.focus();
-                MainView.notify("Name is Required");
-            } else if (subject == null || subject.equals("")) {
-                subjectSelect.focus();
-                MainView.notify("Subject is Required");
-            } else if (containers.isEmpty()) {
-                MainView.notify("Containers are Required");
-            } else {
-                try {
+            try {
+                Map<String, Boolean> containers = containerField.getValue();
+                if (ops == null || ops.isEmpty()) {
+                    MainView.notify("Operations are Required");
+                } else if (subject == null || subject.equals("")) {
+                    subjectSelect.focus();
+                    MainView.notify("Subject is Required");
+                } else if (containers.isEmpty()) {
+                    MainView.notify("Containers are Required");
+                } else {
                     g.updateProhibition(name, subject, containers, ops, intersection);
                     prohibitionViewer.refreshGraph();
                     dialog.close();
-                } catch (PMException e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
             }
         });
-        VerticalLayout submitLayout = new VerticalLayout(submit);
-        form.add(submitLayout);
+
+        // title layout
+        HorizontalLayout titleLayout = GraphEditor.titleFactory("Edit Prohibition", prohibition.getName(), submit);
 
         // putting it all together
-        dialog.add(form);
+        dialog.add(titleLayout, new Hr(), form);
         dialog.open();
         subjectSelect.focus();
     }
@@ -493,7 +487,10 @@ public class ProhibitionEditor extends VerticalLayout {
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         form.add(cancel);
 
-        dialog.add(form);
+        HorizontalLayout titleLayout = GraphEditor.titleFactory("Delete Prohibtion",
+                prohibition.getName());
+
+        dialog.add(titleLayout, new Hr(), form);
         dialog.open();
     }
 }

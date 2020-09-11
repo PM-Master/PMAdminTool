@@ -7,11 +7,13 @@ import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Hr;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph.PolicyClassWithActive;
 import gov.nist.csd.pm.exceptions.PMException;
@@ -67,7 +69,7 @@ public class PolicyClassEditor extends VerticalLayout {
             buttons.setWidthFull();
             add(buttons);
 
-            Button choosePCButton = new Button("Choose Policy Classes");
+            Button choosePCButton = new Button("Choose Active Policy Classes");
             choosePCButton.setWidthFull();
             choosePCButton.addClickListener(event -> choosePolicyClasses());
             buttons.add(choosePCButton);
@@ -101,50 +103,55 @@ public class PolicyClassEditor extends VerticalLayout {
         private void addPolicyClass() {
             Dialog dialog = new Dialog();
             HorizontalLayout form = new HorizontalLayout();
-            form.setAlignItems(FlexComponent.Alignment.BASELINE);
 
             TextField nameField = new TextField("PC Name");
             nameField.setRequiredIndicatorVisible(true);
             nameField.setPlaceholder("Enter Name...");
             form.add(nameField);
 
-            TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
-            propsFeild.setPlaceholder("Enter Properties...");
-            form.add(propsFeild);
+            MapInput<String, String> propsField = new MapInput<>(
+                    TextField.class, TextField.class,
+                    null, null,
+                    (keyFieldInstance) -> {
+                        if (keyFieldInstance instanceof TextField) {
+                            TextField temp = (TextField) keyFieldInstance;
+                            String value = temp.getValue();
+                            return (value != null && !value.isEmpty()) ? value : null;
+                        } else {
+                            MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                            return null;
+                        }
+                    }, null
+            );
+            propsField.setLabel("Properties");
+            form.add(propsField);
 
             Button button = new Button("Submit", event -> {
                 String name = nameField.getValue();
-                String propString = propsFeild.getValue();
-                Map<String, String> props = new HashMap<>();
-                if (name == null || name == "") {
-                    nameField.focus();
-                    MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
-                } else {
-                    if (propString != null && !propString.equals("")) {
-                        try {
-                            for (String prop : propString.split("\n")) {
-                                props.put(prop.split("=")[0], prop.split("=")[1]);
-                            }
-                        } catch (Exception e) {
-                            MainView.notify("Incorrect Formatting of Properties", MainView.NotificationType.ERROR);
-                            e.printStackTrace();
-                        }
-                    }
-                    try {
+                try {
+                    Map<String, String> props = propsField.getValue();
+                    if (name == null || name == "") {
+                        nameField.focus();
+                        MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                    } else {
                         //g.getPAP().getGraphPAP().createPolicyClass(name, props);
-                        g.createPolicyClass(name,props);
+                        g.createPolicyClass(name, props);
                         MainView.notify("Policy Class with name: " + name + " has been created.", MainView.NotificationType.SUCCESS);
                         refreshGrid();
                         dialog.close();
-                    } catch (PMException e) {
-                        //PolicyClassEditor.notify(e.getMessage());
-                        e.printStackTrace();
                     }
+                } catch (Exception e) {
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    e.printStackTrace();
                 }
             });
-            form.add(button);
+            HorizontalLayout titleLayout = GraphEditor.titleFactory(
+                    "Add Policy Class",
+                    "Make's a new PC with Default UA and OA",
+                    button);
 
-            dialog.add(form);
+
+            dialog.add(titleLayout, new Hr(), form);
             dialog.open();
             nameField.focus();
         }
@@ -161,15 +168,14 @@ public class PolicyClassEditor extends VerticalLayout {
 
         private void choosePolicyClasses() {
             Dialog dialog = new Dialog();
-            dialog.add(new H3("Choose Active Policy Classes:"));
+//            dialog.add(new H3("Choose Active Policy Classes:"));
 //            dialog.setHeight("90vh");
             dialog.setWidth("50vh");
 
             VerticalLayout form = new VerticalLayout();
-            form.setSizeFull();
+//            form.setSizeFull();
             form.setAlignItems(FlexComponent.Alignment.BASELINE);
-            form.getStyle().set("background", "#DADADA");
-            form.getStyle().set("border-radius", "3px");
+            form.setPadding(false);
 
             Set<PolicyClassWithActive> activePCs = SingletonGraph.getActivePCs();
             for (PolicyClassWithActive pc: activePCs) {
@@ -195,7 +201,10 @@ public class PolicyClassEditor extends VerticalLayout {
                 form.add(checkbox);
             }
 
-            dialog.add(form);
+            HorizontalLayout titleLayout = GraphEditor.titleFactory(
+                    "Choose Active Policy Classes");
+
+            dialog.add(titleLayout, new Hr(), form);
             dialog.open();
         }
     }

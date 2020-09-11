@@ -2,7 +2,9 @@ package gov.nist.csd.pm.admintool.app.customElements;
 
 import com.vaadin.flow.component.AbstractField;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -22,6 +24,7 @@ public class MapInput<K, V> extends VerticalLayout {
     private FieldConfig keyFieldConfig, valueFieldConfig;
     private FieldRetriever<K> keyFieldRetriever;
     private FieldRetriever<V> valueFieldRetriever;
+    private HorizontalLayout labelSection;
     private Div label;
     private Div rowsSection;
 
@@ -37,17 +40,38 @@ public class MapInput<K, V> extends VerticalLayout {
         this.keyFieldRetriever = keyFieldRetriever;
         this.valueFieldRetriever = valueFieldRetriever;
 
-        label = new Div();
-        label.getStyle().set("font-size", "13px");
-        add(label);
 
+        // ----- label section -----
+        labelSection = new HorizontalLayout();
+        labelSection.setPadding(false);
+        labelSection.setMargin(false);
+        add(labelSection);
+
+        // actual label
+        label = new Div();
+        label.getStyle()
+                .set("font-size", "13px");
+        labelSection.add(label);
+
+        // new row button
+        Div newRowButton = new Div();
+        newRowButton.setText("+");
+        newRowButton.addClickListener((buttonClickEvent) -> {
+            addRow(null, null);
+        });
+        newRowButton.getStyle()
+                .set("font-size", "13px")
+                .set("color", "blue")
+                .set("cursor", "pointer");
+        labelSection.add(newRowButton);
+
+
+        // ----- rows section -----
         rowsSection = new Div();
         rowsSection.getStyle().set("margin", "0").set("padding", "0");
         add(rowsSection);
 
         getStyle().remove("width");
-
-        addRow(null, null);
     }
 
 
@@ -57,45 +81,41 @@ public class MapInput<K, V> extends VerticalLayout {
         rowsSection.add(newRow);
     }
 
-    public void setInputRowValues(K key, V value) {
-        Row first = rows.iterator().next();
-        first.setKey(key);
-        first.setValue(value);
-    }
-
-    public void deleteRow (K key) {
-        Row found = null;
-        for (Row row : rows) {
-            if (row.getKey() == key) {
-                found = row;
-            }
-        }
-
-        if (found != null) {
-            rows.remove(found);
-            rowsSection.remove(found);
+    public void deleteRow (Row row) {
+        if (rows.contains(row)) {
+            rows.remove(row);
+            rowsSection.remove(row);
         }
     }
 
     public void setLabel (String label) {
+//        this.getElement().setProperty("label", label != null ? label : "");
         this.label.setText(label);
     }
 
-    public Map<K, V> getValue () {
+    public Map<K, V> getValue() throws Exception {
         Map<K, V> ret = new HashMap<>();
         for (Row row : rows) {
-            if (row.getKey() != null)
-                ret.put(row.getKey(), row.getValue());
+            if (row.getKey() != null) {
+                if (ret.containsKey(row.getKey())) {
+                    throw new Exception("Duplicate Key");
+                } else {
+                    ret.put(row.getKey(), row.getValue());
+                }
+            }
+
         }
         return ret;
     }
 
     public void setValue (Map<K, V> fieldValue) {
-        rows.clear();
-        rowsSection.removeAll();
+        if (!fieldValue.isEmpty()) {
+            rows.clear();
+            rowsSection.removeAll();
 
-        for (K key: fieldValue.keySet()) {
-            addRow(key, fieldValue.get(key));
+            for (K key: fieldValue.keySet()) {
+                addRow(key, fieldValue.get(key));
+            }
         }
     }
 
@@ -105,15 +125,10 @@ public class MapInput<K, V> extends VerticalLayout {
         private Row(K key, V value) {
             setAlignItems(Alignment.CENTER);
 
-            if (rows.isEmpty()) {
-                Button addButton = new Button(new Icon(VaadinIcon.PLUS));
-                addButton.addClickListener(buttonClickEvent -> addRow(null, null));
-                add(addButton);
-            } else {
-                Button deleteButton = new Button(new Icon(VaadinIcon.MINUS));
-                deleteButton.addClickListener(buttonClickEvent -> deleteRow(getKey()));
-                add(deleteButton);
-            }
+            Button deleteButton = new Button(new Icon(VaadinIcon.MINUS));
+            deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            deleteButton.addClickListener(buttonClickEvent -> deleteRow(this));
+            add(deleteButton);
 
             try {
                 Object keyFieldObject = keyField.newInstance();
@@ -123,6 +138,17 @@ public class MapInput<K, V> extends VerticalLayout {
                         keyFieldConfig.config(keyFieldInstance);
                     if (key != null)
                         keyFieldInstance.setValue(key);
+
+                    // duplicate key notifier
+                    keyFieldInstance.addValueChangeListener((valueChangeEvent) -> {
+                        rows.forEach((row -> {
+                            if (!row.equals(this)) {
+                                if (valueChangeEvent.getValue().equals(row.getKey())) {
+                                    MainView.notify("Duplicate Key");
+                                }
+                            }
+                        }));
+                    });
                     add(keyFieldInstance);
                 }
 
