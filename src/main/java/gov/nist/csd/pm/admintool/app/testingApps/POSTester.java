@@ -158,6 +158,7 @@ public class POSTester extends VerticalLayout {
         try {
             permissions = g.getPDP().getAnalyticsService(new UserContext(user.getName())).getPermissions(node.getName());
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
 
@@ -170,14 +171,14 @@ public class POSTester extends VerticalLayout {
             nodeCollection = new HashSet<>(g.getNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
-            System.out.println(e.getMessage());
-
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         Iterator<Node> nodeIterator = nodeCollection.iterator();
         while (nodeIterator.hasNext()) {
             Node curr = nodeIterator.next();
-            if (!(curr.getType() == NodeType.U || curr.getType() == NodeType.UA) || curr.getProperties().get("namespace") == "super") {
+//            if (!(curr.getType() == NodeType.U || curr.getType() == NodeType.UA) || curr.getProperties().get("namespace") == "super") {
+            if (!(curr.getType() == NodeType.U) || curr.getProperties().get("namespace") == "super") {
                 nodeIterator.remove();
             }
         }
@@ -197,7 +198,7 @@ public class POSTester extends VerticalLayout {
 //                currNodes = g.getPDP().getGraphService(userContext).getNodes();
                 currNodes = g.getPDP().getAnalyticsService(userContext).getPos(userContext);
             } catch (PMException e) {
-                System.out.println(e.getMessage());
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
 
@@ -377,7 +378,7 @@ public class POSTester extends VerticalLayout {
             try {
                 g.deleteNode(n.getName());
             } catch (PMException e) {
-                System.out.println(e.getMessage());
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             updateGraph();
@@ -412,6 +413,7 @@ public class POSTester extends VerticalLayout {
         try {
             explain = analyticsService.explain(user.getName(), node.getName());
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
 

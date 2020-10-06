@@ -1,0 +1,19 @@
+label: test
+rules:
+  - label: rule1
+    event:
+      subject:
+      operations:
+        - assign to
+      target:
+        policyElements:
+          - name: Patients
+            type: UA
+    response:
+      actions:
+        - function:
+            name: record_function
+            args: 
+              - function:
+                  name: child_of_assign
+		

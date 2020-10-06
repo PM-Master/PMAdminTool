@@ -24,6 +24,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * This is the main page of the whole tool.
+ * It contains:
+ *  - The navigation bar on the left side of the screen,
+ *  - Instances of all the actual pages,
+ *  - Test results visualization, and
+ *  - Various global helper functions.
+ */
 @Route
 public class MainView extends HorizontalLayout{
     private Div testResults;
@@ -33,7 +41,6 @@ public class MainView extends HorizontalLayout{
     private VerticalLayout navbar;
 
     public MainView() {
-
         testResults = new Div();
         actions = SingletonActiveActions.getInstance();
         navbar = new VerticalLayout();
@@ -184,5 +191,4 @@ public class MainView extends HorizontalLayout{
     public enum NotificationType {
         SUCCESS, ERROR, DEFAULT
     }
-
 }

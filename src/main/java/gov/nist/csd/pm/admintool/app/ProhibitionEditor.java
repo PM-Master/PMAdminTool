@@ -100,6 +100,7 @@ public class ProhibitionEditor extends VerticalLayout {
             try {
                 prohibitions = g.getAllProhibitions();
             } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             grid.setItems(prohibitions);
@@ -252,6 +253,7 @@ public class ProhibitionEditor extends VerticalLayout {
             rOpsField.setItems(g.getResourceOpsWithStars());
             aOpsField.setItems(g.getAdminOpsWithStars());
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         VerticalLayout opsFields = new VerticalLayout(rOpsField, aOpsField);
@@ -383,6 +385,7 @@ public class ProhibitionEditor extends VerticalLayout {
         try {
             opsField.setItems(g.getAllOpsWithStars());
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         form.add(opsField);
@@ -475,7 +478,7 @@ public class ProhibitionEditor extends VerticalLayout {
                 MainView.notify("Prohibition with name: " + prohibition.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
                 prohibitionViewer.refreshGraph();
             } catch (PMException e) {
-                System.out.println(e.getMessage());
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             dialog.close();

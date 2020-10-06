@@ -1,5 +1,6 @@
 package gov.nist.csd.pm.admintool.graph;
 
+import gov.nist.csd.pm.admintool.graph.customObligationFunctions.RecordFunctionExecutor;
 import gov.nist.csd.pm.epp.EPPOptions;
 import gov.nist.csd.pm.epp.events.EventContext;
 import gov.nist.csd.pm.exceptions.PMException;
@@ -26,6 +27,8 @@ import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 
 import java.util.*;
 
+import static gov.nist.csd.pm.pdp.PDP.newPDP;
+
 /**
  * The "In-Memory" graph used throughout the entirety of the admin tool.
  *
@@ -45,7 +48,7 @@ public class SingletonGraph {
     private static MySQLConnection connection = new MySQLConnection();
 
     private SingletonGraph(PAP pap) throws PMException {
-        pdp = PDP.newPDP(pap, new EPPOptions(), new OperationSet());
+        pdp = newPDP(pap, new EPPOptions(), new OperationSet());
 
         //Prevent form the reflection api.
 //        if (pdp == null){
@@ -79,11 +82,22 @@ public class SingletonGraph {
 
     private synchronized static void fixGraphData(Graph graph) {
         try {
-                g = new SingletonGraph(new PAP(
-                        new GraphAdmin(graph),
-                        new ProhibitionsAdmin(new MySQLProhibitions(connection)),
-                        new ObligationsAdmin(new MemObligations())
-                ));
+            PAP pap = new PAP(
+                    new GraphAdmin(graph),
+                    new ProhibitionsAdmin(new MySQLProhibitions(connection)),
+                    new ObligationsAdmin(new MemObligations())
+            );
+
+            g = new SingletonGraph(pap);
+
+            PDP pdp = newPDP(
+                    pap,
+                    new EPPOptions(new RecordFunctionExecutor()),
+                    (OperationSet) g.getResourceOps());
+
+            g.pdp = pdp;
+
+
             System.out.println("MySQLGraph");
             superContext = null;
             activePCs = new HashSet<>();
@@ -133,11 +147,21 @@ public class SingletonGraph {
 
     private synchronized static void fixGraphDataMem(Graph graph) {
         try {
-            g = new SingletonGraph(new PAP(
+            PAP pap = new PAP(
                     new GraphAdmin(graph),
                     new ProhibitionsAdmin(new MemProhibitions()),
                     new ObligationsAdmin(new MemObligations())
-            ));
+            );
+
+            g = new SingletonGraph(pap);
+
+            PDP pdp = newPDP(
+                    pap,
+                    new EPPOptions(new RecordFunctionExecutor()),
+                    (OperationSet) g.getResourceOps());
+
+            g.pdp = pdp;
+
             System.out.println("MemGraph");
             superContext = null;
             activePCs = new HashSet<>();

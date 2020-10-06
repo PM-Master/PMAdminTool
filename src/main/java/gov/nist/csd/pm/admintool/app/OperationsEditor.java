@@ -113,6 +113,7 @@ public class OperationsEditor extends VerticalLayout {
                 try {
                     resourceOpsList.addAll(g.getResourceOps());
                 } catch (PMException e) {
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();
                 }
                 dataProvider = DataProvider.ofCollection(resourceOpsList);
@@ -121,6 +122,7 @@ public class OperationsEditor extends VerticalLayout {
                 try {
                     adminOpsList.addAll(g.getAdminOps());
                 } catch (PMException e) {
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();
                 }
                 dataProvider = DataProvider.ofCollection(adminOpsList);
@@ -140,6 +142,7 @@ public class OperationsEditor extends VerticalLayout {
             try {
                 g.deleteResourceOps(ops);
             } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             resourcesLayout.refreshGrid();
@@ -210,6 +213,7 @@ public class OperationsEditor extends VerticalLayout {
             try {
                 g.addResourceOps(operation);
             } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             resourcesLayout.refreshGrid();

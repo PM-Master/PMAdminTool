@@ -305,6 +305,7 @@ public class GraphEditor extends VerticalLayout {
                             MainView.notify("Node has no children", MainView.NotificationType.DEFAULT);
                         }
                     } catch (PMException e) {
+                        MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                         e.printStackTrace();
                     }
                 }
@@ -891,6 +892,7 @@ public class GraphEditor extends VerticalLayout {
                     currNodes.add(g.getNode(name));
                 }
             } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             updateGridNodes(currNodes);
@@ -928,6 +930,7 @@ public class GraphEditor extends VerticalLayout {
                     policies.add(g.getNode(policyName));
                 }
             } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             grid.expand(policies);
@@ -1162,6 +1165,7 @@ public class GraphEditor extends VerticalLayout {
                 nodeCollection = new HashSet<>(g.getActiveNodes());
             } catch (PMException e) {
                 nodeCollection = new HashSet<>();
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             Collection<Node> finalNodeCollection = nodeCollection;
@@ -1283,6 +1287,7 @@ public class GraphEditor extends VerticalLayout {
 
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
 
@@ -1371,6 +1376,7 @@ public class GraphEditor extends VerticalLayout {
             nodeCollection = new HashSet<>(g.getActiveNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         nodeCollection.removeIf(curr -> curr.getType() != NodeType.OA);
@@ -1514,6 +1520,7 @@ public class GraphEditor extends VerticalLayout {
                     try {
                         parents.add(g.getNode(parentName));
                     } catch (PMException e) {
+                        MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                         e.printStackTrace();
                     }
                 });
@@ -1585,6 +1592,7 @@ public class GraphEditor extends VerticalLayout {
                             try {
                                 g.deleteNode(child.getName());
                             } catch (PMException e) {
+                                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                                 e.printStackTrace();
                             }
                             childNode.resetGrid();
@@ -1604,6 +1612,7 @@ public class GraphEditor extends VerticalLayout {
                         dialog2.open();
                     }
                 } catch (PMException e) {
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();
                 }
                 childNode.refresh();
@@ -1656,6 +1665,7 @@ public class GraphEditor extends VerticalLayout {
         try {
             opsSelectRessource.setItems(g.getResourceOpsWithStars());
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         opsSelectRessource.setWidth("100%");
@@ -1667,6 +1677,7 @@ public class GraphEditor extends VerticalLayout {
         try {
             opsSelectAdmin.setItems(g.getAdminOpsWithStars());
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         opsSelectAdmin.setWidth("100%");
@@ -1725,6 +1736,7 @@ public class GraphEditor extends VerticalLayout {
         try {
             opsSelectRessource.setItems(g.getResourceOpsWithStars());
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         opsSelectRessource.setWidth("100%");
@@ -1735,6 +1747,7 @@ public class GraphEditor extends VerticalLayout {
         try {
             opsSelectAdmin.setItems(g.getAdminOpsWithStars());
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         opsSelectAdmin.setWidth("100%");
@@ -1814,6 +1827,7 @@ public class GraphEditor extends VerticalLayout {
                 childNode.updateNodeInfo();
                 parentNode.updateNodeInfo();
             } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             dialog.close();
@@ -1846,6 +1860,7 @@ public class GraphEditor extends VerticalLayout {
         try {
             numOfProhibtionsForSubject = g.getProhibitionsFor(selectedChildNode.getName()).size();
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         String initialName = "deny_" + selectedChildNode.getName() + "-" + (numOfProhibtionsForSubject + 1);
@@ -1862,6 +1877,7 @@ public class GraphEditor extends VerticalLayout {
             rOpsField.setItems(g.getResourceOpsWithStars());
             aOpsField.setItems(g.getAdminOpsWithStars());
         } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         VerticalLayout opsFields = new VerticalLayout(rOpsField, aOpsField);
@@ -1963,6 +1979,7 @@ public class GraphEditor extends VerticalLayout {
                 parentNode.resetGrid();
                 parentNode.expandPolicies();
             } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             dialog.close();

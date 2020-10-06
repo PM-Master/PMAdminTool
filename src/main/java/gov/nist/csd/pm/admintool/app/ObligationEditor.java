@@ -122,8 +122,8 @@ public class ObligationEditor extends VerticalLayout {
             try {
                 currObls = g.getAllObls();
             } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
-                System.out.println(e.getMessage());
             }
             obligationGrid.setItems(currObls);
         }
@@ -284,7 +284,7 @@ public class ObligationEditor extends VerticalLayout {
             try {
                 g.deleteObl(n.getLabel());
             } catch (PMException e) {
-                System.out.println(e.getMessage());
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             obligationViewer.refreshGrid();

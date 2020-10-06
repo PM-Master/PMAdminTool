@@ -94,8 +94,7 @@ public class ACLTester extends VerticalLayout {
             nodeCollection = new HashSet<>(g.getNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
-            System.out.println(e.getMessage());
-
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
         }
         Iterator<Node> nodeIterator = nodeCollection.iterator();
@@ -128,7 +127,7 @@ public class ACLTester extends VerticalLayout {
 //                    }
                 }
             } catch (PMException e) {
-                System.out.println(e.getMessage());
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             grid.setItems(currNodes);
