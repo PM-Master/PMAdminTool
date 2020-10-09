@@ -11,12 +11,16 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
-import com.vaadin.flow.data.provider.ListDataProvider;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class OperationsEditor extends VerticalLayout {
 
@@ -50,8 +54,12 @@ public class OperationsEditor extends VerticalLayout {
     }
 
     public class OperationsViewer extends VerticalLayout {
-        private Grid<String> grid;
         private boolean isResourceOps;
+        private final Map<String, Predicate<? super String>> filters = new HashMap<>();
+
+        private TextField searchBar;
+        private Grid<String> grid;
+
 
         public OperationsViewer(boolean isResourceOps) {
             this.isResourceOps = isResourceOps;
@@ -74,6 +82,25 @@ public class OperationsEditor extends VerticalLayout {
                 title.add(new H2("Admin Access Rights:"));
             }
 
+            // adding the search bar
+            searchBar = new TextField();
+            searchBar.setWidthFull();
+            searchBar.setPlaceholder("Search by name...");
+            searchBar.setClearButtonVisible(true);
+            searchBar.setValueChangeMode(ValueChangeMode.LAZY);
+            searchBar.addValueChangeListener(evt -> {
+                if (evt.getValue() != null && !evt.getValue().isEmpty()) {
+                    Predicate<? super String> filterName = (nodeName -> nodeName.contains(evt.getValue()));
+                    filters.put("Name", filterName);
+                } else {
+                    filters.remove("Name");
+                }
+                updateGridNodes();
+            });
+            add(searchBar);
+
+
+            // adding the grid section
             grid = new Grid<>(String.class);
             createContextMenu();
             grid.getStyle()
@@ -81,11 +108,13 @@ public class OperationsEditor extends VerticalLayout {
                     .set("user-select", "none");
 
             grid.removeAllColumns();
-            grid.addColumn(String::toString).setHeader("Existing Access Rights");
+            grid.addColumn(String::toString)
+                    .setHeader("Existing Access Rights")
+                    .setSortable(true);
 
 //            grid.setSelectionMode(Grid.SelectionMode.MULTI);
 
-            refreshGrid();
+            updateGridNodes();
             add(grid);
         }
 
@@ -106,28 +135,29 @@ public class OperationsEditor extends VerticalLayout {
             });
         }
 
-        private void refreshGrid() {
-            final ListDataProvider<String> dataProvider;
-            if (isResourceOps) {
-                Collection<String> resourceOpsList = new ArrayList<>();
-                try {
-                    resourceOpsList.addAll(g.getResourceOps());
-                } catch (PMException e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
+        private void updateGridNodes() {
+            Collection<String> opsList = new ArrayList<>();
+            try {
+                if (isResourceOps) {
+                    opsList.addAll(g.getResourceOps());
+                } else {
+                    opsList.addAll(g.getAdminOps());
                 }
-                dataProvider = DataProvider.ofCollection(resourceOpsList);
-            } else {
-                Collection<String> adminOpsList = new ArrayList<>();
-                try {
-                    adminOpsList.addAll(g.getAdminOps());
-                } catch (PMException e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
+
+                // add filter functions
+                for (Predicate<? super String> filter : filters.values()) {
+                    opsList = opsList.stream().filter(filter).collect(Collectors.toSet());
                 }
-                dataProvider = DataProvider.ofCollection(adminOpsList);
+            } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
             }
-            grid.setDataProvider(dataProvider);
+
+            grid.setDataProvider(DataProvider.ofCollection(opsList));
+        }
+
+        public void refresh() {
+            grid.getDataProvider().refreshAll();
         }
     }
 
@@ -145,8 +175,8 @@ public class OperationsEditor extends VerticalLayout {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
-            resourcesLayout.refreshGrid();
-            adminLayout.refreshGrid();
+            resourcesLayout.updateGridNodes();
+            adminLayout.updateGridNodes();
             dialog.close();
         });
         button.addThemeVariants(ButtonVariant.LUMO_ERROR);
@@ -189,8 +219,8 @@ public class OperationsEditor extends VerticalLayout {
 //                            }
 //                        });
 //            }
-            resourcesLayout.refreshGrid();
-            adminLayout.refreshGrid();
+            resourcesLayout.updateGridNodes();
+            adminLayout.updateGridNodes();
             dialog.close();
         });
         form.add(button);
@@ -216,8 +246,8 @@ public class OperationsEditor extends VerticalLayout {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
-            resourcesLayout.refreshGrid();
-            adminLayout.refreshGrid();
+            resourcesLayout.updateGridNodes();
+            adminLayout.updateGridNodes();
             dialog.close();
         });
         form.add(button);

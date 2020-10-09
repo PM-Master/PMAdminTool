@@ -1219,12 +1219,12 @@ public class GraphEditor extends VerticalLayout {
             try {
                 Map<String, String> props = propsField.getValue();
                 if (name == null || name.equals("")) {
-                nameField.focus();
-                MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
-            } else if (type == null) {
-                typeSelect.focus();
-                MainView.notify("Type is Required", MainView.NotificationType.DEFAULT);
-            } else {
+                    nameField.focus();
+                    MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                } else if (type == null) {
+                    typeSelect.focus();
+                    MainView.notify("Type is Required", MainView.NotificationType.DEFAULT);
+                } else {
                     g.createNode(name, type, props, parents.iterator().next().getName());
                     for (Node parent : parents) {
 
