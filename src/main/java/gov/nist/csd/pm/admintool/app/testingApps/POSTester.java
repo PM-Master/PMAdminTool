@@ -21,8 +21,11 @@ import com.vaadin.flow.data.provider.hierarchy.HierarchicalDataProvider;
 import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery;
 import com.vaadin.flow.function.ValueProvider;
 import gov.nist.csd.pm.admintool.app.MainView;
+import gov.nist.csd.pm.admintool.app.TitleFactory;
+import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pdp.audit.model.Explain;
 import gov.nist.csd.pm.pdp.audit.model.Path;
 import gov.nist.csd.pm.pdp.audit.model.PolicyClass;
@@ -30,16 +33,21 @@ import gov.nist.csd.pm.pdp.services.AnalyticsService;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
+import org.vaadin.gatanaso.MultiselectComboBox;
 
 import java.util.*;
 import java.util.stream.Stream;
 
 public class POSTester extends VerticalLayout {
-    private Select<Node> userSelect;
-    private TreeGrid<Node> grid;
     private Node user;
     private SingletonGraph g;
+    private Set<Node> currNodes;
     private static Random rand = new Random();
+
+    private HorizontalLayout optionsForm;
+    private Select<Node> userSelect;
+    private Button submitButton, delegateButton;
+    private TreeGrid<Node> grid;
 
 
     public POSTester () {
@@ -55,22 +63,24 @@ public class POSTester extends VerticalLayout {
 
         getStyle().set("background", "lightblue");
 
+        currNodes= null;
+        user = null;
 
         g = SingletonGraph.getInstance();
         userSelect = new Select<>();
         grid = new TreeGrid<>(Node.class);
 
-        addUserSelectForm();
+        addOptionsSelectForm();
         addGrid();
     }
 
-    private void addUserSelectForm() {
-        HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
-        form.setWidthFull();
-        form.setMargin(false);
+    private void addOptionsSelectForm() {
+        optionsForm = new HorizontalLayout();
+        optionsForm.setAlignItems(FlexComponent.Alignment.BASELINE);
+        optionsForm.setWidthFull();
+        optionsForm.setMargin(false);
 
-        // actual select box
+        // select box
         setUserSelect();
         userSelect.setRequiredIndicatorVisible(true);
         userSelect.setLabel("Choose User");
@@ -78,23 +88,34 @@ public class POSTester extends VerticalLayout {
         userSelect.setEmptySelectionCaption("Select an option");
         userSelect.setEmptySelectionAllowed(true);
         userSelect.setItemEnabledProvider(Objects::nonNull);
-
         userSelect.addComponents(null, new Hr());
-        form.add(userSelect);
+        userSelect.addValueChangeListener(evt -> {
+            user = evt.getValue();
+            updateGraph();
+            submitButton.setEnabled(evt.getValue() != null);
+            delegateButton.setEnabled(evt.getValue() != null);
+        });
+        optionsForm.add(userSelect);
 
-        // actual submit button
-        Button submit = new Button("Update POS", event -> {
-            Node selectedUser = userSelect.getValue();
-            if (selectedUser == null) {
+        // submit button
+        submitButton = new Button("Update POS", event -> {
+            if (user == null) {
                 MainView.notify("User is required!", MainView.NotificationType.DEFAULT);
             } else {
-                user = selectedUser;
                 updateGraph();
             }
         });
-        form.add(submit);
+        submitButton.setEnabled(false);
+        optionsForm.add(submitButton);
 
-        add(form);
+        // delegate button
+        delegateButton = new Button("Delegate", event -> {
+            delegate(user, null);
+        });
+        delegateButton.setEnabled(false);
+        optionsForm.add(delegateButton);
+
+        add(optionsForm);
     }
 
     private void addGrid() {
@@ -105,21 +126,15 @@ public class POSTester extends VerticalLayout {
 
         ///// context menu /////
         GridContextMenu<Node> contextMenu = new GridContextMenu<>(grid);
-
-//            contextMenu.addItem("Add Node", event -> addNode());
-//        contextMenu.addItem("Edit Node", event -> {
-//            event.getItem().ifPresent(node -> {
-//                editNode(node);
-//            });
-//        });
-//        contextMenu.addItem("Delete Node", event -> {
-//            event.getItem().ifPresent(node -> {
-//                deleteNode(node);
-//            });
-//        });
         contextMenu.addItem("Explain", event -> {
             event.getItem().ifPresent(node -> {
                 explain(user, node);
+            });
+        });
+
+        contextMenu.addItem("Delegate", event -> {
+            event.getItem().ifPresent(node -> {
+                delegate(user, node);
             });
         });
         ///// end of context menu /////
@@ -192,11 +207,11 @@ public class POSTester extends VerticalLayout {
 
     public void updateGraph() {
         if (user != null) {
-            Set<Node> currNodes = new HashSet<>();
+            currNodes = new HashSet<>();
             try {
                 UserContext userContext = new UserContext(user.getName(), rand.toString());
-//                currNodes = g.getPDP().getGraphService(userContext).getNodes();
-                currNodes = g.getPDP().getAnalyticsService(userContext).getPos(userContext);
+                currNodes = g.getPDP().getGraphService(userContext).getNodes();
+//                currNodes = g.getPDP().getAnalyticsService(userContext).getPos(userContext);
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
@@ -316,87 +331,6 @@ public class POSTester extends VerticalLayout {
         grid.setDataProvider(dataProvider);
     }
 
-    private void editNode(Node n) {
-        Dialog dialog = new Dialog();
-        HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
-
-
-        TextField nameField = new TextField("Name");
-        nameField.setRequiredIndicatorVisible(true);
-        nameField.setValue(n.getName());
-        form.add(nameField);
-
-        TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
-        propsFeild.setPlaceholder("Enter Properties...");
-        String pStr = n.getProperties().toString().replaceAll(", ", "\n");
-        propsFeild.setValue(pStr.substring(1,pStr.length()-1));
-        form.add(propsFeild);
-
-        Button button = new Button("Submit", event -> {
-            String name = nameField.getValue();
-            String propString = propsFeild.getValue();
-            Map<String, String> props = new HashMap<>();
-            if (name == null || name == "") {
-                nameField.focus();
-                MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
-            } else {
-                if (propString != null) {
-                    try {
-                        for (String prop : propString.split("\n")) {
-                            props.put(prop.split("=")[0], prop.split("=")[1]);
-                        }
-                    } catch (Exception e) {
-                        MainView.notify("Incorrect Formatting of Properties", MainView.NotificationType.ERROR);
-                        e.printStackTrace();
-                    }
-                }
-                try {
-                    g.updateNode(name, props);
-                    updateGraph();
-                    dialog.close();
-                } catch (Exception e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.DEFAULT);
-                    e.printStackTrace();
-                }
-            }
-        });
-        form.add(button);
-
-        dialog.add(form);
-        dialog.open();
-    }
-
-    private void deleteNode(Node n) {
-        Dialog dialog = new Dialog();
-        HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(FlexComponent.Alignment.BASELINE);
-
-        form.add(new Paragraph("Are You Sure?"));
-
-        Button button = new Button("Delete", event -> {
-            try {
-                g.deleteNode(n.getName());
-            } catch (PMException e) {
-                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                e.printStackTrace();
-            }
-            updateGraph();
-            dialog.close();
-        });
-        button.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        form.add(button);
-
-        Button cancel = new Button("Cancel", event -> {
-            dialog.close();
-        });
-        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        form.add(cancel);
-
-        dialog.add(form);
-        dialog.open();
-    }
-
     private void explain(Node user, Node node) {
         Dialog dialog = new Dialog();
         dialog.setHeight("75%");
@@ -513,5 +447,97 @@ public class POSTester extends VerticalLayout {
 
         dialog.add(form);
         dialog.open();
+    }
+
+    // todo: read through the doc to see what delegation operations are allowed.
+    private void delegate(Node user, Node selectedNode) {
+        if (user == null) {
+            MainView.notify("User is required!", MainView.NotificationType.DEFAULT);
+        } else {
+            // if the user has not submitted once before delegating
+            if (currNodes == null) {
+                updateGraph();
+            }
+
+            // actual UI
+            Dialog dialog = new Dialog();
+            HorizontalLayout form = new HorizontalLayout();
+
+            // parent select
+            Select<Node> sourceNodeSelect = new Select<>();
+            sourceNodeSelect.setRequiredIndicatorVisible(true);
+            sourceNodeSelect.setLabel("Source");
+            sourceNodeSelect.setPlaceholder("Select a Source Node...");
+            sourceNodeSelect.setItemLabelGenerator(Node::getName);
+            sourceNodeSelect.setItems(currNodes.stream().filter((n) -> n.getType() == NodeType.U || n.getType() == NodeType.UA));
+            if (selectedNode != null) {
+                sourceNodeSelect.setValue(selectedNode);
+            }
+            form.add(sourceNodeSelect);
+
+            // operations multi-selectors
+            MultiselectComboBox<String> rOpsField = new MultiselectComboBox<>();
+            rOpsField.setLabel("Access Rights");
+            rOpsField.setPlaceholder("Resource...");
+            MultiselectComboBox<String> aOpsField = new MultiselectComboBox<>();
+            aOpsField.setPlaceholder("Admin...");
+            try {
+                rOpsField.setItems(g.getResourceOpsWithStars());
+                aOpsField.setItems(g.getAdminOpsWithStars());
+            } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+            }
+            VerticalLayout opsFields = new VerticalLayout(rOpsField, aOpsField);
+            opsFields.getStyle().set("padding-top", "0");
+            form.add(opsFields);
+
+            // objects multi-selectors
+            MultiselectComboBox<Node> destinationNodeMultiSelect = new MultiselectComboBox<>();
+            destinationNodeMultiSelect.setRequiredIndicatorVisible(true);
+            destinationNodeMultiSelect.setLabel("Destinations");
+            destinationNodeMultiSelect.setPlaceholder("Select Destination Nodes...");
+            destinationNodeMultiSelect.setItemLabelGenerator(Node::getName);
+            destinationNodeMultiSelect.setItems(currNodes.stream().filter((n) -> n.getType() == NodeType.O || n.getType() == NodeType.OA));
+            form.add(destinationNodeMultiSelect);
+
+            // ----- Title Section -----
+            Button submitButton = new Button("Submit", event -> {
+                Node source = sourceNodeSelect.getValue();
+                OperationSet ops = new OperationSet(rOpsField.getValue());
+                ops.addAll(aOpsField.getValue());
+                Set<Node> destinations = destinationNodeMultiSelect.getSelectedItems();
+
+                try {
+                    if (source == null) {
+                        sourceNodeSelect.focus();
+                        MainView.notify("Source is Required", MainView.NotificationType.DEFAULT);
+                    } else if (ops == null || ops.isEmpty()) {
+                        MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
+                    } else if (destinations == null || destinations.isEmpty()) {
+                        MainView.notify("Destinations are Required", MainView.NotificationType.DEFAULT);
+                    } else {
+                        // use selected user context to make association
+                        UserContext selectedUserContext = new UserContext(user.getName());
+                        for (Node dest: destinations) {
+                            g.getPDP().getGraphService(selectedUserContext).associate(source.getName(), dest.getName(), ops);
+                            MainView.notify(user.getName() + " delegated user, " + source.getName()
+                                    + ", with " + ops + " operations " + " on object, " + dest.getName() + ".", MainView.NotificationType.SUCCESS);
+                        }
+                        dialog.close();
+                    }
+                } catch (Exception e) {
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    e.printStackTrace();
+                }
+            });
+            HorizontalLayout titleLayout = TitleFactory.generate("Delegate", submitButton);
+
+            dialog.add(titleLayout, new Hr(), form);
+            dialog.open();
+            sourceNodeSelect.focus();
+
+
+        }
     }
 }
