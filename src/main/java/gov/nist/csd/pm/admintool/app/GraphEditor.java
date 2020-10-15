@@ -353,6 +353,7 @@ public class GraphEditor extends VerticalLayout {
                                     Button assignmentButton = new Button("Assignment", event -> {
                                         // assignment
                                         addAssignment(dragNode, parentNode);
+                                        dragNode = null;
                                         dialog.close();
                                     });
                                     assignmentButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -361,6 +362,7 @@ public class GraphEditor extends VerticalLayout {
                                     Button associationButton = new Button("Association", event -> {
                                         // association
                                         addAssociation(dragNode, parentNode);
+                                        dragNode = null;
                                         dialog.close();
                                     });
                                     associationButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -377,6 +379,7 @@ public class GraphEditor extends VerticalLayout {
                                 } else if (dragNodeType == NodeType.U) {
                                     // assignment
                                     addAssignment(dragNode, parentNode);
+                                    dragNode = null;
                                 }
                             } else if (parentNodeType == NodeType.OA) {
                                 if (dragNodeType == NodeType.UA) {
@@ -386,16 +389,19 @@ public class GraphEditor extends VerticalLayout {
                                     // assignment
                                     addAssignment(dragNode, parentNode);
                                 }
+                                dragNode = null;
                             } else if (parentNodeType == NodeType.PC) {
                                 if (dragNodeType == NodeType.UA || dragNodeType == NodeType.OA) {
                                     // assignment
                                     addAssignment(dragNode, parentNode);
                                 }
+                                dragNode = null;
                             } else if (parentNodeType == NodeType.O) {
                                 if (dragNodeType == NodeType.UA) {
                                     // association
                                     addAssociation(dragNode, parentNode);
                                 }
+                                dragNode = null;
                             }
                         }
                     }
@@ -403,9 +409,6 @@ public class GraphEditor extends VerticalLayout {
             });
             grid.addDragStartListener((gridDragStartEvent) -> {
                 dragNode = gridDragStartEvent.getDraggedItems().get(0);
-            });
-            grid.addDragEndListener((gridDragEndEvent) -> {
-                dragNode = null;
             });
 
             add(grid);
@@ -1639,8 +1642,9 @@ public class GraphEditor extends VerticalLayout {
     }
 
     private void addAssociation(Node source, Node target) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("75vh");
+        if (source != null && target != null) {
+            Dialog dialog = new Dialog();
+            dialog.setWidth("75vh");
 
 //        Paragraph opsParagraph = new Paragraph("[]");
 //        HorizontalLayout name =
@@ -1655,32 +1659,32 @@ public class GraphEditor extends VerticalLayout {
 //        name.setJustifyContentMode(JustifyContentMode.CENTER);
 //        dialog.add(name);
 
-        HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(Alignment.BASELINE);
+            HorizontalLayout form = new HorizontalLayout();
+            form.setAlignItems(Alignment.BASELINE);
 
-        // resource ops multi-select
-        MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
-        opsSelectRessource.setLabel("Resource Access Rights");
-        opsSelectRessource.setPlaceholder("Choose Access Rights");
-        try {
-            opsSelectRessource.setItems(g.getResourceOpsWithStars());
-        } catch (PMException e) {
-            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-            e.printStackTrace();
-        }
-        opsSelectRessource.setWidth("100%");
+            // resource ops multi-select
+            MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
+            opsSelectRessource.setLabel("Resource Access Rights");
+            opsSelectRessource.setPlaceholder("Choose Access Rights");
+            try {
+                opsSelectRessource.setItems(g.getResourceOpsWithStars());
+            } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+            }
+            opsSelectRessource.setWidth("100%");
 
-        // admin ops multi-select
-        MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
-        opsSelectAdmin.setLabel("Admin Access Rights");
-        opsSelectAdmin.setPlaceholder("Choose Access Rights");
-        try {
-            opsSelectAdmin.setItems(g.getAdminOpsWithStars());
-        } catch (PMException e) {
-            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-            e.printStackTrace();
-        }
-        opsSelectAdmin.setWidth("100%");
+            // admin ops multi-select
+            MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
+            opsSelectAdmin.setLabel("Admin Access Rights");
+            opsSelectAdmin.setPlaceholder("Choose Access Rights");
+            try {
+                opsSelectAdmin.setItems(g.getAdminOpsWithStars());
+            } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+            }
+            opsSelectAdmin.setWidth("100%");
 
 //        opsSelectRessource.addValueChangeListener((evt) -> {
 //            Set<String> tempOps = evt.getValue();
@@ -1693,159 +1697,170 @@ public class GraphEditor extends VerticalLayout {
 //            opsParagraph.setText(tempOps.toString());
 //        });
 
-        form.add(opsSelectRessource);
-        form.add(opsSelectAdmin);
+            form.add(opsSelectRessource);
+            form.add(opsSelectAdmin);
 
-        // ----- Title Section -----
-        Button submit = new Button("Submit", event -> {
-            List<String> opString = new ArrayList<>();
-            opString.addAll(opsSelectRessource.getValue());
-            opString.addAll(opsSelectAdmin.getValue());
-            OperationSet ops = new OperationSet(opString);
-            if (opString == null) {
-                MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
-            } else {
-                try {
-                    g.associate(source.getName(), target.getName(), ops);
-                    MainView.notify(source.getName() + " assigned to " + target.getName(), MainView.NotificationType.SUCCESS);
-                    childNode.updateNodeInfo();
-                    parentNode.updateNodeInfo();
-                    dialog.close();
-                } catch (Exception e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
+            // ----- Title Section -----
+            Button submit = new Button("Submit", event -> {
+                List<String> opString = new ArrayList<>();
+                opString.addAll(opsSelectRessource.getValue());
+                opString.addAll(opsSelectAdmin.getValue());
+                OperationSet ops = new OperationSet(opString);
+                if (opString == null) {
+                    MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
+                } else {
+                    try {
+                        g.associate(source.getName(), target.getName(), ops);
+                        MainView.notify(source.getName() + " assigned to " + target.getName(), MainView.NotificationType.SUCCESS);
+                        childNode.updateNodeInfo();
+                        parentNode.updateNodeInfo();
+                        dialog.close();
+                    } catch (Exception e) {
+                        MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                        e.printStackTrace();
+                    }
                 }
-            }
-        });
-        HorizontalLayout titleLayout = TitleFactory.generate("Add Association",
-                source.getName() + " -> " + target.getName(), submit);
+            });
+            HorizontalLayout titleLayout = TitleFactory.generate("Add Association",
+                    source.getName() + " -> " + target.getName(), submit);
 
-        dialog.add(titleLayout, new Hr(), form);
-        dialog.open();
+            dialog.add(titleLayout, new Hr(), form);
+            dialog.open();
+        } else {
+            MainView.notify("Must choose both a source and a target for association", MainView.NotificationType.DEFAULT);
+        }
     }
 
     private void editAssociation(Node source, Node target) {
-        Dialog dialog = new Dialog();
-        dialog.setWidth("75vh");
-        HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(Alignment.BASELINE);
+        if (source != null && target != null) {
+            Dialog dialog = new Dialog();
+            dialog.setWidth("75vh");
+            HorizontalLayout form = new HorizontalLayout();
+            form.setAlignItems(Alignment.BASELINE);
 
-        MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
-        opsSelectRessource.setLabel("Resource Access Rights");
-        opsSelectRessource.setPlaceholder("Choose Access Rights");
-        try {
-            opsSelectRessource.setItems(g.getResourceOpsWithStars());
-        } catch (PMException e) {
-            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-            e.printStackTrace();
-        }
-        opsSelectRessource.setWidth("100%");
-
-        MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
-        opsSelectAdmin.setLabel("Admin Access Rights");
-        opsSelectAdmin.setPlaceholder("Choose Access Rights");
-        try {
-            opsSelectAdmin.setItems(g.getAdminOpsWithStars());
-        } catch (PMException e) {
-            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-            e.printStackTrace();
-        }
-        opsSelectAdmin.setWidth("100%");
-
-        form.add(opsSelectRessource);
-        form.add(opsSelectAdmin);
-        try {
-            if (source.getType() == NodeType.UA) {
-                Map<String, OperationSet> sourceOps = g.getSourceAssociations(source.getName());
-                Set<String> sourceToTargetOps = new HashSet<>();
-                sourceOps.forEach((targetName, targetOps) -> {
-                    if (targetName.equalsIgnoreCase(target.getName())) {
-                        sourceToTargetOps.addAll(targetOps);
-                    }
-                });
-                HashSet<String> existingResourcesOp = new HashSet<>();
-                HashSet<String> existingAdminsOp = new HashSet<>();
-                sourceToTargetOps.forEach(op -> {
-                    try {
-                        if (g.getResourceOpsWithStars().contains(op)) {
-                            existingResourcesOp.add(op);
-                        } else if (g.getAdminOpsWithStars().contains(op)) {
-                            existingAdminsOp.add(op);
-                        }
-                    } catch (PMException e) {
-                        e.printStackTrace();
-                        MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    }
-                });
-                opsSelectRessource.setValue(existingResourcesOp);
-                opsSelectAdmin.setValue(existingAdminsOp);
-            }
-        } catch (PMException e) {
-            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-            e.printStackTrace();
-        }
-
-        // ----- Title Section -----
-        Button submit = new Button("Submit", event -> {
-            List<String> opString = new ArrayList<>();
-            opString.addAll(opsSelectRessource.getValue());
-            opString.addAll(opsSelectAdmin.getValue());
-            OperationSet ops = new OperationSet(opString);
-            if (opString == null) {
-                MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
-            } else {
-                try {
-                    g.associate(source.getName(), target.getName(), ops);
-                    MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been modified", MainView.NotificationType.SUCCESS);
-                    childNode.updateNodeInfo();
-                    parentNode.updateNodeInfo();
-                    dialog.close();
-                } catch (Exception e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
-                }
-            }
-        });
-        HorizontalLayout titleLayout = TitleFactory.generate("Edit Association",
-                source.getName() + " -> " + target.getName(), submit);
-
-        dialog.add(titleLayout, new Hr(), form);
-        dialog.open();
-    }
-
-    private void deleteAssociation(Node source, Node target) {
-        Dialog dialog = new Dialog();
-        HorizontalLayout form = new HorizontalLayout();
-        form.setAlignItems(Alignment.BASELINE);
-
-        form.add(new Paragraph("Are You Sure?"));
-
-        Button button = new Button("Delete", event -> {
+            MultiselectComboBox<String> opsSelectRessource = new MultiselectComboBox<>();
+            opsSelectRessource.setLabel("Resource Access Rights");
+            opsSelectRessource.setPlaceholder("Choose Access Rights");
             try {
-                g.dissociate(source.getName(), target.getName());
-                MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
-                childNode.updateNodeInfo();
-                parentNode.updateNodeInfo();
+                opsSelectRessource.setItems(g.getResourceOpsWithStars());
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
-            dialog.close();
-        });
-        button.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        form.add(button);
+            opsSelectRessource.setWidth("100%");
 
-        Button cancel = new Button("Cancel", event -> {
-            dialog.close();
-        });
-        cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-        form.add(cancel);
+            MultiselectComboBox<String> opsSelectAdmin = new MultiselectComboBox<>();
+            opsSelectAdmin.setLabel("Admin Access Rights");
+            opsSelectAdmin.setPlaceholder("Choose Access Rights");
+            try {
+                opsSelectAdmin.setItems(g.getAdminOpsWithStars());
+            } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+            }
+            opsSelectAdmin.setWidth("100%");
 
-        HorizontalLayout titleLayout = TitleFactory.generate("Delete Association",
-                source.getName() + " -> " + target.getName());
+            form.add(opsSelectRessource);
+            form.add(opsSelectAdmin);
+            try {
+                if (source.getType() == NodeType.UA) {
+                    Map<String, OperationSet> sourceOps = g.getSourceAssociations(source.getName());
+                    Set<String> sourceToTargetOps = new HashSet<>();
+                    sourceOps.forEach((targetName, targetOps) -> {
+                        if (targetName.equalsIgnoreCase(target.getName())) {
+                            sourceToTargetOps.addAll(targetOps);
+                        }
+                    });
+                    HashSet<String> existingResourcesOp = new HashSet<>();
+                    HashSet<String> existingAdminsOp = new HashSet<>();
+                    sourceToTargetOps.forEach(op -> {
+                        try {
+                            if (g.getResourceOpsWithStars().contains(op)) {
+                                existingResourcesOp.add(op);
+                            } else if (g.getAdminOpsWithStars().contains(op)) {
+                                existingAdminsOp.add(op);
+                            }
+                        } catch (PMException e) {
+                            e.printStackTrace();
+                            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                        }
+                    });
+                    opsSelectRessource.setValue(existingResourcesOp);
+                    opsSelectAdmin.setValue(existingAdminsOp);
+                }
+            } catch (PMException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+            }
 
-        dialog.add(titleLayout, new Hr(), form);
-        dialog.open();
+            // ----- Title Section -----
+            Button submit = new Button("Submit", event -> {
+                List<String> opString = new ArrayList<>();
+                opString.addAll(opsSelectRessource.getValue());
+                opString.addAll(opsSelectAdmin.getValue());
+                OperationSet ops = new OperationSet(opString);
+                if (opString == null) {
+                    MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
+                } else {
+                    try {
+                        g.associate(source.getName(), target.getName(), ops);
+                        MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been modified", MainView.NotificationType.SUCCESS);
+                        childNode.updateNodeInfo();
+                        parentNode.updateNodeInfo();
+                        dialog.close();
+                    } catch (Exception e) {
+                        MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                        e.printStackTrace();
+                    }
+                }
+            });
+            HorizontalLayout titleLayout = TitleFactory.generate("Edit Association",
+                    source.getName() + " -> " + target.getName(), submit);
+
+            dialog.add(titleLayout, new Hr(), form);
+            dialog.open();
+        } else {
+            MainView.notify("Must choose both a source and a target for association", MainView.NotificationType.DEFAULT);
+        }
+    }
+
+    private void deleteAssociation(Node source, Node target) {
+        if (source != null && target != null) {
+            Dialog dialog = new Dialog();
+            HorizontalLayout form = new HorizontalLayout();
+            form.setAlignItems(Alignment.BASELINE);
+
+            form.add(new Paragraph("Are You Sure?"));
+
+            Button button = new Button("Delete", event -> {
+                try {
+                    g.dissociate(source.getName(), target.getName());
+                    MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
+                    childNode.updateNodeInfo();
+                    parentNode.updateNodeInfo();
+                } catch (PMException e) {
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    e.printStackTrace();
+                }
+                dialog.close();
+            });
+            button.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            form.add(button);
+
+            Button cancel = new Button("Cancel", event -> {
+                dialog.close();
+            });
+            cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            form.add(cancel);
+
+            HorizontalLayout titleLayout = TitleFactory.generate("Delete Association",
+                    source.getName() + " -> " + target.getName());
+
+            dialog.add(titleLayout, new Hr(), form);
+            dialog.open();
+        } else {
+            MainView.notify("Must choose both a source and a target for association", MainView.NotificationType.DEFAULT);
+        }
     }
 
     private void addProhibition() {
