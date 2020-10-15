@@ -36,6 +36,7 @@ import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 import org.vaadin.gatanaso.MultiselectComboBox;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class POSTester extends VerticalLayout {
@@ -463,67 +464,104 @@ public class POSTester extends VerticalLayout {
             Dialog dialog = new Dialog();
             HorizontalLayout form = new HorizontalLayout();
 
-            // parent select
+            // relationship selectors (source and target)
             Select<Node> sourceNodeSelect = new Select<>();
             sourceNodeSelect.setRequiredIndicatorVisible(true);
             sourceNodeSelect.setLabel("Source");
-            sourceNodeSelect.setPlaceholder("Select a Source Node...");
+            sourceNodeSelect.setPlaceholder("Source...");
             sourceNodeSelect.setItemLabelGenerator(Node::getName);
-            sourceNodeSelect.setItems(currNodes.stream().filter((n) -> n.getType() == NodeType.U || n.getType() == NodeType.UA));
+            sourceNodeSelect.setItems(
+                currNodes.stream().filter((n) -> n.getType() == NodeType.U || n.getType() == NodeType.UA)
+            );
             if (selectedNode != null) {
                 sourceNodeSelect.setValue(selectedNode);
             }
-            form.add(sourceNodeSelect);
+
+            Select<Node> destinationNodeSelect = new Select<>();
+            destinationNodeSelect.setRequiredIndicatorVisible(true);
+            destinationNodeSelect.setLabel("Destination");
+            destinationNodeSelect.setPlaceholder("Destination...");
+            destinationNodeSelect.setItemLabelGenerator(Node::getName);
+            destinationNodeSelect.getStyle().set("margin-top", "0");
+            destinationNodeSelect.setItems(
+                currNodes.stream().filter((n) -> n.getType() == NodeType.O || n.getType() == NodeType.OA)
+            );
+
+            VerticalLayout relationshipFields = new VerticalLayout(sourceNodeSelect, destinationNodeSelect);
+            relationshipFields.getStyle().set("padding-top", "0");
+            form.add(relationshipFields);
+
 
             // operations multi-selectors
             MultiselectComboBox<String> rOpsField = new MultiselectComboBox<>();
-            rOpsField.setLabel("Access Rights");
-            rOpsField.setPlaceholder("Resource...");
+            rOpsField.setLabel("Resource Access Rights");
+            rOpsField.setPlaceholder("Select...");
+//            rOpsField.setEnabled(false);
+
             MultiselectComboBox<String> aOpsField = new MultiselectComboBox<>();
-            aOpsField.setPlaceholder("Admin...");
-            try {
-                rOpsField.setItems(g.getResourceOpsWithStars());
-                aOpsField.setItems(g.getAdminOpsWithStars());
-            } catch (PMException e) {
-                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                e.printStackTrace();
-            }
+            rOpsField.setLabel("Admin Access Rights");
+            aOpsField.setPlaceholder("Select...");
+//            aOpsField.setEnabled(false);
+
             VerticalLayout opsFields = new VerticalLayout(rOpsField, aOpsField);
             opsFields.getStyle().set("padding-top", "0");
             form.add(opsFields);
 
-            // objects multi-selectors
-            MultiselectComboBox<Node> destinationNodeMultiSelect = new MultiselectComboBox<>();
-            destinationNodeMultiSelect.setRequiredIndicatorVisible(true);
-            destinationNodeMultiSelect.setLabel("Destinations");
-            destinationNodeMultiSelect.setPlaceholder("Select Destination Nodes...");
-            destinationNodeMultiSelect.setItemLabelGenerator(Node::getName);
-            destinationNodeMultiSelect.setItems(currNodes.stream().filter((n) -> n.getType() == NodeType.O || n.getType() == NodeType.OA));
-            form.add(destinationNodeMultiSelect);
+            destinationNodeSelect.addValueChangeListener((event) -> {
+                Node destination = event.getValue();
+                if (destination != null) {
+                    try {
+                        Set<String> selectedOps = getPermissions(user, destination);
+                        Set<String> allROps = g.getResourceOpsWithStars();
+                        Set<String> allAOps = g.getAdminOpsWithStars();
+                        Set<String> rOps = new HashSet<>();
+                        Set<String> aOps = new HashSet<>();
+
+                        for (String op: selectedOps) {
+                            if (allAOps.contains(op)) {
+                                aOps.add(op);
+                            } else if (allROps.contains(op)) {
+                                rOps.add(op);
+                            }
+                        }
+
+//                        rOpsField.setEnabled(true);
+                        rOpsField.setItems(rOps);
+
+//                        aOpsField.setEnabled(true);
+                        aOpsField.setItems(aOps);
+                    } catch (PMException e) {
+                        MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                        e.printStackTrace();
+                    }
+                }
+            });
+
 
             // ----- Title Section -----
             Button submitButton = new Button("Submit", event -> {
                 Node source = sourceNodeSelect.getValue();
                 OperationSet ops = new OperationSet(rOpsField.getValue());
                 ops.addAll(aOpsField.getValue());
-                Set<Node> destinations = destinationNodeMultiSelect.getSelectedItems();
+                Node destination = destinationNodeSelect.getValue();
 
                 try {
                     if (source == null) {
                         sourceNodeSelect.focus();
                         MainView.notify("Source is Required", MainView.NotificationType.DEFAULT);
+                    } else if (destination == null) {
+                        MainView.notify("Destination is Required", MainView.NotificationType.DEFAULT);
                     } else if (ops == null || ops.isEmpty()) {
                         MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
-                    } else if (destinations == null || destinations.isEmpty()) {
-                        MainView.notify("Destinations are Required", MainView.NotificationType.DEFAULT);
                     } else {
                         // use selected user context to make association
                         UserContext selectedUserContext = new UserContext(user.getName());
-                        for (Node dest: destinations) {
-                            g.getPDP().getGraphService(selectedUserContext).associate(source.getName(), dest.getName(), ops);
-                            MainView.notify(user.getName() + " delegated user, " + source.getName()
-                                    + ", with " + ops + " operations " + " on object, " + dest.getName() + ".", MainView.NotificationType.SUCCESS);
-                        }
+
+                        g.getPDP().getGraphService(selectedUserContext).associate(source.getName(), destination.getName(), ops);
+                        MainView.notify(user.getName() + " delegated user, " + source.getName()
+                                + ", with " + ops + " operations " + " on object, " + destination.getName() + ".",
+                                MainView.NotificationType.SUCCESS);
+
                         dialog.close();
                     }
                 } catch (Exception e) {
