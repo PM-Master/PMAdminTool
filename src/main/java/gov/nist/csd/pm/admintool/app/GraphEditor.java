@@ -396,12 +396,6 @@ public class GraphEditor extends VerticalLayout {
                                     addAssignment(dragNode, parentNode);
                                 }
                                 dragNode = null;
-                            } else if (parentNodeType == NodeType.O) {
-                                if (dragNodeType == NodeType.UA) {
-                                    // association
-                                    addAssociation(dragNode, parentNode);
-                                }
-                                dragNode = null;
                             }
                         }
                     }
