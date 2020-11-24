@@ -13,6 +13,7 @@ import gov.nist.csd.pm.pap.ProhibitionsAdmin;
 import gov.nist.csd.pm.pdp.PDP;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.Graph;
+import gov.nist.csd.pm.pip.graph.MemDBGraph;
 import gov.nist.csd.pm.pip.graph.MemGraph;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
@@ -21,7 +22,9 @@ import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
 import gov.nist.csd.pm.pip.obligations.MemObligations;
 import gov.nist.csd.pm.pip.obligations.evr.EVRParser;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
+import gov.nist.csd.pm.pip.prohibitions.MemDBProhibitions;
 import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
+import gov.nist.csd.pm.pip.prohibitions.Prohibitions;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
 import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 
@@ -82,9 +85,14 @@ public class SingletonGraph {
 
     private synchronized static void fixGraphData(Graph graph) {
         try {
+            graph = new MemDBGraph(graph);
+
+            Prohibitions prohibitions = new MySQLProhibitions(connection);
+            prohibitions = new MemDBProhibitions(prohibitions);
+
             PAP pap = new PAP(
                     new GraphAdmin(graph),
-                    new ProhibitionsAdmin(new MySQLProhibitions(connection)),
+                    new ProhibitionsAdmin(prohibitions),
                     new ObligationsAdmin(new MemObligations())
             );
 
