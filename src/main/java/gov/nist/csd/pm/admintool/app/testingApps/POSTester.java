@@ -33,6 +33,7 @@ import gov.nist.csd.pm.pdp.services.AnalyticsService;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
+import gov.nist.csd.pm.policies.dac.DAC;
 import org.vaadin.gatanaso.MultiselectComboBox;
 
 import java.util.*;
@@ -454,6 +455,9 @@ public class POSTester extends VerticalLayout {
     private void delegate(Node user, Node selectedNode) {
         if (user == null) {
             MainView.notify("User is required!", MainView.NotificationType.DEFAULT);
+        } else if (!g.dacConfigured) {
+            MainView.notify("DAC must be configured First!\n" +
+                    "Visit the Policies tab", MainView.NotificationType.DEFAULT);
         } else {
             // if the user has not submitted once before delegating
             if (currNodes == null) {
@@ -555,9 +559,13 @@ public class POSTester extends VerticalLayout {
                         MainView.notify("Operations are Required", MainView.NotificationType.DEFAULT);
                     } else {
                         // use selected user context to make association
-                        UserContext selectedUserContext = new UserContext(user.getName());
+//                        UserContext selectedUserContext = new UserContext(user.getName());
 
-                        g.getPDP().getGraphService(selectedUserContext).associate(source.getName(), destination.getName(), ops);
+//                        g.getPDP().getGraphService(selectedUserContext).associate(source.getName(), destination.getName(), ops);
+                        Set<String> destinations = new HashSet<>();
+                        destinations.add(destination.getName());
+                        g.delegate(user.getName(), source.getName(), ops, destinations);
+
                         MainView.notify(user.getName() + " delegated user, " + source.getName()
                                 + ", with " + ops + " operations " + " on object, " + destination.getName() + ".",
                                 MainView.NotificationType.SUCCESS);
