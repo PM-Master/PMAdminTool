@@ -27,6 +27,7 @@ import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
 import gov.nist.csd.pm.pip.prohibitions.Prohibitions;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
 import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
+import gov.nist.csd.pm.policies.dac.DAC;
 
 import java.util.*;
 
@@ -50,8 +51,10 @@ public class SingletonGraph {
     private static Set<PolicyClassWithActive> activePCs;
     private static MySQLConnection connection = new MySQLConnection();
 
+    public boolean dacConfigured = false;
+
     private SingletonGraph(PAP pap) throws PMException {
-        pdp = newPDP(pap, new EPPOptions(), new OperationSet());
+//        pdp = newPDP(pap, new EPPOptions(), new OperationSet());
 
         //Prevent form the reflection api.
 //        if (pdp == null){
@@ -101,52 +104,14 @@ public class SingletonGraph {
             PDP pdp = newPDP(
                     pap,
                     new EPPOptions(new RecordFunctionExecutor()),
-                    (OperationSet) g.getResourceOps());
+                    new OperationSet(Operations.READ, Operations.WRITE, Operations.OBJECT_ACCESS));
 
             g.pdp = pdp;
 
 
             System.out.println("MySQLGraph");
-            superContext = null;
-            activePCs = new HashSet<>();
-
-            for (Node n : graph.getNodes()) {
-                    if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
-                        switch (n.getType()) {
-                            case OA:
-                                System.out.println("Super OA: " + n.getName());
-                                superOAId = n.getName();
-                                break;
-                            case UA:
-                                if (n.getName().equals("super_ua2")) {
-                                    System.out.println("Super UA: " + n.getName());
-                                    superUAId = n.getName();
-                                }
-                                break;
-                            case U:
-                                System.out.println("Super U: " + n.getName());
-                                superContext = new UserContext(n.getName(), rand.toString());
-                                break;
-                            case PC:
-                                System.out.println("Super PC: " + n.getName());
-                                superPCId = n.getName();
-                                break;
-                    }
-               }
-
-                if (n.getType().equals(NodeType.PC)) {
-                    activePCs.add(new PolicyClassWithActive(n));
-                }
-            }
-
-            OperationSet resourceOps = new OperationSet();
-//            resourceOps.add(Operations.ALL_OPS);
-//            resourceOps.add(Operations.ALL_RESOURCE_OPS);
-            resourceOps.add(Operations.READ);
-            resourceOps.add(Operations.WRITE);
-            resourceOps.add(Operations.OBJECT_ACCESS);
-            getPDP().setResourceOps(resourceOps);
-
+            findSuperConfigurationNodes(graph);
+            findActivePCS(graph);
         } catch (PMException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
@@ -155,6 +120,7 @@ public class SingletonGraph {
 
     private synchronized static void fixGraphDataMem(Graph graph) {
         try {
+            /// Creating new PAP and PDP
             PAP pap = new PAP(
                     new GraphAdmin(graph),
                     new ProhibitionsAdmin(new MemProhibitions()),
@@ -166,51 +132,56 @@ public class SingletonGraph {
             PDP pdp = newPDP(
                     pap,
                     new EPPOptions(new RecordFunctionExecutor()),
-                    (OperationSet) g.getResourceOps());
+                    new OperationSet(Operations.READ, Operations.WRITE, Operations.OBJECT_ACCESS)
+            );
 
             g.pdp = pdp;
 
-            superContext = null;
-            activePCs = new HashSet<>();
-            for (Node n : graph.getNodes()) {
-                if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
-                    switch (n.getType()) {
-                        case OA:
-                            System.out.println("Super OA: " + n.getName());
-                            superOAId = n.getName();
-                            break;
-                        case UA:
-                            if (n.getName().equals("super_ua2")) {
-                                System.out.println("Super UA: " + n.getName());
-                                superUAId = n.getName();
-                            }
-                            break;
-                        case U:
-                            System.out.println("Super U: " + n.getName());
-                            superContext = new UserContext(n.getName(), rand.toString());
-                            break;
-                        case PC:
-                            System.out.println("Super PC: " + n.getName());
-                            superPCId = n.getName();
-                            break;
-                    }
-                }
-
-                if (n.getType().equals(NodeType.PC)) {
-                    activePCs.add(new PolicyClassWithActive(n));
-                }
-            }
-
-            OperationSet resourceOps = new OperationSet();
-            resourceOps.add(Operations.READ);
-            resourceOps.add(Operations.WRITE);
-            resourceOps.add(Operations.OBJECT_ACCESS);
-            //g.setResourceOps(resourceOps);
-            getPDP().setResourceOps(resourceOps);
-
+            System.out.println("MemGraph");
+            findSuperConfigurationNodes(graph);
+            findActivePCS(graph);
         } catch (PMException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private static void findActivePCS(Graph graph) throws PMException{
+        activePCs = new HashSet<>();
+        for (Node n : graph.getNodes()) {
+            if (n.getType().equals(NodeType.PC)) {
+                activePCs.add(new PolicyClassWithActive(n));
+            }
+        }
+    }
+
+    private static void findSuperConfigurationNodes(Graph graph) throws PMException {
+        superContext = null;
+        for (Node n : graph.getNodes()) {
+            if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
+                switch (n.getType()) {
+                    case OA:
+                        System.out.println("Super OA: " + n.getName());
+                        superOAId = n.getName();
+                        break;
+                    case UA:
+                        if (n.getName().equals("super_ua2")) {
+                            System.out.println("Super UA: " + n.getName());
+                            superUAId = n.getName();
+                        }
+                        break;
+                    case U:
+                        System.out.println("Super U: " + n.getName());
+                        superContext = new UserContext(n.getName(), rand.toString());
+                        break;
+                    case PC:
+                        System.out.println("Super PC: " + n.getName());
+                        superPCId = n.getName();
+                        break;
+                }
+            }
+
+
         }
     }
 
@@ -238,7 +209,7 @@ public class SingletonGraph {
         activePCs.removeIf(policyClassWithActive -> !policyClassWithActive.getName().equals("super_pc"));
     }
 
-    public String toString(){
+    public String toString() {
         List<String> pcs = new ArrayList<>();
         for (PolicyClassWithActive pc: activePCs) {
             if (pc.isActive()){
@@ -275,6 +246,7 @@ public class SingletonGraph {
     // graph service methods
     public void reset() throws PMException {
         getPDP().getGraphService(superContext).reset(superContext);
+        dacConfigured = false;
     }
 
     public Node createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
@@ -697,6 +669,19 @@ public class SingletonGraph {
 
     public void deleteResourceOps (String... ops) throws PMException {
         getPDP().deleteResourceOps(ops);
+    }
+
+    // policies methods
+    public void configureDAC(String DACname) throws PMException {
+        DAC.configure(DACname, pdp, superContext);
+        findActivePCS(pdp.getGraphService(superContext));
+        dacConfigured = true;
+    }
+
+    public void delegate(String delegatorName, String delegateeName,
+                         OperationSet ops, Set<String> targetNames) throws PMException {
+        UserContext delegatorContext = new UserContext(delegatorName);
+        DAC.delegate(pdp, delegatorContext, delegateeName, ops, targetNames);
     }
 
 
