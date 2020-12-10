@@ -170,7 +170,6 @@ public class SingletonGraph {
 
             g.pdp = pdp;
 
-            System.out.println("MemGraph");
             superContext = null;
             activePCs = new HashSet<>();
             for (Node n : graph.getNodes()) {
@@ -203,8 +202,6 @@ public class SingletonGraph {
             }
 
             OperationSet resourceOps = new OperationSet();
-//            resourceOps.add(Operations.ALL_OPS);
-//            resourceOps.add(Operations.ALL_RESOURCE_OPS);
             resourceOps.add(Operations.READ);
             resourceOps.add(Operations.WRITE);
             resourceOps.add(Operations.OBJECT_ACCESS);

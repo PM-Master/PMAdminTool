@@ -1986,8 +1986,8 @@ public class GraphEditor extends VerticalLayout {
 
         Button button = new Button("Reset", event -> {
             try {
-                g.reset();
                 SingletonGraph.resetActivePCs();
+                g.reset();
                 MainView.notify("Graph has been reset", MainView.NotificationType.SUCCESS);
                 childNode.resetGrid();
                 childNode.expandPolicies();
