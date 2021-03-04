@@ -28,6 +28,7 @@ import gov.nist.csd.pm.pip.prohibitions.Prohibitions;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
 import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 import gov.nist.csd.pm.policies.dac.DAC;
+import gov.nist.csd.pm.policies.rbac.RBAC;
 
 import java.util.*;
 
@@ -52,6 +53,7 @@ public class SingletonGraph {
     private static MySQLConnection connection = new MySQLConnection();
 
     public boolean dacConfigured = false;
+    public boolean rbacConfigured = false;
 
     private SingletonGraph(PAP pap) throws PMException {
 //        pdp = newPDP(pap, new EPPOptions(), new OperationSet());
@@ -247,6 +249,7 @@ public class SingletonGraph {
     public void reset() throws PMException {
         getPDP().getGraphService(superContext).reset(superContext);
         dacConfigured = false;
+        rbacConfigured = false;
     }
 
     public Node createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
@@ -671,7 +674,7 @@ public class SingletonGraph {
         getPDP().deleteResourceOps(ops);
     }
 
-    // policies methods
+    // dac policy methods
     public void configureDAC(String DACname) throws PMException {
         DAC.configure(DACname, pdp, superContext);
         findActivePCS(pdp.getGraphService(superContext));
@@ -684,8 +687,56 @@ public class SingletonGraph {
         DAC.delegate(pdp, delegatorContext, delegateeName, ops, targetNames);
     }
 
+    public void assignOwner (String ownerName, String... targetNames) throws PMException {
+        DAC.assignOwner(pdp, superContext, ownerName, targetNames);
+    }
 
-    // Policy class with active feild class
+    public Set<String> getAssignees (String ownerName) throws PMException {
+        return DAC.getAssignees(pdp, superContext, ownerName);
+    }
+
+
+    // rbac policy methods
+    public void configureRBAC(String RBACname) throws PMException {
+        RBAC.configure(RBACname, pdp, superContext);
+        findActivePCS(pdp.getGraphService(superContext));
+        rbacConfigured = true;
+    }
+
+    public Node createUserAndAssignRole (String userName, String roleName) throws PMException {
+        return RBAC.createUserAndAssignRole(pdp, superContext, userName, roleName);
+    }
+
+    public void assignRole (String userName, String roleName) throws PMException {
+        RBAC.assignRole(pdp, superContext, userName, roleName);
+    }
+
+    public void deassignRole (String userName, String roleName) throws PMException {
+        RBAC.deassignRole(pdp, superContext, userName, roleName);
+    }
+
+    public Node createRole (String roleName) throws PMException {
+        return RBAC.createRole(pdp, superContext, roleName);
+    }
+
+    public void deleteRole (String roleName) throws PMException {
+        RBAC.deleteRole(pdp, superContext, roleName);
+    }
+
+    public Set<String> getUserRoles (String userName) throws PMException {
+        return RBAC.getUserRoles(pdp, superContext, userName);
+    }
+
+    public void setRolePermissions (String roleName, OperationSet ops, String targetName) throws PMException {
+        RBAC.setRolePermissions(pdp, superContext, roleName, ops, targetName);
+    }
+
+    public Map<String, OperationSet> getRolePermissions (String roleName) throws PMException {
+        return RBAC.getRolePermissions(pdp, superContext, roleName);
+    }
+
+
+    // Policy class with active field class
     public static class PolicyClassWithActive {
         Node pc; // reference to actual pc node
         String name;
