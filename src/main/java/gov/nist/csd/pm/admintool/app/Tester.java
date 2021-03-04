@@ -15,10 +15,9 @@ import gov.nist.csd.pm.admintool.app.testingApps.UnitTester;
 @Tag("tester")
 public class Tester extends VerticalLayout {
     private HorizontalLayout layout;
-    private POSTester posTester;
     private UnitTester unitTester;
     private ACLTester aclTester;
-    private Details pos, obligations, unitTests, acl;
+    private Details obligations, unitTests, acl;
 
     public Tester() {
         layout = new HorizontalLayout();
@@ -26,7 +25,6 @@ public class Tester extends VerticalLayout {
 
         add(new H2("All Tests:"));
 
-//        pos = new Details("POS Tester", null);
         obligations = new Details("Obligations Tester", new Span("obligations tester"));
         unitTests = new Details("Unit Tests", null);
         acl = new Details("ACL Generator", null);
@@ -40,20 +38,6 @@ public class Tester extends VerticalLayout {
     private void setUpLayout() {
         setSizeFull();
         setPadding(true);
-
-        // POS Tester
-//        posTester = new POSTester();
-//        posTester.setWidth("100%");
-//        pos.setContent(posTester);
-//        pos.getElement().getStyle()
-//                .set("background", "lightblue");
-//        pos.addThemeVariants(DetailsVariant.FILLED);
-//        pos.addOpenedChangeListener(e -> {
-//            if (e.isOpened()) {
-//                posTester.setUserSelect();
-//            }
-//        });
-//        add(pos);
 
         // Obligation Tester
         obligations.getElement().getStyle()
