@@ -1,5 +1,7 @@
 package gov.nist.csd.pm.admintool.app;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
@@ -8,10 +10,15 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.operations.OperationSet;
+import gov.nist.csd.pm.pip.graph.Graph;
+import gov.nist.csd.pm.pip.graph.MemGraph;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -164,7 +171,7 @@ public class ImportExport extends VerticalLayout {
             Button exportButton = new Button("Export JSON", click -> {
                 try {
                     //exportJson.setValue(SingletonGraph.getInstance().getGraphService(userCtx).toJson());
-                    exportJson.setValue(g.toJson());
+                    exportJson.setValue(toFullJson(g));
                     //exportJson.setValue(SingletonGraph.getInstance().getPAP().getGraphPAP().toJson());
                     MainView.notify("The graph has been exported into a JSON", MainView.NotificationType.SUCCESS);
                 } catch (PMException e) {
@@ -175,6 +182,80 @@ public class ImportExport extends VerticalLayout {
             exportButton.setHeight("5%");
             add(exportJson);
             add(exportButton);
+        }
+    }
+
+    public static String toFullJson (SingletonGraph graph) throws PMException {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        Collection<Node> nodes = graph.getNodes();
+        HashSet<String[]> jsonAssignments = new HashSet<>();
+        HashSet<JsonAssociation> jsonAssociations = new HashSet<>();
+        for (Node node : nodes) {
+
+            Set<String> parents = graph.getParents(node.getName());
+
+            for (String parent : parents) {
+                jsonAssignments.add(new String[]{node.getName(), parent});
+            }
+
+            Map<String, OperationSet> associations = graph.getSourceAssociations(node.getName());
+            for (String target : associations.keySet()) {
+                OperationSet ops = associations.get(target);
+                Node targetNode = graph.getNode(target);
+
+                jsonAssociations.add(new JsonAssociation(node.getName(), targetNode.getName(), ops));
+            }
+        }
+
+        return gson.toJson(new JsonGraph(nodes, jsonAssignments, jsonAssociations));
+    }
+
+    private static class JsonGraph {
+        Collection<Node> nodes;
+        Set<String[]>  assignments;
+        Set<JsonAssociation> associations;
+
+        JsonGraph(Collection<Node> nodes, Set<String[]> assignments, Set<JsonAssociation> associations) {
+            this.nodes = nodes;
+            this.assignments = assignments;
+            this.associations = associations;
+        }
+
+        Collection<Node> getNodes() {
+            return nodes;
+        }
+
+        Set<String[]> getAssignments() {
+            return assignments;
+        }
+
+        Set<JsonAssociation> getAssociations() {
+            return associations;
+        }
+    }
+
+    private static class JsonAssociation {
+        String source;
+        String target;
+        Set<String> operations;
+
+        public JsonAssociation(String source, String target, Set<String> operations) {
+            this.source = source;
+            this.target = target;
+            this.operations = operations;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
+        public String getTarget() {
+            return target;
+        }
+
+        public Set<String> getOperations() {
+            return operations;
         }
     }
 }
