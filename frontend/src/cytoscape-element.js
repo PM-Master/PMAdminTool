@@ -1,9 +1,14 @@
 /* jshint esversion: 6 */
-import { PolymerElement } from '@polymer/polymer/polymer-element.js';
+// import { register } from '@polymer/polymer/lib/utils/telemetry';
+import {
+  PolymerElement
+} from '@polymer/polymer/polymer-element.js';
 import cytoscape from "cytoscape";
-import dagre from "cytoscape-dagre";
+import { conf as cy_conf } from "./dataset/confFile";
+import { elements as elts1 } from "./dataset/Single PC - Small";
+import { elements as elts2 } from "./dataset/Multiple PCs - Small";
+import { elements as elts3 } from "./dataset/Multiple PCs - Medium";
 
-cytoscape.use(dagre);
 
 class CytoscapeElement extends PolymerElement {
 
@@ -30,6 +35,10 @@ class CytoscapeElement extends PolymerElement {
         type: String,
         value: null
       },
+      childrenData: {
+        type: Object,
+        value: null
+      },
     };
   }
 
@@ -40,352 +49,30 @@ class CytoscapeElement extends PolymerElement {
 
   constructor() {
     super();
-  }
+    this.childrenData = new Map();
 
-  raw_data() {
-    return {
-      "nodes": [
-        {
-          "name": "Patient Records",
-          "type": "OA",
-          "properties": {},
-          "id": 0
-        },
-        {
-          "name": "alice",
-          "type": "U",
-          "properties": {},
-          "id": 0
-        },
-        {
-          "name": "josh",
-          "type": "O",
-          "properties": {},
-          "id": 0
-        },
-        {
-          "name": "super_ua2",
-          "type": "UA",
-          "properties": {
-            "namespace": "super"
-          },
-          "id": 0
-        },
-        {
-          "name": "super_ua1",
-          "type": "UA",
-          "properties": {
-            "namespace": "super"
-          },
-          "id": 0
-        },
-        {
-          "name": "Doctors",
-          "type": "UA",
-          "properties": {},
-          "id": 0
-        },
-        {
-          "name": "Staff Objects",
-          "type": "OA",
-          "properties": {},
-          "id": 0
-        },
-        {
-          "name": "super",
-          "type": "U",
-          "properties": {
-            "namespace": "super"
-          },
-          "id": 0
-        },
-        {
-          "name": "RBAC_rep",
-          "type": "OA",
-          "properties": {
-            "pc": "RBAC"
-          },
-          "id": 0
-        },
-        {
-          "name": "super_pc",
-          "type": "PC",
-          "properties": {
-            "default_oa": "super_pc_default_OA",
-            "namespace": "super",
-            "default_ua": "super_pc_default_UA",
-            "rep": "super_pc_rep"
-          },
-          "id": 0
-        },
-        {
-          "name": "RBAC",
-          "type": "PC",
-          "properties": {
-            "default_ua": "RBAC_default_UA",
-            "default_oa": "RBAC_default_OA",
-            "rep": "RBAC_rep"
-          },
-          "id": 0
-        },
-        {
-          "name": "bob",
-          "type": "U",
-          "properties": {},
-          "id": 0
-        },
-        {
-          "name": "super_oa",
-          "type": "OA",
-          "properties": {
-            "namespace": "super"
-          },
-          "id": 0
-        },
-        {
-          "name": "timesheets",
-          "type": "O",
-          "properties": {},
-          "id": 0
-        },
-        {
-          "name": "super_pc_default_OA",
-          "type": "OA",
-          "properties": {
-            "namespace": "super_pc"
-          },
-          "id": 0
-        },
-        {
-          "name": "Nurses",
-          "type": "UA",
-          "properties": {},
-          "id": 0
-        },
-        {
-          "name": "RBAC_default_OA",
-          "type": "OA",
-          "properties": {
-            "namespace": "RBAC"
-          },
-          "id": 0
-        },
-        {
-          "name": "john",
-          "type": "O",
-          "properties": {},
-          "id": 0
-        },
-        {
-          "name": "super_pc_rep",
-          "type": "OA",
-          "properties": {
-            "pc": "super_pc",
-            "namespace": "super"
-          },
-          "id": 0
-        },
-        {
-          "name": "super_pc_default_UA",
-          "type": "UA",
-          "properties": {
-            "namespace": "super_pc"
-          },
-          "id": 0
-        },
-        {
-          "name": "RBAC_default_UA",
-          "type": "UA",
-          "properties": {
-            "namespace": "RBAC"
-          },
-          "id": 0
-        }
-      ],
-      "assignments": [
-        [
-          "Staff Objects",
-          "RBAC_default_OA"
-        ],
-        [
-          "super_ua1",
-          "super_pc"
-        ],
-        [
-          "RBAC_default_OA",
-          "RBAC"
-        ],
-        [
-          "super_oa",
-          "super_pc"
-        ],
-        [
-          "super_pc_default_UA",
-          "super_pc"
-        ],
-        [
-          "super",
-          "super_ua1"
-        ],
-        [
-          "super",
-          "super_ua2"
-        ],
-        [
-          "super_pc_rep",
-          "super_oa"
-        ],
-        [
-          "RBAC_rep",
-          "super_oa"
-        ],
-        [
-          "john",
-          "Patient Records"
-        ],
-        [
-          "alice",
-          "Nurses"
-        ],
-        [
-          "josh",
-          "Patient Records"
-        ],
-        [
-          "super_pc_default_OA",
-          "super_pc"
-        ],
-        [
-          "Patient Records",
-          "RBAC_default_OA"
-        ],
-        [
-          "RBAC_default_UA",
-          "RBAC"
-        ],
-        [
-          "Nurses",
-          "RBAC_default_UA"
-        ],
-        [
-          "super_ua2",
-          "super_pc"
-        ],
-        [
-          "timesheets",
-          "Staff Objects"
-        ],
-        [
-          "bob",
-          "Doctors"
-        ],
-        [
-          "Doctors",
-          "RBAC_default_UA"
-        ]
-      ],
-      "associations": [
-        {
-          "source": "super_ua1",
-          "target": "RBAC_default_OA",
-          "operations": [
-            "*"
-          ]
-        },
-        {
-          "source": "super_ua1",
-          "target": "super_oa",
-          "operations": [
-            "*"
-          ]
-        },
-        {
-          "source": "super_ua1",
-          "target": "RBAC_default_UA",
-          "operations": [
-            "*"
-          ]
-        },
-        {
-          "source": "RBAC_default_UA",
-          "target": "Staff Objects",
-          "operations": [
-            "read"
-          ]
-        },
-        {
-          "source": "Doctors",
-          "target": "Patient Records",
-          "operations": [
-            "read",
-            "write"
-          ]
-        },
-        {
-          "source": "super_ua1",
-          "target": "super_pc_default_UA",
-          "operations": [
-            "*"
-          ]
-        },
-        {
-          "source": "super_ua1",
-          "target": "super_ua2",
-          "operations": [
-            "*"
-          ]
-        },
-        {
-          "source": "Nurses",
-          "target": "Patient Records",
-          "operations": [
-            "read"
-          ]
-        },
-        {
-          "source": "super_ua2",
-          "target": "super_ua1",
-          "operations": [
-            "*"
-          ]
-        },
-        {
-          "source": "super_ua1",
-          "target": "super_pc_default_OA",
-          "operations": [
-            "*"
-          ]
-        }
-      ]
-    };
-  }
-
-  conf() {
-    return {
-      "node": {
-        "OA": { "color": "#ff00ff", "textColor": "#000000" },
-        "O": { "color": "#ff00aa", "textColor": "#000000" },
-        "UA": { "color": "pink", "textColor": "#000000" },
-        "U": { "color": "purple", "textColor": "#000000" },
-        "PC": { "color": "green", "textColor": "#000000" },
-        "PC0": { "color": "white", "textColor": "#000000" }
-      },
-      "assignments": { "edgeColor": "#9dbaea", "linestyle": "solid" },
-      "associations": { "edgeColor": "#3362FF", "linestyle": "dashed" }
-    };
   }
 
   setNodesInfo(x, conf) {
     return {
-      data: { "id": x.name, "label": x.name, "color": conf.node[x.type].color, "textColor": conf.node[x.type].textColor }
+      data: {
+        "id": x.name.replace(" ", ""),
+        "label": x.name,
+        "color": conf.node[x.type].color,
+        "textColor": conf.node[x.type].textColor,
+      }
     };
   }
 
   setAssignments(x, conf) {
     return {
       data: {
-        "id": x[0].concat(x[1]), "source": x[0], "target": x[1], "label": "",
-        'linecolor': conf.assignments.edgeColor, 'linestyle': conf.assignments.linestyle,
+        "id": x[0].replace(" ", "").concat(x[1].replace(" ", "")),
+        "source": x[1].replace(" ", ""),
+        "target": x[0].replace(" ", ""),
+        "label": "",
+        'linecolor': conf.edges.assignments.edgeColor,
+        'linestyle': conf.edges.assignments.linestyle,
         group: "assignments"
       }
     };
@@ -394,32 +81,67 @@ class CytoscapeElement extends PolymerElement {
   setAssociations(x, conf) {
     return {
       data: {
-        "id": x.source.concat(x.target), "source": x.source, "target": x.target, label: x.operations.join(", "),
-        'linecolor': conf.associations.edgeColor, 'linestyle': conf.assignments.linestyle,
-        dashes: true, group: "associations"
+        "id": x.source.replace(" ", "").concat(x.target.replace(" ", "")),
+        "source": x.source.replace(" ", ""),
+        "target": x.target.replace(" ", ""),
+        label: x.operations.join(", "),
+        'linecolor': conf.edges.associations.edgeColor,
+        'linestyle': conf.edges.associations.linestyle,
+        group: "associations"
       }
     };
   }
 
-  getElements() {
-    var nodes_ = this.raw_data().nodes.map(x => this.setNodesInfo(x, this.conf()));
-    var assignments = this.raw_data().assignments.map(x => this.setAssignments(x, this.conf()));
-    var associations = this.raw_data().associations.map(x => this.setAssociations(x, this.conf()));
-    var edges_ = assignments.concat(associations);
+  getElements(graph) {
+    let nodes_ = graph.nodes.map(x => this.setNodesInfo(x, cy_conf));
+    let assignments = graph.assignments.map(x => this.setAssignments(x, cy_conf));
+    let associations = graph.associations.map(x => this.setAssociations(x, cy_conf));
+    let edges_ = assignments.concat(associations);
     return {
       nodes: nodes_,
       edges: edges_
     };
   }
 
+  getRoots(graph) {
+    return graph.nodes.filter(x => (x.type === "PC")).map(x => {
+      return x.name;
+    });
+  }
+
+  expand_collapse_node_all(nodeo) {
+    if (this.childrenData.get(nodeo.id()).removed) {
+      this.expand_node_all(nodeo);
+    } else {
+      this.collapse_node_all(nodeo);
+    }
+  }
+
+  expand_collapse_node_one(nodeo) {
+    if (this.childrenData.get(nodeo.id()).removed) {
+      this.expand_node_one(nodeo);
+    } else {
+      this.collapse_node_one(nodeo);
+    }
+  }
   ready() {
     super.ready();
     console.info("cytoscape is ready");
-    // cytoscape.use( cxtmenu );
-    // cytoscape.use( edgehandles ); 
-    var cellHeight = 80;
 
-    var mycy = cytoscape({
+    // console.log(this.getElements(elts1));
+    // console.log(this.getElements(elts2));
+    // console.log(this.getElements(elts3));
+
+    // let childrenData = new Map(); //holds nodes' children info for restoration
+
+    // let dataset = elts1_;
+    // let dataset = elts2;
+    let dataset = elts3;
+
+    let policy_classes = this.getRoots(dataset);
+    let elts = this.getElements(dataset);
+
+    let mycy = cytoscape({
 
       container: document.getElementById(this.cyName),
 
@@ -427,55 +149,317 @@ class CytoscapeElement extends PolymerElement {
       maxZoom: 1e5,
       // wheelSensitivity: 0.5,
 
-      elements: this.getElements(),
-      style: [
-        {
-          selector: "node",
-          style: {
-            'background-color': 'data(color)', //'#11479e',
-            'color': 'data(textColor)',
-            "text-opacity": 0.5,
-            'border-width': 3,
-            'height': 80,
-            'width': 150,
-            'label': 'data(id)',
-            'content': "data(id)",
-            'shape': 'round-rectangle',
-            'text-valign': 'center',
-            'text-halign': 'center',
-            'text-wrap': 'wrap',
-            'text-max-width': 100
-          }
-        },
-
-        {
-          selector: "edge",
-          style: {
-            'label': 'data(label)',
-            'line-style': 'data(linestyle)', // 'solid', //'dotted', //'dashed',
-            // 'line-dash-pattern': [6, 3], 
-            // 'line-cap': 'square',
-            'source-arrow-shape': 'square',
-            'source-arrow-color': 'data(linecolor)',
-            'target-arrow-shape': 'triangle',
-            'target-arrow-color': 'data(linecolor)',
-            'line-color': 'data(linecolor)',
-            // 'target-arrow-color': '#9dbaea',
-            'curve-style': 'bezier', //'bezier', //'segments'
-            "width": "3px",
-          }
+      elements: elts,
+      style: [{
+        selector: "node",
+        style: {
+          'background-color': 'data(color)',
+          'color': 'data(textColor)',
+          "text-opacity": 0.5,
+          'border-width': 1,
+          'height': cy_conf.node_shape.cellHeight,
+          'width': cy_conf.node_shape.cellWidth,
+          'label': 'data(id)',
+          'content': 'data(id)',
+          'shape': cy_conf.node_shape.shape,
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'text-wrap': 'wrap',
+          'text-max-width': 100,
+          "font-size": cy_conf.node_shape['font-size']
         }
+      },
+      {
+        selector: "edge",
+        style: {
+          'label': 'data(label)',
+          'line-style': 'data(linestyle)', // 'solid', //'dotted', //'dashed',
+          'source-arrow-shape': 'triangle',
+          'source-arrow-color': 'data(linecolor)',
+          'target-arrow-shape': 'square',
+          'target-arrow-color': 'data(linecolor)',
+          'line-color': 'data(linecolor)',
+          'curve-style': 'bezier', //'bezier', //'segments'
+          "width": "3px", // Edges width
+          "font-size": cy_conf.edge_shape['font-size'],
+          "font-weight": cy_conf.edge_shape['font-weight']
+        }
+      },
+      {
+        selector: ':selected',
+        style: {
+          "border-width": '10px',
+          "border-color": cy_conf.selected.color,
+          "lineColor": cy_conf.selected.color,
+        }
+      },
+      {
+        selector: ".mouseover",
+        style: {
+          "background-color": cy_conf.highlight.color,
+          'border-width': "3px", 
+          'border-style': "double", 
+        }
+      }
+
       ],
       layout: {
-        // name: 'dagre',
         name: 'breadthfirst',
-        roots: ['super_pc', 'RBAC'],
-        transform: function (node, position) { return { x: position.x, y: window.innerHeight - position.y - (Math.random() * cellHeight) }; }
-
+        roots: policy_classes,
+        transform: (node, position) => {
+          return {
+            x: position.x,
+            y: policy_classes.includes(node.data('id')) ? window.innerHeight - position.y : window.innerHeight - position.y - (Math.random() * cy_conf.node_shape.cellHeight)
+          };
+        }
       }
     });
+
     this.cy = mycy;
+
+
+    //populating childrenData dictionary
+    for (let x = 0; x < elts.nodes.length; x++) {
+      let curNode = this.cy.$("#" + elts.nodes[x].data.id);
+      let curId = curNode.data('id');
+
+      //get its connectedEdges and connectedNodes
+      let connectedEdges = curNode.connectedEdges(() => {
+        //filter on connectedEdges
+        return !curNode.target().anySame(curNode);
+      });
+      let connectedNodes = connectedEdges.targets();
+      //and store that in childrenData
+      this.childrenData.set(curId, {
+        data: connectedNodes.union(connectedEdges),
+        removed: false
+      });
+      // console.log(curId, Array.from(connectedNodes).length);
+
+  
+    }
+
+    // console.log(this.childrenData);
+
+    this.cy.on('mouseover', 'node', (evt) => {
+      let node = evt.target;
+      node.addClass('mouseover');
+    });
+
+    this.cy.on('mouseout', 'node', (evt) => {
+      let node = evt.target;
+      node.removeClass('mouseover');
+    });
+
+    this.register();
+
+    //Collapsing all nodes
+    policy_classes.map((x) => { this.expand_collapse_node_all(this.cy.$("#"+x)); });
+
+
+
+    this.cy.on('cxttap', 'node', (evt) => {
+      let node = evt.target;
+      var childrenViewModal_childname = document.getElementById("childrenViewModal_childname");
+      childrenViewModal_childname.innerText = "Node : " + node.data()['label'];
+
+      // let outgoers_ = getChildNodes(childrenData, node.id());
+      let curNode = node;
+
+      let outgoers_ = node.outgoers((ele) => {
+        if (ele.isEdge()) {
+          return false;
+        }
+        if (ele.isNode()) {
+          if (!ele.edgesWith(curNode).length) {
+            return false;
+          }
+          if (this.cy.$("#" + ele.id()).edgesWith(this.cy.$("#" + curNode.id()))[0].data().group === "associations") {
+            return false;
+          }
+        }
+
+        //filter on connectedEdges
+        return !curNode.target().anySame(curNode);
+      })
+
+      let child_lst = document.getElementById("childrenViewModal_childlist");
+      let fragment = document.createDocumentFragment();
+
+      child_lst.appendChild(fragment);
+      modal.style.display = "block";
+    });
+
+    this.cy.on('tap', 'edge', (evt) => {
+      var edge = evt.target;
+      // document.getElementById("select").innerHTML = 'Selected: ' + edge.id();
+      // edge.style({
+      //   'line-color': cy_conf.highlight.color,
+      //   'source-arrow-color': cy_conf.highlight.color,
+      //   'target-arrow-color': cy_conf.highlight.color
+      // });
+      // if (edge.data('group') === "assignments") {
+      //   edge.style({
+      //     'line-color': 'red'
+      //   });
+      // } else {
+      //   edge.style({
+      //     'line-color': 'green'
+      //   });
+      // }
+    });
+
+    this.cy.on('mouseover', 'edge', (evt) => {
+      var edge = evt.target;
+      edge.style({
+        'line-color': cy_conf.highlight.color,
+        'source-arrow-color': cy_conf.highlight.color,
+        'target-arrow-color': cy_conf.highlight.color
+      });
+    });
+
+    this.cy.on('mouseout', 'edge', (evt) => {
+      var edge = evt.target;
+      if (!edge.selected()) {
+        edge.style({
+          'line-color': edge.data('linecolor'),
+          'source-arrow-color': edge.data('linecolor'),
+          'target-arrow-color': edge.data('linecolor')
+        });
+      }
+    });
   }
+
+  register() {
+    this.cy.on('tap', 'node', (evt) => {
+      let node = evt.target;
+      this.expand_collapse_node_one(node);
+    });
+  }
+
+  getChild(childDat, childName) {
+    return childDat.get(childName);
+  }
+
+  getChildNodes(childDat, childName) {
+    return childDat.get(childName).data.filter(x => x.isNode());
+  }
+
+  getChildEdges(childDat, childName) {
+    return childDat.get(childName).data.filter(x => x.isEdge());
+  }
+
+  getChildren(nodeElt) {
+    return nodeElt.outgoers((ele) => {
+      if (ele.isEdge()) {
+        return ele.data().group === "assignments";
+      }
+      if (ele.isNode()) {
+        if (!ele.edgesWith(nodeElt).length) {
+          return false;
+        }
+        return this.cy.$("#" + ele.id()).edgesWith(nodeElt)[0].data().group === "assignments";
+      }
+      //filter on connectedEdges
+      return !curNode.target().anySame(curNode);
+    });
+  }
+
+  getOutgoersByType(node_, type_) {
+    return node_.outgoers((ele) => {
+      if (ele.isEdge()) {
+        if (ele.data().group === type_) {
+          return false;
+        }
+      }
+      if (ele.isNode()) {
+        if (!ele.edgesWith(node_).length) {
+          return false;
+        }
+        if (this.cy.$("#" + ele.id()).edgesWith(this.cy.$("#" + node_.id()))[0].data()['group'] === type_) {
+          return false;
+        }
+      }
+      return !node_.target().anySame(node_);
+    });
+
+  }
+
+  getSelected() {
+    return this.cy.$(":selected");
+  }
+
+  getAllByType(type) {
+    /* Returns all elements of group associations or assignments */
+    return this.cy.filter('[group = "' + type + '"]');
+  }
+
+
+  fetchAllChildren(nodeElt) {
+    let connectedElt = this.getChildren(nodeElt);
+    let toRemove = [];
+    let trail = [];
+
+    Array.prototype.push.apply(toRemove, connectedElt);
+
+    connectedElt.forEach((nodeito) => {
+      let elt = this.cy.$("#" + nodeito.id());
+      if (elt.isNode()) {
+        let conlvl2 = this.fetchAllChildren(elt);
+        Array.prototype.push.apply(toRemove, conlvl2);
+      }
+    });
+    return toRemove;
+  }
+
+
+
+  collapse_node_all(nodeo) {
+    let childrenNodes = this.fetchAllChildren(nodeo);
+    childrenNodes.map(x => x.hide());
+    childrenNodes.forEach((nodeito) => {
+      if (nodeito.isNode()) {
+        this.childrenData.get(nodeito.data('id')).removed = true;
+      }
+    });
+    this.childrenData.get(nodeo.id()).removed = true;
+  }
+
+  collapse_node_one(nodeo) {
+    let childrenNodes = this.getChildren(nodeo);
+    childrenNodes.map(x => x.hide());
+    childrenNodes.forEach((nodeito) => {
+      if (nodeito.isNode()) {
+        this.childrenData.get(nodeito.data('id')).removed = true;
+      }
+    });
+    this.childrenData.get(nodeo.id()).removed = true;
+  }
+
+  expand_node_all(nodeo) {
+    let childrenNodes = this.fetchAllChildren(nodeo);
+    childrenNodes.map(x => x.show());
+    childrenNodes.forEach((nodeito) => {
+
+      if (nodeito.isNode()) {
+        this.childrenData.get(nodeito.data('id')).removed = false;
+      }
+    });
+    this.childrenData.get(nodeo.id()).removed = false;
+  }
+  expand_node_one(nodeo) {
+    let childrenNodes = this.getChildren(nodeo);
+    childrenNodes.map(x => x.show());
+    childrenNodes.forEach((nodeito) => {
+
+      if (nodeito.isNode()) {
+        this.childrenData.get(nodeito.data('id')).removed = false;
+      }
+    });
+    this.childrenData.get(nodeo.id()).removed = false;
+  }
+
+
 
   loadGraph(elements) {
     this.cy.json(JSON.parse(elements));
@@ -484,47 +468,25 @@ class CytoscapeElement extends PolymerElement {
 
 
   loadGraph1() {
-    var elements = {
-      nodes: [
-        { data: { id: "n4" } },
-        { data: { id: "n5" } },
-        { data: { id: "n6" } },
-        { data: { id: "n7" } },
-        { data: { id: "n8" } },
-        { data: { id: "n9" } },
-        { data: { id: "n10" } }
-      ],
-      edges: [
-        { data: { source: "n4", target: "n5", id: "45", label: "45" } },
-        { data: { source: "n4", target: "n6", id: "46", label: "46" } },
-        { data: { source: "n6", target: "n7", id: "67", label: "67" } },
-        { data: { source: "n6", target: "n8", id: "68", label: "68" } },
-        { data: { source: "n8", target: "n9", id: "89", label: "89" } },
-        { data: { source: "n8", target: "n10", id: "810", label: "810" } }
-      ]
+    let elements = {
+
     };
 
-    this.cy.json({ elements: elements });
+    this.cy.json({
+      elements: elements
+    });
     this.cy.fit();
   }
 
 
   loadGraph2() {
-    var elements = {
-      nodes: [
-        { data: { id: "n0" } },
-        { data: { id: "n1" } },
-        { data: { id: "n2" } },
-        { data: { id: "n3" } }
-      ],
-      edges: [
-        { data: { source: "n0", target: "n1", id: "01", label: "01" } },
-        { data: { source: "n1", target: "n2", id: "12", label: "12" } },
-        { data: { source: "n1", target: "n3", id: "13", label: "13" } }
-      ]
+    let elements = {
+
     };
 
-    this.cy.json({ elements: elements });
+    this.cy.json({
+      elements: elements
+    });
     this.cy.fit();
   }
 }
