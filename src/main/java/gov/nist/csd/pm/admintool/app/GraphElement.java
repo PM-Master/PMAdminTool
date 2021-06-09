@@ -12,8 +12,8 @@ import com.vaadin.flow.component.page.PendingJavaScriptResult;
 // import com.vaadin.flow.shared.Registration;
 
 @Tag("cytoscape-element")
-@NpmPackage(value = "@polymer/polymer", version = "3.2.0")
-@NpmPackage(value = "@webcomponents/webcomponentsjs", version = "^2.2.10")
+@NpmPackage(value = "@polymer/polymer", version = "3.4.1")
+// @NpmPackage(value = "@webcomponents/webcomponentsjs", version = "^2.2.10")
 @NpmPackage(value = "cytoscape", version = "3.18.2")
 @NpmPackage(value = "jquery", version = "3.2.1")
 @JsModule("./src/cytoscape-element.js")
