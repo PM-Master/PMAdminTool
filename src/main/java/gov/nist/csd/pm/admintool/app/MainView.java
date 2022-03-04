@@ -100,18 +100,13 @@ public class MainView extends HorizontalLayout{
         page9.setSizeFull();
         page9.setVisible(false);
 
-        Tab tab10 = new Tab("GraphVis");
-        VerticalLayout page10 = new GraphVisTempPage();
+        Tab tab10 = new Tab("Settings");
+        VerticalLayout page10 = new PolicyClassEditor();
+        page10.add(new Settings());
         page10.setSizeFull();
         page10.setVisible(false);
 
-        Tab tab11 = new Tab("Settings");
-        VerticalLayout page11 = new PolicyClassEditor();
-        page11.add(new Settings());
-        page11.setSizeFull();
-        page11.setVisible(false);
-
-        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11);
+        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10);
         tabs.setOrientation(Tabs.Orientation.VERTICAL);
         tabs.setFlexGrowForEnclosedTabs(1);
         navbar.add(tabs);
@@ -127,9 +122,8 @@ public class MainView extends HorizontalLayout{
         tabsToPages.put(tab8, page8);
         tabsToPages.put(tab9, page9);
         tabsToPages.put(tab10, page10);
-        tabsToPages.put(tab11, page11);
 
-        pages = new Div(page1, page2, page3, page4, page5, page6, page7, page8, page9, page10, page11);
+        pages = new Div(page1, page2, page3, page4, page5, page6, page7, page8, page9, page10);
         pages.setSizeFull();
 
         Set<Component> pagesShown = Stream.of(page1)

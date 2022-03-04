@@ -2,6 +2,7 @@ package gov.nist.csd.pm.admintool.app;
 
 // import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.dependency.CssImport;
 // import com.vaadin.flow.component.dependency.JavaScript;
 import com.vaadin.flow.component.dependency.JsModule;
@@ -20,13 +21,37 @@ import com.vaadin.flow.component.page.PendingJavaScriptResult;
 @CssImport("./styles/csd_pm_style.css")
 
 public class GraphElement extends Div {
-    public GraphElement(String elementID) {
-        getElement().setProperty("cyName", elementID);
+    private ClickCallback clickCallback;
+
+    public GraphElement(String elementID, String graph) {
         this.setId(elementID);
+        getElement().setProperty("cyName", elementID);
+        getElement().setProperty("graphFromVaadin", graph);
+
+        getElement().addEventListener("click", (mouseEvent) -> {
+            getSelectedElements().then((jsonValue) -> {
+                if (clickCallback != null)
+                    clickCallback.onClick(jsonValue.toJson() != null ? jsonValue.asString() : null);
+            });
+        });
+
+//        getElement().addEventListener("contextmenu", (mouseEvent) -> {
+//            MainView.notify("Right Click on Graph Element");
+//        });
+//
+//        ContextMenu menu = new ContextMenu();
+//        menu.setTarget(this);
+//        menu.addItem("Get Right Click Position", menuItemClickEvent -> {
+//            MainView.notify(menuItemClickEvent.getClientX() + ", " + menuItemClickEvent.getClientY());
+//        });
     }
 
-    public PendingJavaScriptResult getSelectedElements() {
-        return getElement().callJsFunction("selectedElements", ":selected");
+    private PendingJavaScriptResult getSelectedElements() {
+        return getElement().callJsFunction("getSelected");
+    }
+
+    public void setClickListener(ClickCallback clickCallback) {
+        this.clickCallback = clickCallback;
     }
 
     public PendingJavaScriptResult getZoomAndPan() {
@@ -43,6 +68,10 @@ public class GraphElement extends Div {
 
     public void loadGraph2() {
         getElement().callJsFunction("loadGraph2");
+    }
+
+    public interface ClickCallback {
+        void onClick(String node_id);
     }
 
 }

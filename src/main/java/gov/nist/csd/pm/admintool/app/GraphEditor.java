@@ -92,9 +92,14 @@ public class GraphEditor extends VerticalLayout {
         private H3 currNodeName; // The current node whose children are being shown
         private Button backButton;
         private Toggle ouToggle;
+        private Toggle gridGraphToggle;
         private TextField searchBar;
 
+        // for graph viewer section
+        private GraphElement graphViewer;
+
         // for node info section
+        private VerticalLayout nodeInfo; // overall node info layout
         private H3 name;
         private Div childrenList, parentList;   // for relations
         private Div outgoingAssociationList, incomingAssociationList; // for associations
@@ -116,6 +121,7 @@ public class GraphEditor extends VerticalLayout {
 
             addTitleLayout();
             addGridLayout();
+            addGraphLayout();
             addNodeInfoLayout();
 
             // get data and expand policy classes
@@ -219,6 +225,22 @@ public class GraphEditor extends VerticalLayout {
                 refresh();
             });
             add(ouToggle);
+
+            // graph/grid selector
+            gridGraphToggle = new Toggle("Grid", "Grid", "Graph");
+            gridGraphToggle.addValueChangeListener(event -> {
+                switch (event.getValue()) {
+                    case "Grid":
+                        add(grid, nodeInfo);
+                        remove(graphViewer);
+                        break;
+                    case "Graph":
+                        remove(grid, nodeInfo);
+                        add(graphViewer);
+                        break;
+                }
+            });
+            add(gridGraphToggle);
 
             // search bar
             searchBar = new TextField();
@@ -424,8 +446,39 @@ public class GraphEditor extends VerticalLayout {
             });
         }
 
+        private void addGraphLayout() {
+            try {
+                graphViewer = new GraphElement(isSource ? "cy1":"cy2", ImportExport.toFullJson(g));
+                graphViewer.addClassName("cy");
+                graphViewer.setHeight("100%");
+                graphViewer.setWidth("100%");
+
+                graphViewer.setClickListener(node_id -> {
+                    if (node_id == null || node_id.isEmpty()) {
+                        if (isSource) selectedChildNode = null;
+                        else selectedParentNode = null;
+                    } else {
+                        try {
+                            if (isSource) selectedChildNode = g.getNode(node_id);
+                            else selectedParentNode = g.getNode(node_id);
+                        } catch (PMException e) {
+                            e.printStackTrace();
+
+                            if (isSource) selectedChildNode = null;
+                            else selectedParentNode = null;
+                        }
+                    }
+
+                    buttonGroup.refreshButtonStates();
+                    buttonGroup.refreshNodeTexts();
+                });
+            } catch (PMException e) {
+                e.printStackTrace();
+            }
+        }
+
         private void addNodeInfoLayout() {
-            VerticalLayout nodeInfo = new VerticalLayout();
+            nodeInfo = new VerticalLayout();
             nodeInfo.setWidthFull();
             nodeInfo.setHeight("30%");
             nodeInfo.getStyle()

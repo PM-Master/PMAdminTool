@@ -4,6 +4,7 @@ import {
   PolymerElement
 } from '@polymer/polymer/polymer-element.js';
 import cytoscape from "cytoscape";
+import $ from "jquery";
 import {
   conf as cy_conf
 } from "./dataset/confFile";
@@ -41,6 +42,10 @@ class CytoscapeElement extends PolymerElement {
       },
       cyName: {
         type: String,
+        value: null
+      },
+      graphFromVaadin: {
+        type: JSON,
         value: null
       },
       childrenData: {
@@ -155,23 +160,28 @@ class CytoscapeElement extends PolymerElement {
     console.info("cytoscape is ready");
 
 
-    console.log(this.dataset_);
-    console.log(this.getElements(elts1));
+    // console.log(this.getElements(elts1));
     // console.log(this.getElements(elts2));
     // console.log(this.getElements(elts3));
 
-
-    // this.dataset_= elts1;
+    this.dataset_= JSON.parse(this.graphFromVaadin);
     // this.dataset_ = elts2;
-    this.dataset_ = elts3;
+    // this.dataset_ = elts2;
+    // this.dataset_ = elts3;
+
+    console.log(this.dataset_);
+
+    console.log( "ready!" );
+    let ctr = $( "cytoscape-element[id=" + this.cyName + "]" )
+    console.log(ctr);
 
     let policy_classes = this.getRoots(this.dataset_);
     let elts = this.getElements(this.dataset_);
 
 
-    let mycy = cytoscape({
+    this.cy = cytoscape({
 
-      container: document.getElementById(this.cyName),
+      container: ctr,
 
       minZoom: 1e-5,
       maxZoom: 1e5,
@@ -248,8 +258,6 @@ class CytoscapeElement extends PolymerElement {
       }
     });
 
-    this.cy = mycy;
-
 
     //populating childrenData dictionary; graph starts expanded
     for (let x = 0; x < elts.nodes.length; x++) {
@@ -269,8 +277,7 @@ class CytoscapeElement extends PolymerElement {
       });
 
       if (Array.from(connectedNodes).length != 1) {
-      curNode.addClass('withChildren');
-
+        curNode.addClass('withChildren');
       }
     }
 
@@ -280,10 +287,9 @@ class CytoscapeElement extends PolymerElement {
     this.register();
 
     //Collapsing all nodes
-    policy_classes.map((x) => {
-      this.collapse_node_all(this.cy.$("#" + x));
-    });
-
+    // policy_classes.map((x) => {
+    //   this.collapse_node_all(this.cy.$("#" + x));
+    // });
   }
 
   register() {
@@ -428,7 +434,11 @@ class CytoscapeElement extends PolymerElement {
   }
 
   getSelected() {
-    return this.cy.$(":selected");
+    if (this.cy.$(":selected").size() > 0) {
+      return this.cy.$(":selected")[0].data()["id"];
+    } else {
+      return null;
+    }
   }
 
   getAllByType(type) {
