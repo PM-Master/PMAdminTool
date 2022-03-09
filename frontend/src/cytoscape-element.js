@@ -163,53 +163,47 @@ class CytoscapeElement extends PolymerElement {
     super.ready();
     console.info("cytoscape is ready");
 
-
-    // console.log(this.getElements(elts1));
-    // console.log(this.getElements(elts2));
-    // console.log(this.getElements(elts3));
-
-    this.dataset_= JSON.parse(this.graphFromVaadin);
-    // this.dataset_ = elts2;
-    // this.dataset_ = elts2;
-    // this.dataset_ = elts3;
-
-    console.log(this.dataset_);
+    this.setup(this.graphFromVaadin)
 
     console.log( "ready!" );
-    let ctr = $( "cytoscape-element[id=" + this.cyName + "]" )
-    console.log(ctr);
+  }
+
+  setup(dataset) {
+    console.log("setup")
+
+    this.dataset_ = JSON.parse(dataset)
 
     let policy_classes = this.getRoots(this.dataset_);
     let elts = this.getElements(this.dataset_);
 
-
     this.cy = cytoscape({
 
-      container: ctr,
+      container: $( "cytoscape-element[id=" + this.cyName + "]" ),
 
       minZoom: 1e-5,
       maxZoom: 1e5,
 
       elements: elts,
       style: [{
-          selector: "node",
-          style: {
-            'background-color': 'data(color)',
-            'color': 'data(textColor)',
-            "text-opacity": 0.5,
-            'border-width': 1,
-            'height': cy_conf.node_shape.cellHeight,
-            'width': cy_conf.node_shape.cellWidth,
-            'label': 'data(id)',
-            'content': 'data(id)',
-            'shape': cy_conf.node_shape.shape,
-            'text-valign': 'center',
-            'text-halign': 'center',
-            'text-wrap': 'wrap',
-            'text-max-width': 100,
-            "font-size": cy_conf.node_shape['font-size']
-          }
-        },
+        selector: "node",
+        style: {
+          'background-color': 'data(color)',
+          'color': 'data(textColor)',
+          "text-opacity": .75,
+          'border-width': 1,
+          'height': cy_conf.node_shape.cellHeight,
+          'width': cy_conf.node_shape.cellWidth,
+          'label': 'data(id)',
+          'content': 'data(id)',
+          'shape': cy_conf.node_shape.shape,
+          'text-valign': 'center',
+          'text-halign': 'center',
+          'text-wrap': 'wrap',
+          'text-max-width': 100,
+          "font-size": cy_conf.node_shape['font-size'],
+          "font-weight": "bold"
+        }
+      },
         {
           selector: "edge",
           style: {
@@ -296,6 +290,15 @@ class CytoscapeElement extends PolymerElement {
     // });
 
     this.fit()
+  }
+
+  teardown() {
+    this.cy.destroy()
+  }
+
+  reset() {
+    this.teardown()
+    this.setup(this.graphFromVaadin)
   }
 
   register() {

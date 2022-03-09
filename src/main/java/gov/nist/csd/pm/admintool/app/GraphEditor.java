@@ -974,11 +974,23 @@ public class GraphEditor extends VerticalLayout {
         public void refresh() {
 //            grid.getDataCommunicator().reset();
             grid.getDataProvider().refreshAll();
+
+            try {
+                graphViewer.reset(ImportExport.toFullJson(g));
+            } catch (PMException e) {
+                e.printStackTrace();
+            }
         }
 
         public void refresh(Node... nodes) {
             for (Node node : nodes)
                 grid.getDataProvider().refreshItem(node, true);
+
+            try {
+                graphViewer.reset(ImportExport.toFullJson(g));
+            } catch (PMException e) {
+                e.printStackTrace();
+            }
         }
 
         public void expandPolicies() {

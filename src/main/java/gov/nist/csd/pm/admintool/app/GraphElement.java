@@ -42,6 +42,11 @@ public class GraphElement extends Div {
         menu.addItem("Download JPEG", menuItemClickEvent -> getElement().callJsFunction("download"));
     }
 
+    public void reset(String graph) {
+        getElement().setProperty("graphFromVaadin", graph);
+        getElement().callJsFunction("reset", graph);
+    }
+
     private PendingJavaScriptResult getSelectedElements() {
         return getElement().callJsFunction("getSelected");
     }
