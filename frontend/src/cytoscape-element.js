@@ -118,7 +118,9 @@ class CytoscapeElement extends PolymerElement {
       data: {
         "id": x[0].replace(" ", "").concat(x[1].replace(" ", "")),
         "source": x[1].replace(" ", ""),
+        "sourceshape": 'triangle',
         "target": x[0].replace(" ", ""),
+        "targetshape": 'square',
         "label": "",
         "linecolor": conf.edges.assignments.edgeColor,
         "linestyle": conf.edges.assignments.linestyle,
@@ -133,7 +135,9 @@ class CytoscapeElement extends PolymerElement {
       data: {
         "id": x.source.replace(" ", "").concat(x.target.replace(" ", "")),
         "source": x.source.replace(" ", ""),
+        "sourceshape": 'square',
         "target": x.target.replace(" ", ""),
+        "targetshape": 'triangle',
         "label": x.operations.join(", "),
         'linecolor': conf.edges.associations.edgeColor,
         'linestyle': conf.edges.associations.linestyle,
@@ -211,9 +215,9 @@ class CytoscapeElement extends PolymerElement {
           style: {
             'label': 'data(label)',
             'line-style': 'data(linestyle)', // 'solid', //'dotted', //'dashed',
-            'source-arrow-shape': 'triangle',
+            'source-arrow-shape': 'data(sourceshape)',
             'source-arrow-color': 'data(linecolor)',
-            'target-arrow-shape': 'square',
+            'target-arrow-shape': 'data(targetshape)',
             'target-arrow-color': 'data(linecolor)',
             'line-color': 'data(linecolor)',
             'curve-style': 'bezier', //'bezier', //'segments'
@@ -251,8 +255,8 @@ class CytoscapeElement extends PolymerElement {
         roots: policy_classes,
         transform: (node, position) => {
           return {
-            x: position.x,
-            y: policy_classes.includes(node.data('id')) ? window.innerHeight - position.y : window.innerHeight - position.y - (Math.random() * cy_conf.node_shape.cellHeight)
+            x: (window.innerWidth - position.x) * cy_conf["x-scaling"],
+            y: (window.innerHeight - position.y - (policy_classes.includes(node.data('id')) ? 0 : (Math.random() * cy_conf.node_shape.cellHeight))) * cy_conf["y-scaling"]
           };
         }
       }

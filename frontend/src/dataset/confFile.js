@@ -14,8 +14,9 @@ const conf = {
   "highlight": {"color": "yellow"},
   "selected": {"color": "#66FF33"},
   "node_shape" : {"cellHeight": 80, "cellWidth": 150, "font-size": 14, "shape": "ellipse"}, //'bottom-round-rectangle' 'rounded-rectangle'
-  "edge_shape" : {"font-size": 14, "font-weight": "bold"}
-  
+  "edge_shape" : {"font-size": 14, "font-weight": "bold"},
+  "x-scaling" : 0.75,
+  "y-scaling" : 1.5
 };
 
 export { conf }; 
