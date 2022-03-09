@@ -543,6 +543,20 @@ class CytoscapeElement extends PolymerElement {
     });
     this.cy.fit();
   }
+
+  download() {
+    var element = document.createElement('a');
+    element.setAttribute('href', this.cy.jpeg({"full":true}));
+    element.setAttribute('download', "graph.jpeg");
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }
+
 }
 
 customElements.define(CytoscapeElement.is, CytoscapeElement);

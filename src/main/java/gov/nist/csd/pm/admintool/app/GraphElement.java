@@ -35,15 +35,9 @@ public class GraphElement extends Div {
             });
         });
 
-//        getElement().addEventListener("contextmenu", (mouseEvent) -> {
-//            MainView.notify("Right Click on Graph Element");
-//        });
-//
-//        ContextMenu menu = new ContextMenu();
-//        menu.setTarget(this);
-//        menu.addItem("Get Right Click Position", menuItemClickEvent -> {
-//            MainView.notify(menuItemClickEvent.getClientX() + ", " + menuItemClickEvent.getClientY());
-//        });
+        ContextMenu menu = new ContextMenu();
+        menu.setTarget(this);
+        menu.addItem("Download JPEG", menuItemClickEvent -> getElement().callJsFunction("download"));
     }
 
     private PendingJavaScriptResult getSelectedElements() {
