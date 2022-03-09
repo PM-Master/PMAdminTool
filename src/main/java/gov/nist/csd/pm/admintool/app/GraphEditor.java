@@ -88,6 +88,7 @@ public class GraphEditor extends VerticalLayout {
         private final Map<String, Predicate<? super String>> filters;
 
         // for title section
+        private HorizontalLayout title; // contains Title, Back Button, Current Parent Node
         private H2 titleText;
         private H3 currNodeName; // The current node whose children are being shown
         private Button backButton;
@@ -129,63 +130,24 @@ public class GraphEditor extends VerticalLayout {
         }
 
         private void addTitleLayout() {
-            /// contains Title, Back Button, Current Parent Node
-
-            // title layout config
-            HorizontalLayout title = new HorizontalLayout();
-            title.setAlignItems(Alignment.BASELINE);
-            title.setJustifyContentMode(JustifyContentMode.START);
-            title.setWidthFull();
-            title.getStyle()
-                    .set("overflow-y", "hidden")
-                    .set("overflow-x", "scroll");
-            add(title);
-
-            // title text
-            titleText = new H2();
-            titleText.getStyle().set("user-select", "none");
-            if (isSource) {
-                titleText.setText("Source:");
-            } else {
-                titleText.setText("Destination:");
-            }
-            title.add(titleText);
-
-            // current parent node whose children are being shown
-            currNodeName = new H3("All Nodes");
-            currNodeName.getStyle().set("user-select", "none");
-            title.add(currNodeName);
-
-            // back button
-            backButton = new Button(new Icon(VaadinIcon.ARROW_BACKWARD));
-            backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-            backButton.addClickListener(evt -> {
-                if (!prevNodes.empty()) {
-                    currNodes = prevNodes.pop();
-                    //grid.setItems(currNodes);
-                    updateGridNodes(currNodes);
-                    grid.deselectAll();
-                    if (isSource) {
-                        selectedChildNode = null;
-                    } else {
-                        selectedParentNode = null;
-                    }
-                    buttonGroup.refreshNodeTexts();
-                    buttonGroup.refreshButtonStates();
-                    updateNodeInfo();
+            // graph/grid selector
+            gridGraphToggle = new Toggle("Grid", "Grid", "Graph");
+            gridGraphToggle.getElement().getStyle()
+                    .set("margin-top", "2vh")
+                    .set("margin-bottom", "1vh");
+            gridGraphToggle.addValueChangeListener(event -> {
+                switch (event.getValue()) {
+                    case "Grid":
+                        add(ouToggle, title, searchBar, grid, nodeInfo);
+                        remove(graphViewer);
+                        break;
+                    case "Graph":
+                        remove(ouToggle, title, searchBar, grid, nodeInfo);
+                        add(graphViewer);
+                        break;
                 }
-
-                if (prevNodes.empty()) {
-                    backButton.setEnabled(false);
-                }
-
-                if (!prevNodeNames.empty()) {
-                    currNodeName.setText(prevNodeNames.pop());
-                }
-
             });
-            backButton.setEnabled(false);
-            title.add(backButton);
+            add(gridGraphToggle);
 
             // object/user selector
             ouToggle = new Toggle("All", "Users", "All", "Objects");
@@ -226,24 +188,71 @@ public class GraphEditor extends VerticalLayout {
             });
             add(ouToggle);
 
-            // graph/grid selector
-            gridGraphToggle = new Toggle("Grid", "Grid", "Graph");
-            gridGraphToggle.addValueChangeListener(event -> {
-                switch (event.getValue()) {
-                    case "Grid":
-                        add(grid, nodeInfo);
-                        remove(graphViewer);
-                        break;
-                    case "Graph":
-                        remove(grid, nodeInfo);
-                        add(graphViewer);
-                        break;
+            // title layout config
+            title = new HorizontalLayout();
+            title.setAlignItems(Alignment.BASELINE);
+            title.setJustifyContentMode(JustifyContentMode.START);
+            title.setWidthFull();
+            title.getStyle()
+                    .set("overflow-y", "hidden")
+                    .set("overflow-x", "scroll")
+                    .set("margin-bottom", "0");
+            add(title);
+
+            // title text
+            titleText = new H2();
+            titleText.getStyle()
+                    .set("user-select", "none")
+                    .set("margin-top", "0");
+            if (isSource) {
+                titleText.setText("Source:");
+            } else {
+                titleText.setText("Destination:");
+            }
+            title.add(titleText);
+
+            // current parent node whose children are being shown
+            currNodeName = new H3("All Nodes");
+            currNodeName.getStyle()
+                    .set("user-select", "none")
+                    .set("margin-top", "0");
+            title.add(currNodeName);
+
+            // back button
+            backButton = new Button(new Icon(VaadinIcon.ARROW_BACKWARD));
+            backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            backButton.addClickListener(evt -> {
+                if (!prevNodes.empty()) {
+                    currNodes = prevNodes.pop();
+                    //grid.setItems(currNodes);
+                    updateGridNodes(currNodes);
+                    grid.deselectAll();
+                    if (isSource) {
+                        selectedChildNode = null;
+                    } else {
+                        selectedParentNode = null;
+                    }
+                    buttonGroup.refreshNodeTexts();
+                    buttonGroup.refreshButtonStates();
+                    updateNodeInfo();
                 }
+
+                if (prevNodes.empty()) {
+                    backButton.setEnabled(false);
+                }
+
+                if (!prevNodeNames.empty()) {
+                    currNodeName.setText(prevNodeNames.pop());
+                }
+
             });
-            add(gridGraphToggle);
+            backButton.setEnabled(false);
+            title.add(backButton);
 
             // search bar
             searchBar = new TextField();
+            searchBar.getStyle()
+                    .set("margin-top", "0");;
             searchBar.setWidthFull();
             searchBar.setPlaceholder("Search by name...");
             searchBar.setClearButtonVisible(true);
