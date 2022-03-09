@@ -294,6 +294,8 @@ class CytoscapeElement extends PolymerElement {
     // policy_classes.map((x) => {
     //   this.collapse_node_all(this.cy.$("#" + x));
     // });
+
+    this.fit()
   }
 
   register() {
@@ -541,6 +543,10 @@ class CytoscapeElement extends PolymerElement {
     this.cy.json({
       elements: elements
     });
+    this.cy.fit();
+  }
+
+  fit() {
     this.cy.fit();
   }
 

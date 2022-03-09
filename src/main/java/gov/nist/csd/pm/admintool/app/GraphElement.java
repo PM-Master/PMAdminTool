@@ -35,6 +35,8 @@ public class GraphElement extends Div {
             });
         });
 
+        getElement().addEventListener("dblclick", (mouseEvent) -> getElement().callJsFunction("fit"));
+
         ContextMenu menu = new ContextMenu();
         menu.setTarget(this);
         menu.addItem("Download JPEG", menuItemClickEvent -> getElement().callJsFunction("download"));
