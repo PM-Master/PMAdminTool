@@ -133,6 +133,7 @@ class CytoscapeElement extends PolymerElement {
 
 
   setAssociations(x, conf) {
+    let opsString = x.operations.join(", ");
     return {
       data: {
         "id": x.source.replace(" ", "").concat(x.target.replace(" ", "")),
@@ -140,11 +141,11 @@ class CytoscapeElement extends PolymerElement {
         "sourceshape": 'square',
         "target": x.target.replace(" ", ""),
         "targetshape": 'triangle',
-        "label": x.operations.join(", ").length > 10 ? '[...]' : x.operations.join(", "),
+        "label": opsString.length > 10 ? '[...]' : opsString,
         'linecolor': conf.edges.associations.edgeColor,
         'linestyle': conf.edges.associations.linestyle,
         "group": "associations",
-        'label_long': x.operations.join(", ").length > 10 ? x.operations.join(", ") : ''
+        'label_long': opsString.length > 10 ? opsString : ''
       }
     };
   }
