@@ -16,6 +16,8 @@ import com.vaadin.flow.component.page.PendingJavaScriptResult;
 @NpmPackage(value = "@polymer/polymer", version = "3.4.1")
 // @NpmPackage(value = "@webcomponents/webcomponentsjs", version = "^2.2.10")
 @NpmPackage(value = "cytoscape", version = "3.18.2")
+@NpmPackage(value = "cytoscape-popper", version = "2.0.0")
+@NpmPackage(value = "tippy.js", version = "6.3.7")
 @NpmPackage(value = "jquery", version = "3.2.1")
 @JsModule("./src/cytoscape-element.js")
 @CssImport("./styles/csd_pm_style.css")

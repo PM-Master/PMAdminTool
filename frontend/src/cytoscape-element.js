@@ -4,6 +4,8 @@ import {
   PolymerElement
 } from '@polymer/polymer/polymer-element.js';
 import cytoscape from "cytoscape";
+import popper from "cytoscape-popper";
+import tippy from "tippy.js";
 import $ from "jquery";
 import {
   conf as cy_conf
@@ -138,10 +140,11 @@ class CytoscapeElement extends PolymerElement {
         "sourceshape": 'square',
         "target": x.target.replace(" ", ""),
         "targetshape": 'triangle',
-        "label": x.operations.join(", "),
+        "label": x.operations.join(", ").length > 10 ? '[...]' : x.operations.join(", "),
         'linecolor': conf.edges.associations.edgeColor,
         'linestyle': conf.edges.associations.linestyle,
-        "group": "associations"
+        "group": "associations",
+        'label_long': x.operations.join(", ").length > 10 ? x.operations.join(", ") : ''
       }
     };
   }
@@ -379,6 +382,30 @@ class CytoscapeElement extends PolymerElement {
         'source-arrow-color': cy_conf.highlight.color,
         'target-arrow-color': cy_conf.highlight.color
       });
+
+      if (edge.data().group == "associations") {
+        if (edge.data().label_long.length > 0) {
+          // tool tip from https://github.com/cytoscape/cytoscape.js-popper
+          let ref = edge.popperRef(); // used only for positioning
+
+          edge.data().tooltip = new tippy(document.createElement('div'), { // tippy props:
+            getReferenceClientRect: ref.getBoundingClientRect, // https://atomiks.github.io/tippyjs/v6/all-props/#getreferenceclientrect
+            trigger: 'manual', // mandatory, we cause the tippy to show programmatically.
+
+            // your own custom props
+            // content prop can be used when the target is a single element https://atomiks.github.io/tippyjs/v6/constructor/#prop
+            content: () => {
+              let content = document.createElement('div');
+
+              content.innerHTML = edge.data().label_long;
+
+              return content;
+            }
+          });
+
+          edge.data().tooltip.show();
+        }
+      }
     });
 
     this.cy.on('mouseout', 'edge', (evt) => {
@@ -389,6 +416,11 @@ class CytoscapeElement extends PolymerElement {
           'source-arrow-color': edge.data('linecolor'),
           'target-arrow-color': edge.data('linecolor')
         });
+      }
+
+      if (edge.data().tooltip) {
+        edge.data().tooltip.destroy()
+        edge.data().tooltip = null;
       }
     });
 
@@ -544,4 +576,5 @@ class CytoscapeElement extends PolymerElement {
 
 }
 
+cytoscape.use(popper)
 customElements.define(CytoscapeElement.is, CytoscapeElement);
