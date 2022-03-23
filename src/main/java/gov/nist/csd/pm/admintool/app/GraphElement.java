@@ -42,6 +42,16 @@ public class GraphElement extends Div {
         ContextMenu menu = new ContextMenu();
         menu.setTarget(this);
         menu.addItem("Download JPEG", menuItemClickEvent -> getElement().callJsFunction("download"));
+        menu.addItem("Highlight Path from Selected", menuItemClickEvent -> {
+            getSelectedElements().then((jsonValue) -> {
+                if (jsonValue.toJson() != null) {
+                    getElement().callJsFunction("highlight", jsonValue.asString());
+                } else {
+                    MainView.notify("No Node Selected! Please select node before highlighting");
+                }
+            });
+
+        });
     }
 
     public void reset(String graph) {

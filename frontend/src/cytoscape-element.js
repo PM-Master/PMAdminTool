@@ -177,8 +177,8 @@ class CytoscapeElement extends PolymerElement {
 
     this.dataset_ = JSON.parse(dataset)
 
-    let policy_classes = this.getRoots(this.dataset_);
-    let elts = this.getElements(this.dataset_);
+    this.policy_classes = this.getRoots(this.dataset_);
+    this.elts = this.getElements(this.dataset_);
 
     this.cy = cytoscape({
 
@@ -187,7 +187,7 @@ class CytoscapeElement extends PolymerElement {
       minZoom: 1e-5,
       maxZoom: 1e5,
 
-      elements: elts,
+      elements: this.elts,
       style: [{
         selector: "node",
         style: {
@@ -245,16 +245,19 @@ class CytoscapeElement extends PolymerElement {
             "background-color": cy_conf.highlight.color,
             'border-width': "5px",
             'border-style': "double",
+            'line-color': cy_conf.highlight.color,
+            'source-arrow-color': cy_conf.highlight.color,
+            'target-arrow-color': cy_conf.highlight.color
           }
         }
       ],
       layout: {
         name: 'breadthfirst',
-        roots: policy_classes,
+        roots: this.policy_classes,
         transform: (node, position) => {
           return {
             x: (window.innerWidth - position.x) * cy_conf["x-scaling"],
-            y: (window.innerHeight - position.y - (policy_classes.includes(node.data('id')) ? 0 : (Math.random() * cy_conf.node_shape.cellHeight))) * cy_conf["y-scaling"]
+            y: (window.innerHeight - position.y - (this.policy_classes.includes(node.data('id')) ? 0 : (Math.random() * cy_conf.node_shape.cellHeight))) * cy_conf["y-scaling"]
           };
         }
       }
@@ -262,8 +265,8 @@ class CytoscapeElement extends PolymerElement {
 
 
     //populating childrenData dictionary; graph starts expanded
-    for (let x = 0; x < elts.nodes.length; x++) {
-      let curNode = this.cy.$("#" + elts.nodes[x].data.id);
+    for (let x = 0; x < this.elts.nodes.length; x++) {
+      let curNode = this.cy.$("#" + this.elts.nodes[x].data.id);
       let curId = curNode.data('id');
 
       //get its connectedEdges and connectedNodes
@@ -325,64 +328,9 @@ class CytoscapeElement extends PolymerElement {
       node.removeClass('mouseover');
     });
 
-    this.cy.on('cxttap', 'node', (evt) => {
-      let node = evt.target;
-      var childrenViewModal_childname = document.getElementById("childrenViewModal_childname");
-      childrenViewModal_childname.innerText = "Node : " + node.data()['label'];
-
-      // let outgoers_ = getChildNodes(childrenData, node.id());
-      let curNode = node;
-
-      let outgoers_ = node.outgoers((ele) => {
-        if (ele.isEdge()) {
-          return false;
-        }
-        if (ele.isNode()) {
-          if (!ele.edgesWith(curNode).length) {
-            return false;
-          }
-          if (this.cy.$("#" + ele.id()).edgesWith(this.cy.$("#" + curNode.id()))[0].data().group === "associations") {
-            return false;
-          }
-        }
-
-        //filter on connectedEdges
-        return !curNode.target().anySame(curNode);
-      });
-
-      let child_lst = document.getElementById("childrenViewModal_childlist");
-      let fragment = document.createDocumentFragment();
-
-      child_lst.appendChild(fragment);
-      modal.style.display = "block";
-    });
-
-    this.cy.on('tap', 'edge', (evt) => {
-      var edge = evt.target;
-      // document.getElementById("select").innerHTML = 'Selected: ' + edge.id();
-      // edge.style({
-      //   'line-color': cy_conf.highlight.color,
-      //   'source-arrow-color': cy_conf.highlight.color,
-      //   'target-arrow-color': cy_conf.highlight.color
-      // });
-      // if (edge.data('group') === "assignments") {
-      //   edge.style({
-      //     'line-color': 'red'
-      //   });
-      // } else {
-      //   edge.style({
-      //     'line-color': 'green'
-      //   });
-      // }
-    });
-
     this.cy.on('mouseover', 'edge', (evt) => {
       var edge = evt.target;
-      edge.style({
-        'line-color': cy_conf.highlight.color,
-        'source-arrow-color': cy_conf.highlight.color,
-        'target-arrow-color': cy_conf.highlight.color
-      });
+      edge.addClass('mouseover');
 
       if (edge.data().group == "associations") {
         if (edge.data().label_long.length > 0) {
@@ -411,13 +359,7 @@ class CytoscapeElement extends PolymerElement {
 
     this.cy.on('mouseout', 'edge', (evt) => {
       var edge = evt.target;
-      if (!edge.selected()) {
-        edge.style({
-          'line-color': edge.data('linecolor'),
-          'source-arrow-color': edge.data('linecolor'),
-          'target-arrow-color': edge.data('linecolor')
-        });
-      }
+      edge.removeClass('mouseover');
 
       if (edge.data().tooltip) {
         edge.data().tooltip.destroy()
@@ -560,6 +502,12 @@ class CytoscapeElement extends PolymerElement {
 
   fit() {
     this.cy.fit();
+  }
+
+  highlight(id) { // from id to each PC
+    this.policy_classes.forEach(pc => {
+      this.cy.elements().aStar({ root: "#" + pc, goal: "#" + id }).path.select();
+    })
   }
 
   download() {

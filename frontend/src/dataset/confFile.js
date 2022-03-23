@@ -17,8 +17,10 @@ const conf = {
     "PC": { "color": coolors["pc_color"], "textColor": "#000000" },
     "PC0": { "color": "white", "textColor": "#000000" }
   },
-  "edges": {"assignments": {"edgeColor": "blue", "linestyle": "solid"},
-  "associations": {"edgeColor": "green", "linestyle": "dashed"}},
+  "edges": {
+    "assignments": {"edgeColor": "blue", "linestyle": "solid"},
+    "associations": {"edgeColor": "green", "linestyle": "dashed"}
+  },
   "highlight": {"color": "yellow"},
   "selected": {"color": "#66FF33"},
   "node_shape" : {"cellHeight": 80, "cellWidth": 150, "font-size": 13.5, "shape": "ellipse"}, //'bottom-round-rectangle' 'rounded-rectangle'
