@@ -28,12 +28,12 @@ public class GraphElement extends Div {
     private ClickCallback clickCallback;
     private SingletonGraph g;
 
-    public GraphElement(String elementID, String graph) {
+    public GraphElement(String elementID) throws PMException {
         g = SingletonGraph.getInstance();
 
         this.setId(elementID);
         getElement().setProperty("cyName", elementID);
-        getElement().setProperty("graphFromVaadin", graph);
+        getElement().setProperty("graphFromVaadin", ImportExport.toFullJson(g));
 
         getElement().addEventListener("click", (mouseEvent) -> {
             getSelectedElements().then((jsonValue) -> {

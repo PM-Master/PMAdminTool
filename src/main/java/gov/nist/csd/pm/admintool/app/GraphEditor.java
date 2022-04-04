@@ -457,7 +457,7 @@ public class GraphEditor extends VerticalLayout {
 
         private void addGraphLayout() {
             try {
-                graphViewer = new GraphElement(isSource ? "cy1":"cy2", ImportExport.toFullJson(g));
+                graphViewer = new GraphElement(isSource ? "cy1":"cy2");
                 graphViewer.addClassName("cy");
                 graphViewer.setHeight("100%");
                 graphViewer.setWidth("100%");

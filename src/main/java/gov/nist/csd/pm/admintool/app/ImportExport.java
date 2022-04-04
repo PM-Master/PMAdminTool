@@ -171,7 +171,7 @@ public class ImportExport extends VerticalLayout {
             Button exportButton = new Button("Export JSON", click -> {
                 try {
                     //exportJson.setValue(SingletonGraph.getInstance().getGraphService(userCtx).toJson());
-                    exportJson.setValue(toFullJson(g));
+                    exportJson.setValue(g.toJson());
                     //exportJson.setValue(SingletonGraph.getInstance().getPAP().getGraphPAP().toJson());
                     MainView.notify("The graph has been exported into a JSON", MainView.NotificationType.SUCCESS);
                 } catch (PMException e) {
