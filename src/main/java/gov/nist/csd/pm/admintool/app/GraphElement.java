@@ -86,9 +86,10 @@ public class GraphElement extends Div {
         });
     }
 
-    public void reset(String graph) {
+    public void reset() throws PMException{
+        String graph = ImportExport.toFullJson(g);
         getElement().setProperty("graphFromVaadin", graph);
-        getElement().callJsFunction("reset", graph);
+        getElement().callJsFunction("reset");
     }
 
     private void highlightNode(String node_name) {

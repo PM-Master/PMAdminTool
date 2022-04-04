@@ -975,23 +975,24 @@ public class GraphEditor extends VerticalLayout {
 //            grid.getDataCommunicator().reset();
             grid.getDataProvider().refreshAll();
 
-            try {
-                graphViewer.reset(ImportExport.toFullJson(g));
-            } catch (PMException e) {
-                e.printStackTrace();
-            }
+            refreshGraphViewer();
         }
 
         public void refresh(Node... nodes) {
             for (Node node : nodes)
                 grid.getDataProvider().refreshItem(node, true);
 
+            refreshGraphViewer();
+        }
+
+        public void refreshGraphViewer() {
             try {
-                graphViewer.reset(ImportExport.toFullJson(g));
+                graphViewer.reset();
             } catch (PMException e) {
                 e.printStackTrace();
             }
         }
+
 
         public void expandPolicies() {
             Set<Node> policies = new HashSet<>();
@@ -1562,6 +1563,9 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify("Node with name: " + name + " has been edited", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();
+
+                    childNode.refreshGraphViewer();
+                    parentNode.refreshGraphViewer();
                     dialog.close();
                 }
             } catch (Exception e) {
@@ -1782,6 +1786,9 @@ public class GraphEditor extends VerticalLayout {
                         MainView.notify(source.getName() + " assigned to " + target.getName(), MainView.NotificationType.SUCCESS);
                         childNode.updateNodeInfo();
                         parentNode.updateNodeInfo();
+
+                        childNode.refreshGraphViewer();
+                        parentNode.refreshGraphViewer();
                         dialog.close();
                     } catch (Exception e) {
                         MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1875,6 +1882,9 @@ public class GraphEditor extends VerticalLayout {
                         MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been modified", MainView.NotificationType.SUCCESS);
                         childNode.updateNodeInfo();
                         parentNode.updateNodeInfo();
+
+                        childNode.refreshGraphViewer();
+                        parentNode.refreshGraphViewer();
                         dialog.close();
                     } catch (Exception e) {
                         MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1906,6 +1916,9 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();
+
+                    childNode.refreshGraphViewer();
+                    parentNode.refreshGraphViewer();
                 } catch (PMException e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();
