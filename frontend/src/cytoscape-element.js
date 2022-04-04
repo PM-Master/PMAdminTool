@@ -510,6 +510,10 @@ class CytoscapeElement extends PolymerElement {
     })
   }
 
+  highlightNode(node_name) {
+    this.cy.$('#' + node_name).select();
+  }
+
   download() {
     var element = document.createElement('a');
     element.setAttribute('href', this.cy.jpeg({"full":true}));

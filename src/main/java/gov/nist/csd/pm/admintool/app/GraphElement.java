@@ -10,6 +10,8 @@ import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.page.PendingJavaScriptResult;
+import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.exceptions.PMException;
 // import com.vaadin.flow.shared.Registration;
 
 @Tag("cytoscape-element")
@@ -24,8 +26,11 @@ import com.vaadin.flow.component.page.PendingJavaScriptResult;
 
 public class GraphElement extends Div {
     private ClickCallback clickCallback;
+    private SingletonGraph g;
 
     public GraphElement(String elementID, String graph) {
+        g = SingletonGraph.getInstance();
+
         this.setId(elementID);
         getElement().setProperty("cyName", elementID);
         getElement().setProperty("graphFromVaadin", graph);
@@ -50,6 +55,33 @@ public class GraphElement extends Div {
                     MainView.notify("No Node Selected! Please select node before highlighting");
                 }
             });
+        });
+        menu.addItem("Highlight Parents from Selected", menuItemClickEvent -> {
+            getSelectedElements().then((jsonValue) -> {
+                if (jsonValue.toJson() != null) {
+                    try {
+                        g.getParents(jsonValue.asString()).forEach(this::highlightNode);
+                    } catch (PMException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    MainView.notify("No Node Selected! Please select node before highlighting");
+                }
+            });
+
+        });
+        menu.addItem("Highlight Children from Selected", menuItemClickEvent -> {
+            getSelectedElements().then((jsonValue) -> {
+                if (jsonValue.toJson() != null) {
+                    try {
+                        g.getChildren(jsonValue.asString()).forEach(this::highlightNode);
+                    } catch (PMException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    MainView.notify("No Node Selected! Please select node before highlighting");
+                }
+            });
 
         });
     }
@@ -57,6 +89,10 @@ public class GraphElement extends Div {
     public void reset(String graph) {
         getElement().setProperty("graphFromVaadin", graph);
         getElement().callJsFunction("reset", graph);
+    }
+
+    private void highlightNode(String node_name) {
+        getElement().callJsFunction("highlightNode", node_name);
     }
 
     private PendingJavaScriptResult getSelectedElements() {
