@@ -98,6 +98,7 @@ public class GraphEditor extends VerticalLayout {
 
         // for graph viewer section
         private GraphElement graphViewer;
+        private boolean graphViewerAdded = false;
 
         // for node info section
         private VerticalLayout nodeInfo; // overall node info layout
@@ -139,11 +140,15 @@ public class GraphEditor extends VerticalLayout {
                 switch (event.getValue()) {
                     case "Grid":
                         add(ouToggle, title, searchBar, grid, nodeInfo);
-                        remove(graphViewer);
+                        graphViewer.setVisible(false);
                         break;
                     case "Graph":
                         remove(ouToggle, title, searchBar, grid, nodeInfo);
-                        add(graphViewer);
+                        if (!graphViewerAdded) {
+                            add(graphViewer);
+                            graphViewerAdded = true;
+                        }
+                        graphViewer.setVisible(true);
                         break;
                 }
             });
