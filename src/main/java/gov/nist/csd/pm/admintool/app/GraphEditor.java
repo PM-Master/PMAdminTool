@@ -88,13 +88,20 @@ public class GraphEditor extends VerticalLayout {
         private final Map<String, Predicate<? super String>> filters;
 
         // for title section
+        private HorizontalLayout title; // contains Title, Back Button, Current Parent Node
         private H2 titleText;
         private H3 currNodeName; // The current node whose children are being shown
         private Button backButton;
         private Toggle ouToggle;
+        private Toggle gridGraphToggle;
         private TextField searchBar;
 
+        // for graph viewer section
+        private CytoscapeElement graphViewer;
+        private boolean graphViewerAdded = false;
+
         // for node info section
+        private VerticalLayout nodeInfo; // overall node info layout
         private H3 name;
         private Div childrenList, parentList;   // for relations
         private Div outgoingAssociationList, incomingAssociationList; // for associations
@@ -116,6 +123,7 @@ public class GraphEditor extends VerticalLayout {
 
             addTitleLayout();
             addGridLayout();
+            addGraphLayout();
             addNodeInfoLayout();
 
             // get data and expand policy classes
@@ -123,63 +131,28 @@ public class GraphEditor extends VerticalLayout {
         }
 
         private void addTitleLayout() {
-            /// contains Title, Back Button, Current Parent Node
-
-            // title layout config
-            HorizontalLayout title = new HorizontalLayout();
-            title.setAlignItems(Alignment.BASELINE);
-            title.setJustifyContentMode(JustifyContentMode.START);
-            title.setWidthFull();
-            title.getStyle()
-                    .set("overflow-y", "hidden")
-                    .set("overflow-x", "scroll");
-            add(title);
-
-            // title text
-            titleText = new H2();
-            titleText.getStyle().set("user-select", "none");
-            if (isSource) {
-                titleText.setText("Source:");
-            } else {
-                titleText.setText("Destination:");
-            }
-            title.add(titleText);
-
-            // current parent node whose children are being shown
-            currNodeName = new H3("All Nodes");
-            currNodeName.getStyle().set("user-select", "none");
-            title.add(currNodeName);
-
-            // back button
-            backButton = new Button(new Icon(VaadinIcon.ARROW_BACKWARD));
-            backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-            backButton.addClickListener(evt -> {
-                if (!prevNodes.empty()) {
-                    currNodes = prevNodes.pop();
-                    //grid.setItems(currNodes);
-                    updateGridNodes(currNodes);
-                    grid.deselectAll();
-                    if (isSource) {
-                        selectedChildNode = null;
-                    } else {
-                        selectedParentNode = null;
-                    }
-                    buttonGroup.refreshNodeTexts();
-                    buttonGroup.refreshButtonStates();
-                    updateNodeInfo();
+            // graph/grid selector
+            gridGraphToggle = new Toggle("Grid", "Grid", "Graph");
+            gridGraphToggle.getElement().getStyle()
+                    .set("margin-top", "2vh")
+                    .set("margin-bottom", "1vh");
+            gridGraphToggle.addValueChangeListener(event -> {
+                switch (event.getValue()) {
+                    case "Grid":
+                        add(ouToggle, title, searchBar, grid, nodeInfo);
+                        graphViewer.setVisible(false);
+                        break;
+                    case "Graph":
+                        remove(ouToggle, title, searchBar, grid, nodeInfo);
+                        if (!graphViewerAdded) {
+                            add(graphViewer);
+                            graphViewerAdded = true;
+                        }
+                        graphViewer.setVisible(true);
+                        break;
                 }
-
-                if (prevNodes.empty()) {
-                    backButton.setEnabled(false);
-                }
-
-                if (!prevNodeNames.empty()) {
-                    currNodeName.setText(prevNodeNames.pop());
-                }
-
             });
-            backButton.setEnabled(false);
-            title.add(backButton);
+            add(gridGraphToggle);
 
             // object/user selector
             ouToggle = new Toggle("All", "Users", "All", "Objects");
@@ -220,8 +193,71 @@ public class GraphEditor extends VerticalLayout {
             });
             add(ouToggle);
 
+            // title layout config
+            title = new HorizontalLayout();
+            title.setAlignItems(Alignment.BASELINE);
+            title.setJustifyContentMode(JustifyContentMode.START);
+            title.setWidthFull();
+            title.getStyle()
+                    .set("overflow-y", "hidden")
+                    .set("overflow-x", "scroll")
+                    .set("margin-bottom", "0");
+            add(title);
+
+            // title text
+            titleText = new H2();
+            titleText.getStyle()
+                    .set("user-select", "none")
+                    .set("margin-top", "0");
+            if (isSource) {
+                titleText.setText("Source:");
+            } else {
+                titleText.setText("Destination:");
+            }
+            title.add(titleText);
+
+            // current parent node whose children are being shown
+            currNodeName = new H3("All Nodes");
+            currNodeName.getStyle()
+                    .set("user-select", "none")
+                    .set("margin-top", "0");
+            title.add(currNodeName);
+
+            // back button
+            backButton = new Button(new Icon(VaadinIcon.ARROW_BACKWARD));
+            backButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+            backButton.addClickListener(evt -> {
+                if (!prevNodes.empty()) {
+                    currNodes = prevNodes.pop();
+                    //grid.setItems(currNodes);
+                    updateGridNodes(currNodes);
+                    grid.deselectAll();
+                    if (isSource) {
+                        selectedChildNode = null;
+                    } else {
+                        selectedParentNode = null;
+                    }
+                    buttonGroup.refreshNodeTexts();
+                    buttonGroup.refreshButtonStates();
+                    updateNodeInfo();
+                }
+
+                if (prevNodes.empty()) {
+                    backButton.setEnabled(false);
+                }
+
+                if (!prevNodeNames.empty()) {
+                    currNodeName.setText(prevNodeNames.pop());
+                }
+
+            });
+            backButton.setEnabled(false);
+            title.add(backButton);
+
             // search bar
             searchBar = new TextField();
+            searchBar.getStyle()
+                    .set("margin-top", "0");;
             searchBar.setWidthFull();
             searchBar.setPlaceholder("Search by name...");
             searchBar.setClearButtonVisible(true);
@@ -424,8 +460,39 @@ public class GraphEditor extends VerticalLayout {
             });
         }
 
+        private void addGraphLayout() {
+            try {
+                graphViewer = new CytoscapeElement(isSource ? "cy1":"cy2");
+                graphViewer.addClassName("cy");
+                graphViewer.setHeight("100%");
+                graphViewer.setWidth("100%");
+
+                graphViewer.setClickListener(node_id -> {
+                    if (node_id == null || node_id.isEmpty()) {
+                        if (isSource) selectedChildNode = null;
+                        else selectedParentNode = null;
+                    } else {
+                        try {
+                            if (isSource) selectedChildNode = g.getNode(node_id);
+                            else selectedParentNode = g.getNode(node_id);
+                        } catch (PMException e) {
+                            e.printStackTrace();
+
+                            if (isSource) selectedChildNode = null;
+                            else selectedParentNode = null;
+                        }
+                    }
+
+                    buttonGroup.refreshButtonStates();
+                    buttonGroup.refreshNodeTexts();
+                });
+            } catch (PMException e) {
+                e.printStackTrace();
+            }
+        }
+
         private void addNodeInfoLayout() {
-            VerticalLayout nodeInfo = new VerticalLayout();
+            nodeInfo = new VerticalLayout();
             nodeInfo.setWidthFull();
             nodeInfo.setHeight("30%");
             nodeInfo.getStyle()
@@ -912,12 +979,25 @@ public class GraphEditor extends VerticalLayout {
         public void refresh() {
 //            grid.getDataCommunicator().reset();
             grid.getDataProvider().refreshAll();
+
+            refreshGraphViewer();
         }
 
         public void refresh(Node... nodes) {
             for (Node node : nodes)
                 grid.getDataProvider().refreshItem(node, true);
+
+            refreshGraphViewer();
         }
+
+        public void refreshGraphViewer() {
+            try {
+                graphViewer.reset();
+            } catch (PMException e) {
+                e.printStackTrace();
+            }
+        }
+
 
         public void expandPolicies() {
             Set<Node> policies = new HashSet<>();
@@ -1488,6 +1568,9 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify("Node with name: " + name + " has been edited", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();
+
+                    childNode.refreshGraphViewer();
+                    parentNode.refreshGraphViewer();
                     dialog.close();
                 }
             } catch (Exception e) {
@@ -1708,6 +1791,9 @@ public class GraphEditor extends VerticalLayout {
                         MainView.notify(source.getName() + " assigned to " + target.getName(), MainView.NotificationType.SUCCESS);
                         childNode.updateNodeInfo();
                         parentNode.updateNodeInfo();
+
+                        childNode.refreshGraphViewer();
+                        parentNode.refreshGraphViewer();
                         dialog.close();
                     } catch (Exception e) {
                         MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1801,6 +1887,9 @@ public class GraphEditor extends VerticalLayout {
                         MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been modified", MainView.NotificationType.SUCCESS);
                         childNode.updateNodeInfo();
                         parentNode.updateNodeInfo();
+
+                        childNode.refreshGraphViewer();
+                        parentNode.refreshGraphViewer();
                         dialog.close();
                     } catch (Exception e) {
                         MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1832,6 +1921,9 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify("Association between " + source.getName() + " and " + target.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();
+
+                    childNode.refreshGraphViewer();
+                    parentNode.refreshGraphViewer();
                 } catch (PMException e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();

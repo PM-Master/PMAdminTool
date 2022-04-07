@@ -1,0 +1,17 @@
+body {
+  font-family: helvetica neue, helvetica, liberation sans, arial, sans-serif;
+  font-size: 14px;
+}
+
+#cy {
+  z-index: 999;
+  width: 85%;
+  height: 85%;
+  float: left;
+}
+
+h1 {
+  opacity: 0.5;
+  font-size: 1em;
+  font-weight: bold;
+}
