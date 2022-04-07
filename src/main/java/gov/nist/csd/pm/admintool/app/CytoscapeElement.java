@@ -1,22 +1,17 @@
 package gov.nist.csd.pm.admintool.app;
 
-// import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.dependency.CssImport;
-// import com.vaadin.flow.component.dependency.JavaScript;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
-import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.page.PendingJavaScriptResult;
 import gov.nist.csd.pm.admintool.graph.SingletonGraph;
 import gov.nist.csd.pm.exceptions.PMException;
-// import com.vaadin.flow.shared.Registration;
 
 @Tag("cytoscape-element")
 @NpmPackage(value = "@polymer/polymer", version = "3.4.1")
-// @NpmPackage(value = "@webcomponents/webcomponentsjs", version = "^2.2.10")
 @NpmPackage(value = "cytoscape", version = "3.18.2")
 @NpmPackage(value = "cytoscape-popper", version = "2.0.0")
 @NpmPackage(value = "tippy.js", version = "6.3.7")
@@ -24,17 +19,28 @@ import gov.nist.csd.pm.exceptions.PMException;
 @JsModule("./src/cytoscape-element.js")
 @CssImport("./styles/csd_pm_style.css")
 
-public class GraphElement extends Div {
+public class CytoscapeElement extends Div {
     private ClickCallback clickCallback;
     private SingletonGraph g;
 
-    public GraphElement(String elementID) throws PMException {
+    public CytoscapeElement(String elementID) throws PMException {
+        // get singleton instance
         g = SingletonGraph.getInstance();
 
+        // html meta info
         this.setId(elementID);
         getElement().setProperty("cyName", elementID);
+
+        // pass graph json to cytoscape
         getElement().setProperty("graphFromVaadin", ImportExport.toFullJson(g));
 
+        // add interactive functionality
+        addListeners();
+        addContextMenu();
+    }
+
+    // constructor helpers
+    private void addListeners() {
         getElement().addEventListener("click", (mouseEvent) -> {
             getSelectedElements().then((jsonValue) -> {
                 if (clickCallback != null)
@@ -43,7 +49,9 @@ public class GraphElement extends Div {
         });
 
         getElement().addEventListener("dblclick", (mouseEvent) -> getElement().callJsFunction("fit"));
+    }
 
+    private void addContextMenu() {
         ContextMenu menu = new ContextMenu();
         menu.setTarget(this);
         menu.addItem("Download JPEG", menuItemClickEvent -> getElement().callJsFunction("download"));
@@ -86,12 +94,20 @@ public class GraphElement extends Div {
         });
     }
 
+
+    // public methods
+    public void setClickListener(ClickCallback clickCallback) {
+        this.clickCallback = clickCallback;
+    }
+
     public void reset() throws PMException{
         String graph = ImportExport.toFullJson(g);
         getElement().setProperty("graphFromVaadin", graph);
         getElement().callJsFunction("reset");
     }
 
+
+    // methods to interact with underlying javascript
     private void highlightNode(String node_name) {
         getElement().callJsFunction("highlightNode", node_name);
     }
@@ -100,28 +116,9 @@ public class GraphElement extends Div {
         return getElement().callJsFunction("getSelected");
     }
 
-    public void setClickListener(ClickCallback clickCallback) {
-        this.clickCallback = clickCallback;
-    }
 
-    public PendingJavaScriptResult getZoomAndPan() {
-        return getElement().callJsFunction("getZoomAndPan");
-    }
-
-    public void setViewport(String viewport) {
-        getElement().callJsFunction("setViewport", viewport);
-    }
-
-    public void loadGraph1() {
-        getElement().callJsFunction("loadGraph1");
-    }
-
-    public void loadGraph2() {
-        getElement().callJsFunction("loadGraph2");
-    }
-
+    // click callback to give custom functionality to clicking on a node
     public interface ClickCallback {
         void onClick(String node_id);
     }
-
 }

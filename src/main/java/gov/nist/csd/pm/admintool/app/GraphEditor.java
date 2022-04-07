@@ -97,7 +97,7 @@ public class GraphEditor extends VerticalLayout {
         private TextField searchBar;
 
         // for graph viewer section
-        private GraphElement graphViewer;
+        private CytoscapeElement graphViewer;
         private boolean graphViewerAdded = false;
 
         // for node info section
@@ -462,7 +462,7 @@ public class GraphEditor extends VerticalLayout {
 
         private void addGraphLayout() {
             try {
-                graphViewer = new GraphElement(isSource ? "cy1":"cy2");
+                graphViewer = new CytoscapeElement(isSource ? "cy1":"cy2");
                 graphViewer.addClassName("cy");
                 graphViewer.setHeight("100%");
                 graphViewer.setWidth("100%");

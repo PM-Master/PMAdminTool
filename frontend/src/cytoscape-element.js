@@ -1,5 +1,4 @@
 /* jshint esversion: 6 */
-// import { register } from '@polymer/polymer/lib/utils/telemetry';
 import {
   PolymerElement
 } from '@polymer/polymer/polymer-element.js';
@@ -9,20 +8,10 @@ import tippy from "tippy.js";
 import $ from "jquery";
 import {
   conf as cy_conf
-} from "./dataset/confFile";
-import {
-  elements as elts1
-} from "./dataset/Single PC - Small";
-import {
-  elements as elts2
-} from "./dataset/Multiple PCs - Small";
-import {
-  elements as elts3
-} from "./dataset/Multiple PCs - Medium";
+} from "./confFile";
 
 
 class CytoscapeElement extends PolymerElement {
-
 
   static get properties() {
     return {
@@ -57,111 +46,14 @@ class CytoscapeElement extends PolymerElement {
     };
   }
 
-
   static get is() {
     return 'cytoscape-element';
   }
 
-
   constructor() {
     super();
     this.childrenData = new Map(); // Holds nodes' children info for restoration
-    
   }
-
-
-  getElements(graph) {
-    let nodes_ = graph.nodes.map(x => this.setNodesInfo(x, cy_conf));
-    let assignments = graph.assignments.map(x => this.setAssignments(x, cy_conf));
-    let associations = graph.associations.map(x => this.setAssociations(x, cy_conf));
-    let edges_ = assignments.concat(associations);
-    return {
-      nodes: nodes_,
-      edges: edges_
-    };
-  }
-
-  getRoots(graph) {
-    return graph.nodes.filter(x => (x.type === "PC")).map(x => {
-      return x.name;
-    });
-  }
-
-
-  expand_collapse_node_all(nodeo) {
-    if (this.childrenData.get(nodeo.id()).removed) {
-      this.expand_node_all(nodeo);
-    } else {
-      this.collapse_node_all(nodeo);
-    }
-  }
-
-
-  expand_collapse_node_one(nodeo) {
-    if (this.childrenData.get(nodeo.id()).removed) {
-      this.expand_node_one(nodeo);
-    } else {
-      this.collapse_node_one(nodeo);
-    }
-  }
-
-
-  expand_one_collapse_all(nodeo) {
-    if (this.childrenData.get(nodeo.id()).removed) {
-      this.expand_node_one(nodeo);
-    } else {
-      this.collapse_node_all(nodeo);
-    }
-  }
-
-
-  setAssignments(x, conf) {
-    return {
-      data: {
-        "id": x[0].replace(" ", "").concat(x[1].replace(" ", "")),
-        "source": x[1].replace(" ", ""),
-        "sourceshape": 'triangle',
-        "target": x[0].replace(" ", ""),
-        "targetshape": 'square',
-        "label": "",
-        "linecolor": conf.edges.assignments.edgeColor,
-        "linestyle": conf.edges.assignments.linestyle,
-        "group": "assignments"
-      }
-    };
-  }
-
-
-  setAssociations(x, conf) {
-    let opsString = x.operations.join(", ");
-    return {
-      data: {
-        "id": x.source.replace(" ", "").concat(x.target.replace(" ", "")),
-        "source": x.source.replace(" ", ""),
-        "sourceshape": 'square',
-        "target": x.target.replace(" ", ""),
-        "targetshape": 'triangle',
-        "label": opsString.length > 10 ? '[...]' : opsString,
-        'linecolor': conf.edges.associations.edgeColor,
-        'linestyle': conf.edges.associations.linestyle,
-        "group": "associations",
-        'label_long': opsString.length > 10 ? opsString : ''
-      }
-    };
-  }
-
-
-  setNodesInfo(x, conf) {
-    return {
-      data: {
-        "id": x.name.replace(" ", ""),
-        "label": x.name,
-        "color": conf.node[x.type].color,
-        "textColor": conf.node[x.type].textColor,
-      }
-    };
-  }
-
 
   ready() {
     super.ready();
@@ -172,6 +64,8 @@ class CytoscapeElement extends PolymerElement {
     console.log( "ready!" );
   }
 
+
+  // set up functions
   setup(dataset) {
     console.log("setup")
 
@@ -299,13 +193,66 @@ class CytoscapeElement extends PolymerElement {
     this.fit()
   }
 
-  teardown() {
-    this.cy.destroy()
+  getElements(graph) {
+    let nodes_ = graph.nodes.map(x => this.setNodesInfo(x, cy_conf));
+    let assignments = graph.assignments.map(x => this.setAssignments(x, cy_conf));
+    let associations = graph.associations.map(x => this.setAssociations(x, cy_conf));
+    let edges_ = assignments.concat(associations);
+    return {
+      nodes: nodes_,
+      edges: edges_
+    };
   }
 
-  reset() {
-    this.teardown()
-    this.setup(this.graphFromVaadin)
+  getRoots(graph) {
+    return graph.nodes.filter(x => (x.type === "PC")).map(x => {
+      return x.name;
+    });
+  }
+
+  setAssignments(x, conf) {
+    return {
+      data: {
+        "id": x[0].replace(" ", "").concat(x[1].replace(" ", "")),
+        "source": x[1].replace(" ", ""),
+        "sourceshape": 'triangle',
+        "target": x[0].replace(" ", ""),
+        "targetshape": 'square',
+        "label": "",
+        "linecolor": conf.edges.assignments.edgeColor,
+        "linestyle": conf.edges.assignments.linestyle,
+        "group": "assignments"
+      }
+    };
+  }
+
+  setAssociations(x, conf) {
+    let opsString = x.operations.join(", ");
+    return {
+      data: {
+        "id": x.source.replace(" ", "").concat(x.target.replace(" ", "")),
+        "source": x.source.replace(" ", ""),
+        "sourceshape": 'square',
+        "target": x.target.replace(" ", ""),
+        "targetshape": 'triangle',
+        "label": opsString.length > 10 ? '[...]' : opsString,
+        'linecolor': conf.edges.associations.edgeColor,
+        'linestyle': conf.edges.associations.linestyle,
+        "group": "associations",
+        'label_long': opsString.length > 10 ? opsString : ''
+      }
+    };
+  }
+
+  setNodesInfo(x, conf) {
+    return {
+      data: {
+        "id": x.name.replace(" ", ""),
+        "label": x.name,
+        "color": conf.node[x.type].color,
+        "textColor": conf.node[x.type].textColor,
+      }
+    };
   }
 
   register() {
@@ -369,6 +316,115 @@ class CytoscapeElement extends PolymerElement {
 
   }
 
+
+  // action functions
+  teardown() {
+    this.cy.destroy()
+  }
+
+  reset() {
+    this.teardown()
+    this.setup(this.graphFromVaadin)
+  }
+
+  fit() {
+    this.cy.fit();
+  }
+
+  highlight(id) { // from id to each PC
+    this.policy_classes.forEach(pc => {
+      this.cy.elements().aStar({ root: "#" + pc, goal: "#" + id }).path.select();
+    })
+  }
+
+  highlightNode(node_name) {
+    this.cy.$('#' + node_name).select();
+  }
+
+  download() {
+    var element = document.createElement('a');
+    element.setAttribute('href', this.cy.jpeg({"full":true}));
+    element.setAttribute('download', "graph.jpeg");
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }
+
+
+  // expanding and collapsing functions
+  expand_collapse_node_all(nodeo) {
+    if (this.childrenData.get(nodeo.id()).removed) {
+      this.expand_node_all(nodeo);
+    } else {
+      this.collapse_node_all(nodeo);
+    }
+  }
+
+  expand_collapse_node_one(nodeo) {
+    if (this.childrenData.get(nodeo.id()).removed) {
+      this.expand_node_one(nodeo);
+    } else {
+      this.collapse_node_one(nodeo);
+    }
+  }
+
+  expand_one_collapse_all(nodeo) {
+    if (this.childrenData.get(nodeo.id()).removed) {
+      this.expand_node_one(nodeo);
+    } else {
+      this.collapse_node_all(nodeo);
+    }
+  }
+
+  collapse_node_all(nodeo) {
+    let nodesToRemove = this.fetchAllChildren(nodeo);
+    this._collapse(nodesToRemove);
+    this.childrenData.get(nodeo.id()).removed = true;
+  }
+
+  collapse_node_one(nodeo) {
+    let nodesToRemove = this.getChildren(nodeo);
+    this._collapse(nodesToRemove);
+    this.childrenData.get(nodeo.id()).removed = true;
+  }
+
+  _collapse(nodesToRemove){
+    nodesToRemove.map(x => x.hide());
+    nodesToRemove.forEach((nodeito) => {
+      if (nodeito.isNode()) {
+        this.childrenData.get(nodeito.data('id')).removed = true;
+      }
+    });
+  }
+
+  expand_node_all(nodeo) {
+    let childrenNodes = this.fetchAllChildren(nodeo);
+    childrenNodes.map(x => x.show());
+    childrenNodes.forEach((nodeito) => {
+      if (nodeito.isNode()) {
+        this.childrenData.get(nodeito.data('id')).removed = false;
+      }
+    });
+    this.childrenData.get(nodeo.id()).removed = false;
+  }
+
+  expand_node_one(nodeo) {
+    let childrenNodes = this.getChildren(nodeo);
+    childrenNodes.map(x => x.show());
+    childrenNodes.forEach((nodeito) => {
+      if (nodeito.isNode()) {
+        // this.childrenData.get(nodeito.data('id')).removed = false;
+      }
+    });
+    this.childrenData.get(nodeo.id()).removed = false;
+  }
+
+
+  // get info funtions
   getChild(childDat, childName) {
     return childDat.get(childName);
   }
@@ -430,7 +486,6 @@ class CytoscapeElement extends PolymerElement {
     return this.cy.filter('[group = "' + type + '"]');
   }
 
-
   fetchAllChildren(nodeElt) {
     let connectedElt = this.getChildren(nodeElt);
     let toRemove = [];
@@ -447,86 +502,6 @@ class CytoscapeElement extends PolymerElement {
     });
     return toRemove;
   }
-
-
-
-  collapse_node_all(nodeo) {
-    let nodesToRemove = this.fetchAllChildren(nodeo);
-    this._collapse(nodesToRemove);
-    this.childrenData.get(nodeo.id()).removed = true;
-  }
-
-  collapse_node_one(nodeo) {
-    let nodesToRemove = this.getChildren(nodeo);
-    this._collapse(nodesToRemove);
-    this.childrenData.get(nodeo.id()).removed = true;
-  }
-
-  _collapse(nodesToRemove){
-    nodesToRemove.map(x => x.hide());
-    nodesToRemove.forEach((nodeito) => {
-      if (nodeito.isNode()) {
-        this.childrenData.get(nodeito.data('id')).removed = true;
-      }
-    });
-  }
-
-  expand_node_all(nodeo) {
-    let childrenNodes = this.fetchAllChildren(nodeo);
-    childrenNodes.map(x => x.show());
-    childrenNodes.forEach((nodeito) => {
-      if (nodeito.isNode()) {
-        this.childrenData.get(nodeito.data('id')).removed = false;
-      }
-    });
-    this.childrenData.get(nodeo.id()).removed = false;
-  }
-
-  expand_node_one(nodeo) {
-    let childrenNodes = this.getChildren(nodeo);
-    childrenNodes.map(x => x.show());
-    childrenNodes.forEach((nodeito) => {
-      if (nodeito.isNode()) {
-        // this.childrenData.get(nodeito.data('id')).removed = false;
-      }
-    });
-    this.childrenData.get(nodeo.id()).removed = false;
-  }
-
-
-
-  loadGraph(elements) {
-    this.cy.json(JSON.parse(elements));
-    this.cy.fit();
-  }
-
-  fit() {
-    this.cy.fit();
-  }
-
-  highlight(id) { // from id to each PC
-    this.policy_classes.forEach(pc => {
-      this.cy.elements().aStar({ root: "#" + pc, goal: "#" + id }).path.select();
-    })
-  }
-
-  highlightNode(node_name) {
-    this.cy.$('#' + node_name).select();
-  }
-
-  download() {
-    var element = document.createElement('a');
-    element.setAttribute('href', this.cy.jpeg({"full":true}));
-    element.setAttribute('download', "graph.jpeg");
-
-    element.style.display = 'none';
-    document.body.appendChild(element);
-
-    element.click();
-
-    document.body.removeChild(element);
-  }
-
 }
 
 cytoscape.use(popper)
