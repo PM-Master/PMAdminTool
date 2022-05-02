@@ -205,6 +205,17 @@ public class SingletonGraph {
         return activePCs;
     }
 
+    public boolean isPCActive(Node pc) {
+        for (PolicyClassWithActive pcsa : activePCs) {
+            if (pcsa.pc.equals(pc)) {
+                return pcsa.isActive();
+            }
+        }
+
+        return false;
+    }
+
+
     public static void resetActivePCs() {
         activePCs.removeIf(policyClassWithActive -> !policyClassWithActive.getName().equals("super_pc"));
     }

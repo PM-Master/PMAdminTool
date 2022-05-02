@@ -945,15 +945,27 @@ public class GraphEditor extends VerticalLayout {
         public void resetGrid() {
             currNodes = new HashSet<>();
             try {
-                //retrieve active PC's
-                List<String> pcs = new ArrayList<>();
-                for (SingletonGraph.PolicyClassWithActive pc: SingletonGraph.getActivePCs()) {
-                    if (pc.isActive()){
-                        pcs.add(pc.getName());
+                Set<Node> allNodes = g.getActiveNodes();
+                Set<String> visitedNodes = new HashSet<>();
+
+                for (Node n: allNodes) {
+                    if (!visitedNodes.contains(n.getName())) { // has not already been visited
+                        visitedNodes.add(n.getName());
+
+                        // if no parents, add to curr nodes
+                        if (g.getParents(n.getName()).isEmpty()) {
+                            if (n.getType().equals(NodeType.PC)) {
+                                if (g.isPCActive(n)) {
+                                    currNodes.add(n);
+                                }
+                            } else {
+                                currNodes.add(n);
+                            }
+                        }
+
+                        // add children to visited
+                        visitedNodes.addAll(g.getChildren(n.getName()));
                     }
-                }
-                for (String name : pcs) {
-                    currNodes.add(g.getNode(name));
                 }
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
