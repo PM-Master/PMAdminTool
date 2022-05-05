@@ -18,7 +18,10 @@ import gov.nist.csd.pm.admintool.actions.Action;
 import gov.nist.csd.pm.admintool.actions.SingletonActiveActions;
 import gov.nist.csd.pm.admintool.actions.events.Event;
 import gov.nist.csd.pm.admintool.actions.tests.Test;
-import gov.nist.csd.pm.admintool.app.testingApps.POSTester;
+import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -72,54 +75,49 @@ public class MainView extends HorizontalLayout{
         VerticalLayout page1 = new GraphEditor();
         page1.setSizeFull();
 
-        Tab tab2 = new Tab("POS");
-        VerticalLayout page2 = new POSTester();
+        Tab tab2 = new Tab("Import/Export");
+        VerticalLayout page2 = new ImportExport();
         page2.setSizeFull();
         page2.setVisible(false);
 
-        Tab tab3 = new Tab("Import/Export");
-        VerticalLayout page3 = new ImportExport();
+        Tab tab3 = new Tab("Smart Policy Tool");
+        VerticalLayout page3 = new SPTEditor();
         page3.setSizeFull();
         page3.setVisible(false);
 
-        Tab tab4 = new Tab("Smart Policy Tool");
-        VerticalLayout page4 = new SPTEditor();
+        Tab tab4 = new Tab("Prohibition Editor");
+        VerticalLayout page4 = new ProhibitionEditor();
         page4.setSizeFull();
         page4.setVisible(false);
 
-        Tab tab5 = new Tab("Prohibition Editor");
-        VerticalLayout page5 = new ProhibitionEditor();
+        Tab tab5 = new Tab("Obligation Editor");
+        VerticalLayout page5 = new ObligationEditor();
         page5.setSizeFull();
         page5.setVisible(false);
-
-        Tab tab6 = new Tab("Obligation Editor");
-        VerticalLayout page6 = new ObligationEditor();
-        page6.setSizeFull();
-        page6.setVisible(false);
         //page6.setEnabled(false);
 
-        Tab tab7 = new Tab("Access Rights Editor");
-        VerticalLayout page7 = new OperationsEditor();
+        Tab tab6 = new Tab("Access Rights Editor");
+        VerticalLayout page6 = new OperationsEditor();
+        page6.setSizeFull();
+        page6.setVisible(false);
+
+        Tab tab7 = new Tab("Tester");
+        VerticalLayout page7 = new Tester();
         page7.setSizeFull();
         page7.setVisible(false);
 
-        Tab tab8 = new Tab("Tester");
-        VerticalLayout page8 = new Tester();
+        Tab tab8 = new Tab("Policies");
+        VerticalLayout page8 = new Policies();
         page8.setSizeFull();
         page8.setVisible(false);
 
-        Tab tab9 = new Tab("Policies");
-        VerticalLayout page9 = new Policies();
+        Tab tab9 = new Tab("Settings");
+        VerticalLayout page9 = new PolicyClassEditor();
+        page9.add(new Settings());
         page9.setSizeFull();
         page9.setVisible(false);
 
-        Tab tab10 = new Tab("Settings");
-        VerticalLayout page10 = new PolicyClassEditor();
-        page10.add(new Settings());
-        page10.setSizeFull();
-        page10.setVisible(false);
-
-        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10);
+        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9);
         tabs.setOrientation(Tabs.Orientation.VERTICAL);
         tabs.setFlexGrowForEnclosedTabs(1);
         navbar.add(tabs);
@@ -134,9 +132,8 @@ public class MainView extends HorizontalLayout{
         tabsToPages.put(tab7, page7);
         tabsToPages.put(tab8, page8);
         tabsToPages.put(tab9, page9);
-        tabsToPages.put(tab10, page10);
 
-        pages = new Div(page1, page2, page3, page4, page5, page6, page7, page8, page9, page10);
+        pages = new Div(page1, page2, page3, page4, page5, page6, page7, page8, page9);
         pages.setSizeFull();
 
         Set<Component> pagesShown = Stream.of(page1)

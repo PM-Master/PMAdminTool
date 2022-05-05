@@ -1,5 +1,6 @@
 package gov.nist.csd.pm.admintool.graph;
 
+import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.customObligationFunctions.RecordFunctionExecutor;
 import gov.nist.csd.pm.epp.EPPOptions;
 import gov.nist.csd.pm.epp.events.EventContext;
@@ -11,6 +12,10 @@ import gov.nist.csd.pm.pap.ObligationsAdmin;
 import gov.nist.csd.pm.pap.PAP;
 import gov.nist.csd.pm.pap.ProhibitionsAdmin;
 import gov.nist.csd.pm.pdp.PDP;
+import gov.nist.csd.pm.pdp.audit.model.Explain;
+import gov.nist.csd.pm.pdp.audit.model.Path;
+import gov.nist.csd.pm.pdp.audit.model.PolicyClass;
+import gov.nist.csd.pm.pdp.services.AnalyticsService;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.Graph;
 import gov.nist.csd.pm.pip.graph.MemDBGraph;
@@ -691,6 +696,82 @@ public class SingletonGraph {
 
     public void deleteResourceOps (String... ops) throws PMException {
         getPDP().deleteResourceOps(ops);
+    }
+
+    public String getExplanation(String target) {
+        AnalyticsService analyticsService = getPDP().getAnalyticsService(userContext);
+        String explanation;
+        Explain explain = null;
+
+        try {
+            explain = analyticsService.explain(userContext.getUser(), target);
+        } catch (PMException e) {
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+            e.printStackTrace();
+        }
+
+        if (explain != null) {
+            String ret = "";
+            // Explain returns two things:
+            //  1. The permissions the user has on the target
+            //  2. A breakdown of permissions per policy class and paths in each policy class
+            ret +=  "'" + userContext.getUser() + "' has the following permissions on the target '" + target + "': \n";
+            Set<String> permissions = explain.getPermissions();
+            for (String perm: permissions) {
+                ret += "\t- " + perm + "\n";
+            }
+            ret += "\n";
+
+
+            // policyClasses maps the name of a policy class node to a Policy Class object
+            // a policy class object contains the permissions the user has on the target node
+            //   in that policy class
+            ret += "The following section shows a more detailed permission breakdown from the perspective of each policy class:\n";
+            Map<String, PolicyClass> policyClasses = explain.getPolicyClasses();
+            int i = 1;
+            for (String pcName : policyClasses.keySet()) {
+                ret += "\t" + i + ". '" + pcName + "':\n";
+                PolicyClass policyClass = policyClasses.get(pcName);
+
+                // the operations available to the user on the target under this policy class
+                Set<String> operations = policyClass.getOperations();
+                ret += "\t\t- Permissions (Given by this PC):\n";
+                for (String op: operations) {
+                    ret += "\t\t\t- " + op + "\n";
+                }
+                // the paths from the user to the target
+                // A Path object contains the path and the permissions the path provides
+                // the path is just a list of nodes starting at the user and ending at the target node
+                // example: u1 -> ua1 -> oa1 -> o1 [read]
+                //   the association ua1 -> oa1 has the permission [read]
+                ret += "\t\t- Paths (How each permission is found):\n";
+                Set<Path> paths = policyClass.getPaths();
+                for (Path path : paths) {
+                    ret += "\t\t\t";
+                    // this is just a list of nodes -> [u1, ua1, oa1, o1]
+                    List<Node> nodes = path.getNodes();
+                    for (Node n: nodes) {
+                        ret += "'" + n.getName() + "'";
+                        if (!nodes.get(nodes.size()-1).equals(n)) { // not final node
+                            ret += " > ";
+                        }
+                    }
+
+                    // this is the operations in the association between ua1 and oa1
+                    Set<String> pathOps = path.getOperations();
+                    ret += ":\n\t\t\t\t" + pathOps;
+                    // This is the string representation of the path (i.e. "u1-ua1-oa1-o1 ops=[r, w]")
+                    String pathString = path.toString();
+                    ret += "\n";
+                }
+                i++;
+            }
+
+            explanation = ret;
+        } else {
+            explanation = "Returned Audit was null";
+        }
+        return explanation;
     }
 
     // policies methods

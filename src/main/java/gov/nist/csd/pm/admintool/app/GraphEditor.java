@@ -458,6 +458,11 @@ public class GraphEditor extends VerticalLayout {
                     deleteNode(node);
                 });
             });
+            contextMenu.addItem("Explain", event -> {
+                event.getItem().ifPresent(node -> {
+                    explain(node.getName());
+                });
+            });
         }
 
         private void addGraphLayout() {
@@ -2072,6 +2077,45 @@ public class GraphEditor extends VerticalLayout {
                 "Denying " + selectedChildNode.getName(), submit);
 
         dialog.add(titleLayout, new Hr(), form);
+        dialog.open();
+    }
+
+    private void explain(String node) {
+        Dialog dialog = new Dialog();
+
+        String explanation = g.getExplanation(node);
+
+        VerticalLayout auditLayout = new VerticalLayout();
+
+        auditLayout.setSizeFull();
+        auditLayout.getStyle()
+                .set("padding-bottom", "0px");
+        String[] split = explanation.split("\n");
+        if (split.length > 1) {
+            for (String line : split) {
+                Span lineSpan = new Span(line);
+                int tabs = 0;
+                while (line.startsWith("\t")) {
+                    tabs++;
+                    line = line.substring(1);
+                }
+                lineSpan.getStyle()
+                        .set("margin", "0")
+                        .set("padding-left", ((Integer) (tabs * 25)).toString() + "px")
+                        .set("padding", "0");
+                auditLayout.add(lineSpan);
+            }
+        } else {
+            auditLayout.add(new Span(explanation));
+        }
+
+        // ----- Title Section -----
+        Button button = new Button("Close", event -> {
+            dialog.close();
+        });
+        HorizontalLayout titleLayout = TitleFactory.generate("Explanation", button);
+
+        dialog.add(titleLayout, new Hr(), new HorizontalLayout(auditLayout));
         dialog.open();
     }
 

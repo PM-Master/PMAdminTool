@@ -9,7 +9,6 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import gov.nist.csd.pm.admintool.app.testingApps.ACLTester;
-import gov.nist.csd.pm.admintool.app.testingApps.POSTester;
 import gov.nist.csd.pm.admintool.app.testingApps.UnitTester;
 
 @Tag("tester")
