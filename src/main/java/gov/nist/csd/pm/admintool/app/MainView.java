@@ -1,9 +1,11 @@
 package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.dialog.Dialog;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
@@ -18,9 +20,7 @@ import gov.nist.csd.pm.admintool.actions.events.Event;
 import gov.nist.csd.pm.admintool.actions.tests.Test;
 import gov.nist.csd.pm.admintool.app.testingApps.POSTester;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,7 +40,11 @@ public class MainView extends HorizontalLayout{
 
     private VerticalLayout navbar;
 
+    private SingletonGraph g;
+
     public MainView() {
+        g = SingletonGraph.getInstance();
+
         testResults = new Div();
         actions = SingletonActiveActions.getInstance();
         navbar = new VerticalLayout();
@@ -52,8 +56,17 @@ public class MainView extends HorizontalLayout{
                 .set("background", "#FFF3D3");
 
         H3 admintool = new H3("Admin Tool");
-        admintool.getStyle().set("user-select", "none");
+        admintool.getStyle().set("user-select", "none")
+                .set("margin-bottom", "0");
         navbar.add(admintool);
+
+        Paragraph currentUser = new Paragraph("Current User: " + g.getCurrentContext());
+        currentUser.getStyle()
+                .set("color", "#a1a1a1")
+                .set("cursor", "pointer")
+                .set("margin-top", "0");
+        currentUser.addClickListener(component -> switchUserContextDialog());
+        navbar.add(currentUser);
 
         Tab  tab1 = new Tab("Graph Editor");
         VerticalLayout page1 = new GraphEditor();
@@ -170,6 +183,64 @@ public class MainView extends HorizontalLayout{
             }
             testResults.add(line);
         }
+    }
+
+    private void switchUserContextDialog() {
+        Dialog dialog = new Dialog();
+        HorizontalLayout form = new HorizontalLayout();
+
+        // get all users that are not the current user
+        Collection<Node> nodeCollection;
+        try {
+            nodeCollection = new HashSet<>(g.getActiveNodes());
+            nodeCollection.removeIf(curr -> !(curr.getType() == NodeType.U) || curr.getName().equals(g.getCurrentContext()));
+        } catch (PMException e) {
+            nodeCollection = new HashSet<>();
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+            e.printStackTrace();
+        }
+        List<String> nodes = nodeCollection.stream().map(Node::getName).collect(Collectors.toList());
+
+        // user select filed
+        ComboBox<String> userSelect = new ComboBox<>();
+        userSelect.setRequiredIndicatorVisible(true);
+        userSelect.setLabel("New User");
+        userSelect.setPlaceholder("Select User...");
+        userSelect.setWidthFull();
+
+        // allow for custom values
+        userSelect.setAllowCustomValue(true);
+        userSelect.addCustomValueSetListener(e -> {
+            String customValue = e.getDetail();
+            if (nodes.contains(customValue)) return;
+
+            nodes.add(customValue);
+            userSelect.setItems(nodes);
+            userSelect.setValue(customValue);
+        });
+
+        userSelect.setItems(nodes);
+        form.add(userSelect);
+
+        // ----- Title Section -----
+        Button button = new Button("Submit", event -> {
+            String user = userSelect.getValue();
+
+            if (user == null) {
+                userSelect.focus();
+                MainView.notify("User selection is Required", MainView.NotificationType.DEFAULT);
+            } else {
+                g.setUserContext(user);
+                dialog.close();
+                UI.getCurrent().getPage().reload();
+            }
+        });
+        HorizontalLayout titleLayout = TitleFactory.generate("Login", "Current User: " + g.getCurrentContext(), button);
+
+        dialog.add(titleLayout, new Hr(), form);
+        dialog.setMinWidth("25%");
+        dialog.open();
+        userSelect.focus();
     }
 
     public static void notify(String message, NotificationType type) {

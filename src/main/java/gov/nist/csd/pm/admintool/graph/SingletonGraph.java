@@ -38,14 +38,15 @@ import static gov.nist.csd.pm.pdp.PDP.newPDP;
  *
  * There is only one instance which can be retrieved using SingletonGraph.getInstance().
  *
- * It also implies the super context, so I have created "wrapper" methods which use the super
- * context automatically.
+ * UserContext is used to track the current user of the application. At the start of the application it is the
+ * super user, but if the setUserContext() method is used it will change from the super context.
+ *
  */
 public class SingletonGraph {
     private static Boolean isMysql;
     private static SingletonGraph g; // the single instance
     private static PDP pdp;
-    private static UserContext superContext;
+    private static UserContext userContext;
     private static String superPCId, superUAId, superOAId;
     private static Random rand;
     private static Set<PolicyClassWithActive> activePCs;
@@ -146,6 +147,17 @@ public class SingletonGraph {
         }
     }
 
+    public void setUserContext(String username) {
+        userContext = new UserContext(username, rand.toString());
+    }
+
+    public String getCurrentContext() {
+        if (userContext != null)
+            return userContext.getUser();
+        else
+            return "No User Context";
+    }
+
     private static void findActivePCS(Graph graph) throws PMException{
         activePCs = new HashSet<>();
         for (Node n : graph.getNodes()) {
@@ -156,7 +168,7 @@ public class SingletonGraph {
     }
 
     private static void findSuperConfigurationNodes(Graph graph) throws PMException {
-        superContext = null;
+        userContext = null;
         for (Node n : graph.getNodes()) {
             if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
                 switch (n.getType()) {
@@ -172,7 +184,7 @@ public class SingletonGraph {
                         break;
                     case U:
                         System.out.println("Super U: " + n.getName());
-                        superContext = new UserContext(n.getName(), rand.toString());
+                        userContext = new UserContext(n.getName(), rand.toString());
                         break;
                     case PC:
                         System.out.println("Super PC: " + n.getName());
@@ -185,8 +197,8 @@ public class SingletonGraph {
         }
     }
 
-    private static UserContext getSuperContext() {
-        return superContext;
+    private static UserContext getUserContext() {
+        return userContext;
     }
 
     public static String getSuperPCId() {
@@ -232,12 +244,12 @@ public class SingletonGraph {
 
     public static Node createPolicyClass(String name, Map<String, String> properties) throws PMException {
 
-        if (superContext != null) {
-            Node newPC = getPDP().getGraphService(superContext).createPolicyClass(name, properties);
+        if (userContext != null) {
+            Node newPC = getPDP().getGraphService(userContext).createPolicyClass(name, properties);
             activePCs.add(new PolicyClassWithActive(newPC));
             return newPC;
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Conext is Null");
         }
     }
 
@@ -253,60 +265,59 @@ public class SingletonGraph {
         return g;
     }
 
-    // wrapped methods (implies super context) \\
     // graph service methods
     public void reset() throws PMException {
-        getPDP().getGraphService(superContext).reset(superContext);
+        getPDP().getGraphService(userContext).reset(userContext);
         dacConfigured = false;
     }
 
     public Node createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).createNode(name, type, properties, parent );
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).createNode(name, type, properties, parent );
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public String getPolicyClassDefault(String pc, NodeType type) throws PMException {
         if (pc.equalsIgnoreCase("0")) {
-            if (superContext != null) {
-                return getPDP().getGraphService(superContext).getPolicyClassDefault(superPCId, type);
+            if (userContext != null) {
+                return getPDP().getGraphService(userContext).getPolicyClassDefault(superPCId, type);
             } else {
-                throw new PMException("Super Context is Null");
+                throw new PMException("User Context is Null");
             }
-        } else return getPDP().getGraphService(superContext).getPolicyClassDefault(pc, type);
+        } else return getPDP().getGraphService(userContext).getPolicyClassDefault(pc, type);
     }
 
     public void updateNode(String name, Map<String, String> properties) throws PMException {
-        if (superContext != null) {
-            getPDP().getGraphService(superContext).updateNode(name, properties);
+        if (userContext != null) {
+            getPDP().getGraphService(userContext).updateNode(name, properties);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void deleteNode(String name) throws PMException {
-        if (superContext != null) {
-            getPDP().getGraphService(superContext).deleteNode(name);
+        if (userContext != null) {
+            getPDP().getGraphService(userContext).deleteNode(name);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public boolean exists(String name) throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).exists(name);
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).exists(name);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Set<Node> getNodes() throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).getNodes();
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).getNodes();
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
@@ -349,119 +360,119 @@ public class SingletonGraph {
     }
 
     public Set<String> getPolicies() throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).getPolicyClasses();
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).getPolicyClasses();
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Set<String> getChildren(String name) throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).getChildren(name);
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).getChildren(name);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Set<String> getChildrenNoSuperPolicy(String name) throws PMException {
-        if (superContext != null) {
-            Set<String> children_noSuperPolicy = getPDP().getGraphService(superContext).getChildren(name);
+        if (userContext != null) {
+            Set<String> children_noSuperPolicy = getPDP().getGraphService(userContext).getChildren(name);
             Collection<String> superPolicyNames = new ArrayList<>();
             superPolicyNames.add("super_ua1");
             superPolicyNames.add("super_ua2");
             children_noSuperPolicy.removeAll(superPolicyNames);
             return children_noSuperPolicy;
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Set<String> getParents(String node) throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).getParents(node);
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).getParents(node);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void assign(String child, String parent) throws PMException {
-        if (superContext != null) {
-            getPDP().getGraphService(superContext).assign(child, parent);
+        if (userContext != null) {
+            getPDP().getGraphService(userContext).assign(child, parent);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void deassign(String child, String parent) throws PMException {
-        if (superContext != null) {
-            getPDP().getGraphService(superContext).deassign(child, parent);
+        if (userContext != null) {
+            getPDP().getGraphService(userContext).deassign(child, parent);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void associate(String ua, String target, OperationSet operations) throws PMException {
-        if (superContext != null) {
-            getPDP().getGraphService(superContext).associate(ua, target, operations);
+        if (userContext != null) {
+            getPDP().getGraphService(userContext).associate(ua, target, operations);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void dissociate(String ua, String target) throws PMException {
-        if (superContext != null) {
-            getPDP().getGraphService(superContext).dissociate(ua, target);
+        if (userContext != null) {
+            getPDP().getGraphService(userContext).dissociate(ua, target);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Map<String, OperationSet> getSourceAssociations(String source) throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).getSourceAssociations(source);
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).getSourceAssociations(source);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Map<String, OperationSet> getTargetAssociations(String target) throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).getTargetAssociations(target);
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).getTargetAssociations(target);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Set<Node> search(String name, String type, Map<String, String> properties) throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).search(NodeType.toNodeType(type), properties);
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).search(NodeType.toNodeType(type), properties);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Node getNode(String name) throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).getNode(name);
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).getNode(name);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void fromJson(String s) throws PMException {
-        if (superContext != null) {
-            getPDP().getGraphService(superContext).fromJson(s);
+        if (userContext != null) {
+            getPDP().getGraphService(userContext).fromJson(s);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public String toJson() throws PMException {
-        if (superContext != null) {
-            return getPDP().getGraphService(superContext).toJson();
+        if (userContext != null) {
+            return getPDP().getGraphService(userContext).toJson();
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 /*    public HashSet<PolicyClassWithActive> getActivePcs () {
@@ -469,17 +480,17 @@ public class SingletonGraph {
     }*/
 
     public void processEvent (EventContext eventCtx) throws PMException {
-        if (superContext != null) {
+        if (userContext != null) {
             getPDP().getEPP().processEvent(eventCtx);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     // obligation service methods
     public Obligation parseObligationYaml (String oblString) throws PMException {
         EVRParser parser = new EVRParser();
-        return parser.parse(superContext.getUser(), oblString);
+        return parser.parse(userContext.getUser(), oblString);
     }
 
     public void addObl(String oblString) throws PMException {
@@ -487,58 +498,58 @@ public class SingletonGraph {
     }
 
     public void addObl(Obligation obligation) throws PMException {
-        if (superContext != null) {
-            getPDP().getObligationsService(superContext).add(obligation, true);
+        if (userContext != null) {
+            getPDP().getObligationsService(userContext).add(obligation, true);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Obligation getObl(String label) throws PMException {
-        if (superContext != null) {
-            return getPDP().getObligationsService(superContext).get(label);
+        if (userContext != null) {
+            return getPDP().getObligationsService(userContext).get(label);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public List<Obligation> getAllObls() throws PMException {
-        if (superContext != null) {
-            return getPDP().getObligationsService(superContext).getAll();
+        if (userContext != null) {
+            return getPDP().getObligationsService(userContext).getAll();
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void updateObl(String label, Obligation obligation) throws PMException {
-        if (superContext != null) {
-            getPDP().getObligationsService(superContext).update(label, obligation);
+        if (userContext != null) {
+            getPDP().getObligationsService(userContext).update(label, obligation);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void deleteObl(String label) throws PMException {
-        if (superContext != null) {
-            getPDP().getObligationsService(superContext).delete(label);
+        if (userContext != null) {
+            getPDP().getObligationsService(userContext).delete(label);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void enableObl(String label) throws PMException {
-        if (superContext != null) {
-            getPDP().getObligationsService(superContext).setEnable(label, true);
+        if (userContext != null) {
+            getPDP().getObligationsService(userContext).setEnable(label, true);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public List<Obligation> getEnabledObls() throws PMException {
-        if (superContext != null) {
-            return getPDP().getObligationsService(superContext).getEnabled();
+        if (userContext != null) {
+            return getPDP().getObligationsService(userContext).getEnabled();
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
@@ -554,10 +565,10 @@ public class SingletonGraph {
 
     // prohibition service methods
     public List<Prohibition> getAllProhibitions() throws PMException {
-        if (superContext != null) {
-            return getPDP().getProhibitionsService(superContext).getAll();
+        if (userContext != null) {
+            return getPDP().getProhibitionsService(userContext).getAll();
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
@@ -565,36 +576,36 @@ public class SingletonGraph {
         Prohibition.Builder builder = new Prohibition.Builder(prohibitionName, subject, ops)
                 .setIntersection(intersection);
         containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
-        if (superContext != null) {
-            getPDP().getProhibitionsService(superContext).add(builder.build());
+        if (userContext != null) {
+            getPDP().getProhibitionsService(userContext).add(builder.build());
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Prohibition getProhibition(String prohibitionName) throws PMException {
-        if (superContext != null) {
-            return getPDP().getProhibitionsService(superContext).get(prohibitionName);
+        if (userContext != null) {
+            return getPDP().getProhibitionsService(userContext).get(prohibitionName);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public List<Prohibition> getProhibitionsFor(String subject) throws PMException {
-        if (superContext != null) {
-            return getPDP().getProhibitionsService(superContext).getProhibitionsFor(subject);
+        if (userContext != null) {
+            return getPDP().getProhibitionsService(userContext).getProhibitionsFor(subject);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public List<Prohibition> getProhibitionsFrom(String target) throws PMException {
-        if (superContext != null) {
-            List<Prohibition> allProhibitions = getPDP().getProhibitionsService(superContext).getAll();
+        if (userContext != null) {
+            List<Prohibition> allProhibitions = getPDP().getProhibitionsService(userContext).getAll();
             allProhibitions.removeIf((prohibition) -> !prohibition.getContainers().keySet().contains(target));
             return allProhibitions;
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
@@ -602,18 +613,18 @@ public class SingletonGraph {
         Prohibition.Builder builder = new Prohibition.Builder(prohibitionName, subject, ops)
                 .setIntersection(intersection);
         containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
-        if (superContext != null) {
-            getPDP().getProhibitionsService(superContext).update(prohibitionName, builder.build());
+        if (userContext != null) {
+            getPDP().getProhibitionsService(userContext).update(prohibitionName, builder.build());
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public void deleteProhibition(String prohibitionName) throws PMException {
-        if (superContext != null) {
-            getPDP().getProhibitionsService(superContext).delete(prohibitionName);
+        if (userContext != null) {
+            getPDP().getProhibitionsService(userContext).delete(prohibitionName);
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
@@ -628,20 +639,20 @@ public class SingletonGraph {
 
     // operation methods
     public Set<String> getAdminOps() throws PMException {
-        if (superContext != null) {
+        if (userContext != null) {
             return Operations.ADMIN_OPS;
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
     public Set<String> getAdminOpsWithStars() throws PMException {
-        if (superContext != null) {
+        if (userContext != null) {
             Set<String> ret = getAdminOps();
             ret.add(Operations.ALL_ADMIN_OPS);
             return ret;
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
@@ -650,13 +661,13 @@ public class SingletonGraph {
     }
 
     public Set<String> getResourceOpsWithStars() throws PMException {
-        if (superContext != null) {
+        if (userContext != null) {
             Set<String> ret = getResourceOps();
             ret.add(Operations.ALL_OPS);
             ret.add(Operations.ALL_RESOURCE_OPS);
             return ret;
         } else {
-            throw new PMException("Super Context is Null");
+            throw new PMException("User Context is Null");
         }
     }
 
@@ -684,8 +695,8 @@ public class SingletonGraph {
 
     // policies methods
     public void configureDAC(String DACname) throws PMException {
-        DAC.configure(DACname, pdp, superContext);
-        findActivePCS(pdp.getGraphService(superContext));
+        DAC.configure(DACname, pdp, userContext);
+        findActivePCS(pdp.getGraphService(userContext));
         dacConfigured = true;
     }
 
