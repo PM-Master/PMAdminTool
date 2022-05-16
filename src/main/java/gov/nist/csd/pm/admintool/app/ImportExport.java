@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static gov.nist.csd.pm.operations.Operations.*;
+
 @Tag("import-export")
 public class ImportExport extends VerticalLayout {
     private SingletonGraph g;
@@ -29,8 +31,13 @@ public class ImportExport extends VerticalLayout {
     private ImportLayout importLayout;
     private ExportLayout exportLayout;
 
-    public ImportExport() {
+    public ImportExport() throws PMException {
         g = SingletonGraph.getInstance();
+
+        // check permission
+        if (!g.checkPermissions("super_pc_rep", TO_JSON, FROM_JSON))
+            throw new PMException("Current user ('" + g.getCurrentContext() + "') does not have adequate permissions to use import export");
+
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
@@ -185,26 +192,33 @@ public class ImportExport extends VerticalLayout {
         }
     }
 
-    public static String toFullJson (SingletonGraph graph) throws PMException {
+    public static String toFullJson (SingletonGraph graph) throws PMException{
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         Collection<Node> nodes = graph.getNodes();
         HashSet<String[]> jsonAssignments = new HashSet<>();
         HashSet<JsonAssociation> jsonAssociations = new HashSet<>();
         for (Node node : nodes) {
+            try {
+                Set<String> parents = graph.getParents(node.getName());
 
-            Set<String> parents = graph.getParents(node.getName());
-
-            for (String parent : parents) {
-                jsonAssignments.add(new String[]{node.getName(), parent});
+                for (String parent : parents) {
+                    jsonAssignments.add(new String[]{node.getName(), parent});
+                }
+            } catch (PMException e) {
+                System.err.println("To Full Json Error: " + e.getMessage());
             }
 
-            Map<String, OperationSet> associations = graph.getSourceAssociations(node.getName());
-            for (String target : associations.keySet()) {
-                OperationSet ops = associations.get(target);
-                Node targetNode = graph.getNode(target);
+            try {
+                Map<String, OperationSet> associations = graph.getSourceAssociations(node.getName());
+                for (String target : associations.keySet()) {
+                    OperationSet ops = associations.get(target);
+                    Node targetNode = graph.getNode(target);
 
-                jsonAssociations.add(new JsonAssociation(node.getName(), targetNode.getName(), ops));
+                    jsonAssociations.add(new JsonAssociation(node.getName(), targetNode.getName(), ops));
+                }
+            } catch (PMException e) {
+                System.err.println("To Full Json Error: " + e.getMessage());
             }
         }
 

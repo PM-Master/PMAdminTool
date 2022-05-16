@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import static gov.nist.csd.pm.operations.Operations.*;
+
 @Tag("obligation-editor")
 public class ObligationEditor extends VerticalLayout {
     private SingletonGraph g;
@@ -35,8 +37,14 @@ public class ObligationEditor extends VerticalLayout {
     private YamlImporter yamlImporter;
     private ObligationViewer obligationViewer;
 
-    public ObligationEditor() {
+    public ObligationEditor() throws PMException {
         g = SingletonGraph.getInstance();
+
+        // check permissions
+        if (!g.checkPermissions("super_oa", GET_OBLIGATION, UPDATE_OBLIGATION, DELETE_OBLIGATION, ENABLE_OBLIGATION))
+            throw new PMException("Current user ('" + g.getCurrentContext() + "') does not have adequate permissions to use obligation editor");
+
+
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);

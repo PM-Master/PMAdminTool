@@ -71,14 +71,23 @@ public class MainView extends HorizontalLayout{
         currentUser.addClickListener(component -> switchUserContextDialog());
         navbar.add(currentUser);
 
+        // tabs
         Tab  tab1 = new Tab("Graph Editor");
         VerticalLayout page1 = new GraphEditor();
         page1.setSizeFull();
 
         Tab tab2 = new Tab("Import/Export");
-        VerticalLayout page2 = new ImportExport();
-        page2.setSizeFull();
-        page2.setVisible(false);
+        VerticalLayout page2 = null;
+        try {
+            page2 = new ImportExport();
+            page2.setSizeFull();
+            page2.setVisible(false);
+        } catch (PMException e) {
+            MainView.notify(e.getMessage(), NotificationType.ERROR, 10 * 1000);
+            tab2.setEnabled(false);
+            tab2.getElement().setProperty("title", e.getMessage())
+                    .setProperty("user-select", "auto");
+        }
 
         Tab tab3 = new Tab("Smart Policy Tool");
         VerticalLayout page3 = new SPTEditor();
@@ -91,10 +100,16 @@ public class MainView extends HorizontalLayout{
         page4.setVisible(false);
 
         Tab tab5 = new Tab("Obligation Editor");
-        VerticalLayout page5 = new ObligationEditor();
-        page5.setSizeFull();
-        page5.setVisible(false);
-        //page6.setEnabled(false);
+        VerticalLayout page5 = null;
+        try {
+            page5 = new ObligationEditor();
+            page5.setSizeFull();
+            page5.setVisible(false);
+        } catch (PMException e) {
+            MainView.notify(e.getMessage(), NotificationType.ERROR, 10 * 1000);
+            tab5.setEnabled(false);
+            tab5.getElement().setProperty("title", e.getMessage());
+        }
 
         Tab tab6 = new Tab("Access Rights Editor");
         VerticalLayout page6 = new OperationsEditor();
@@ -117,11 +132,6 @@ public class MainView extends HorizontalLayout{
         page9.setSizeFull();
         page9.setVisible(false);
 
-        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9);
-        tabs.setOrientation(Tabs.Orientation.VERTICAL);
-        tabs.setFlexGrowForEnclosedTabs(1);
-        navbar.add(tabs);
-
         Map<Tab, Component> tabsToPages = new HashMap<>();
         tabsToPages.put(tab1, page1);
         tabsToPages.put(tab2, page2);
@@ -133,7 +143,15 @@ public class MainView extends HorizontalLayout{
         tabsToPages.put(tab8, page8);
         tabsToPages.put(tab9, page9);
 
-        pages = new Div(page1, page2, page3, page4, page5, page6, page7, page8, page9);
+        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9);
+        tabs.setOrientation(Tabs.Orientation.VERTICAL);
+        tabs.setFlexGrowForEnclosedTabs(1);
+        navbar.add(tabs);
+
+        pages = new Div();
+        for (Component page: tabsToPages.values()) {
+            if (page != null) pages.add(page);
+        }
         pages.setSizeFull();
 
         Set<Component> pagesShown = Stream.of(page1)
@@ -241,6 +259,10 @@ public class MainView extends HorizontalLayout{
     }
 
     public static void notify(String message, NotificationType type) {
+        notify(message, type, 3000);
+    }
+
+    public static void notify(String message, NotificationType type, int duration) {
         Paragraph text = new Paragraph(message);
         switch(type) {
             case SUCCESS:
@@ -254,7 +276,7 @@ public class MainView extends HorizontalLayout{
                 break;
         }
         Notification notif = new Notification(text);
-        notif.setDuration(3000);
+        notif.setDuration(duration);
         notif.open();
     }
 

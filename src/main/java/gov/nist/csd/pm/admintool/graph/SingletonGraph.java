@@ -35,6 +35,7 @@ import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 import gov.nist.csd.pm.policies.dac.DAC;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static gov.nist.csd.pm.pdp.PDP.newPDP;
 
@@ -772,6 +773,11 @@ public class SingletonGraph {
             explanation = "Returned Audit was null";
         }
         return explanation;
+    }
+
+    public boolean checkPermissions (String target, String... ops) throws PMException {
+        Set<String> permissions = getPDP().getAnalyticsService(userContext).getPermissions(target);
+        return Stream.of(ops).allMatch(op -> permissions.contains(op));
     }
 
     // policies methods

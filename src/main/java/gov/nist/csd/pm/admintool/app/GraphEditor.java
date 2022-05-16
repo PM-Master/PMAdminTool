@@ -39,6 +39,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static gov.nist.csd.pm.operations.Operations.*;
+
 @Tag("graph-editor")
 public class GraphEditor extends VerticalLayout {
     private final SingletonGraph g;
@@ -450,7 +452,17 @@ public class GraphEditor extends VerticalLayout {
             //contextMenu.addItem("Add Node", event -> addNode());
             contextMenu.addItem("Edit Node", event -> {
                 event.getItem().ifPresent(node -> {
-                    editNode(node);
+                    try {
+                        if (g.checkPermissions(node.getName(), UPDATE_NODE))
+                            editNode(node);
+                        else
+                            MainView.notify("Current User ('" + g.getCurrentContext() +
+                                    "') does not have permission to edit node ('" + node.getName() +
+                                    "')", MainView.NotificationType.ERROR);
+                    } catch (PMException e) {
+                        MainView.notify("Error on Edit Node: " + e.getMessage(), MainView.NotificationType.ERROR);
+                        e.printStackTrace();
+                    }
                 });
             });
             contextMenu.addItem("Delete Node", event -> {
@@ -697,56 +709,88 @@ public class GraphEditor extends VerticalLayout {
 
         private void updateAssignmentInfo(Node gridSelecNode) throws PMException {
             // assignments
-            Iterator<String> childIter = g.getChildren(gridSelecNode.getName()).iterator();
-            if (!childIter.hasNext()) {
-                childrenList.add(new Paragraph("None"));
-            } else {
-                while (childIter.hasNext()) {
-                    String child = childIter.next();
-                    Node childNode = g.getNode(child);
-                    childrenList.add(new NodeDataBlip(childNode, false));
+            try {
+                Iterator<String> childIter = g.getChildren(gridSelecNode.getName()).iterator();
+                if (!childIter.hasNext()) {
+                    childrenList.add(new Paragraph("None"));
+                } else {
+                    while (childIter.hasNext()) {
+                        String child = childIter.next();
+                        try {
+                            Node childNode = g.getNode(child);
+                            childrenList.add(new NodeDataBlip(childNode, false));
+                        } catch (PMException e) {
+                            childrenList.add(new Paragraph(child));
+                        }
+                    }
                 }
+            } catch (PMException e) {
+                childrenList.add(new Paragraph("Inadequate Permissions"));
             }
 
-            Iterator<String> parentIter = g.getParents(gridSelecNode.getName()).iterator();
-            if (!parentIter.hasNext()) {
-                parentList.add(new Paragraph("None"));
-            } else {
-                while (parentIter.hasNext()) {
-                    String parent = parentIter.next();
-                    Node parentNode = g.getNode(parent);
-                    parentList.add(new NodeDataBlip(parentNode, true));
+            try {
+                Iterator<String> parentIter = g.getParents(gridSelecNode.getName()).iterator();
+                if (!parentIter.hasNext()) {
+                    parentList.add(new Paragraph("None"));
+                } else {
+                    while (parentIter.hasNext()) {
+                        String parent = parentIter.next();
+                        try {
+                            Node parentNode = g.getNode(parent);
+                            parentList.add(new NodeDataBlip(parentNode, true));
+                        } catch (PMException e) {
+                            parentList.add(new Paragraph(parent));
+                        }
+                    }
                 }
+            } catch (PMException e) {
+                parentList.add(new Paragraph("Inadequate Permissions"));
             }
         }
 
         private void updateAssociationInfo(Node gridSelecNode) throws PMException {
             // associations
             if (gridSelecNode.getType() == NodeType.UA) {
-                Map<String, OperationSet> outgoingMap = g.getSourceAssociations(gridSelecNode.getName());
-                Iterator<String> outgoingKeySet = outgoingMap.keySet().iterator();
-                if (!outgoingKeySet.hasNext()) {
-                    outgoingAssociationList.add(new Paragraph("None"));
-                } else {
-                    while (outgoingKeySet.hasNext()) {
-                        String name = outgoingKeySet.next();
-                        Node node = g.getNode(name);
-                        outgoingAssociationList.add(new AssociationBlip(node, true, outgoingMap.get(name)));
+                try {
+                    Map<String, OperationSet> outgoingMap = g.getSourceAssociations(gridSelecNode.getName());
+                    Iterator<String> outgoingKeySet = outgoingMap.keySet().iterator();
+                    if (!outgoingKeySet.hasNext()) {
+                        outgoingAssociationList.add(new Paragraph("None"));
+                    } else {
+                        while (outgoingKeySet.hasNext()) {
+                            String name = outgoingKeySet.next();
+                            try {
+                                Node node = g.getNode(name);
+                                outgoingAssociationList.add(new AssociationBlip(node, true, outgoingMap.get(name)));
+                            } catch (PMException e) {
+                                outgoingAssociationList.add(new Paragraph(name));
+                            }
+                        }
                     }
+                } catch (PMException e) {
+                    outgoingAssociationList.add(new Paragraph("Inadequate Permissions"));
                 }
             }
 
             if (gridSelecNode.getType() == NodeType.UA || gridSelecNode.getType() == NodeType.OA) {
-                Map<String, OperationSet> incomingMap = g.getTargetAssociations(gridSelecNode.getName());
-                Iterator<String> incomingKeySet = incomingMap.keySet().iterator();
-                if (!incomingKeySet.hasNext()) {
-                    incomingAssociationList.add(new Paragraph("None"));
-                } else {
-                    while (incomingKeySet.hasNext()) {
-                        String name = incomingKeySet.next();
-                        Node node = g.getNode(name);
-                        incomingAssociationList.add(new AssociationBlip(node, false, incomingMap.get(name)));
+                try {
+                    Map<String, OperationSet> incomingMap = g.getTargetAssociations(gridSelecNode.getName());
+                    Iterator<String> incomingKeySet = incomingMap.keySet().iterator();
+                    if (!incomingKeySet.hasNext()) {
+                        incomingAssociationList.add(new Paragraph("None"));
+                    } else {
+                        while (incomingKeySet.hasNext()) {
+                            String name = incomingKeySet.next();
+                            try {
+                                Node node = g.getNode(name);
+                                incomingAssociationList.add(new AssociationBlip(node, false, incomingMap.get(name)));
+                            } catch (PMException e) {
+                                incomingAssociationList.add(new Paragraph(name));
+                            }
+                        }
                     }
+                } catch (PMException e) {
+                    incomingAssociationList.add(new Paragraph("Inadequate Permissions"));
                 }
             }
         }
@@ -754,15 +798,19 @@ public class GraphEditor extends VerticalLayout {
         private void updateProhibitionInfo(Node gridSelecNode) throws PMException {
             // prohibitions
             if (gridSelecNode.getType() == NodeType.UA || gridSelecNode.getType() == NodeType.U) {
-                List<Prohibition> outgoingList = g.getProhibitionsFor(gridSelecNode.getName());
-                Iterator<Prohibition> outgoingIterator = outgoingList.iterator();
-                if (!outgoingIterator.hasNext()) {
-                    outgoingProhibitionList.add(new Paragraph("None"));
-                } else {
-                    while (outgoingIterator.hasNext()) {
-                        Prohibition prohibition = outgoingIterator.next();
-                        outgoingProhibitionList.add(new ProhibitonBlip(prohibition));
+                try {
+                    List<Prohibition> outgoingList = g.getProhibitionsFor(gridSelecNode.getName());
+                    Iterator<Prohibition> outgoingIterator = outgoingList.iterator();
+                    if (!outgoingIterator.hasNext()) {
+                        outgoingProhibitionList.add(new Paragraph("None"));
+                    } else {
+                        while (outgoingIterator.hasNext()) {
+                            Prohibition prohibition = outgoingIterator.next();
+                            outgoingProhibitionList.add(new ProhibitonBlip(prohibition));
+                        }
                     }
+                } catch (PMException e) {
+                    outgoingAssociationList.add(new Paragraph("Inadequate Permissions"));
                 }
             }
 
@@ -1195,8 +1243,17 @@ public class GraphEditor extends VerticalLayout {
                 if ((parentType == NodeType.UA && (childType == NodeType.U || childType == NodeType.UA))
                         || (parentType == NodeType.OA && (childType == NodeType.O || childType == NodeType.OA))
                         || (parentType == NodeType.PC && (childType == NodeType.UA || childType == NodeType.OA))) {
-                    addAssignmentButton.setEnabled(true);
-                    deleteAssignmentButton.setEnabled(true);
+
+                    boolean canAssign = false, canDeassign = false;
+                    try {
+                        canAssign = g.checkPermissions(selectedChildNode.getName(), ASSIGN) && g.checkPermissions(selectedParentNode.getName(), ASSIGN_TO);
+                        canDeassign = g.checkPermissions(selectedChildNode.getName(), DEASSIGN) && g.checkPermissions(selectedParentNode.getName(), DEASSIGN_FROM);
+                    } catch (PMException e) {
+                        MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    }
+
+                    addAssignmentButton.setEnabled(canAssign);
+                    deleteAssignmentButton.setEnabled(canDeassign);
                 } else {
                     addAssignmentButton.setEnabled(false);
                     deleteAssignmentButton.setEnabled(false);
@@ -1204,9 +1261,17 @@ public class GraphEditor extends VerticalLayout {
 
 
                 if ((childType == NodeType.UA) && (parentType == NodeType.UA || parentType == NodeType.OA || parentType == NodeType.O)) {
-                    addAssociationButton.setEnabled(true);
-                    editAssociationButton.setEnabled(true);
-                    deleteAssociationButton.setEnabled(true);
+                    boolean canAssociate = false, canDisassociate = false;
+                    try {
+                        canAssociate = g.checkPermissions(selectedChildNode.getName(), ASSOCIATE) && g.checkPermissions(selectedParentNode.getName(), ASSOCIATE);
+                        canDisassociate = g.checkPermissions(selectedChildNode.getName(), DISASSOCIATE) && g.checkPermissions(selectedParentNode.getName(), DISASSOCIATE);
+                    } catch (PMException e) {
+                        MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                    }
+
+                    addAssociationButton.setEnabled(canAssociate);
+                    editAssociationButton.setEnabled(canAssociate);
+                    deleteAssociationButton.setEnabled(canDisassociate);
                 } else {
                     addAssociationButton.setEnabled(false);
                     editAssociationButton.setEnabled(false);
@@ -1318,6 +1383,8 @@ public class GraphEditor extends VerticalLayout {
                 } else if (type == null) {
                     typeSelect.focus();
                     MainView.notify("Type is Required", MainView.NotificationType.DEFAULT);
+                } else if (parents.isEmpty()) {
+                    MainView.notify("Parent is Required", MainView.NotificationType.DEFAULT);
                 } else {
                     g.createNode(name, type, props, parents.iterator().next().getName());
                     for (Node parent : parents) {
@@ -1426,6 +1493,8 @@ public class GraphEditor extends VerticalLayout {
                 if (name == null || name == "") {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                } else if (parents.isEmpty()) {
+                    MainView.notify("At least one parent is required", MainView.NotificationType.DEFAULT);
                 } else {
                     g.createNode(name, NodeType.U, props, parents.iterator().next().getName());
                     for (Node parent : parents) {
@@ -1511,6 +1580,8 @@ public class GraphEditor extends VerticalLayout {
                 if (name == null || name == "") {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                } else if (parents.isEmpty()) {
+                    MainView.notify("At least one parent is required", MainView.NotificationType.DEFAULT);
                 } else {
                     g.createNode(name, NodeType.O, props, parents.iterator().next().getName());
                     for (Node parent : parents) {
