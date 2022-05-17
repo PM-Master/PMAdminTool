@@ -101,6 +101,7 @@ public class GraphEditor extends VerticalLayout {
         // for graph viewer section
         private CytoscapeElement graphViewer;
         private boolean graphViewerAdded = false;
+        private boolean graphViewerPendingUpdate = false;
 
         // for node info section
         private VerticalLayout nodeInfo; // overall node info layout
@@ -151,6 +152,11 @@ public class GraphEditor extends VerticalLayout {
                             graphViewerAdded = true;
                         }
                         graphViewer.setVisible(true);
+
+                        // if new changes have occurred while in visible
+                        if (graphViewerPendingUpdate) {
+                            refreshGraphViewer();
+                        }
                         break;
                 }
             });
@@ -1045,19 +1051,28 @@ public class GraphEditor extends VerticalLayout {
 //            grid.getDataCommunicator().reset();
             grid.getDataProvider().refreshAll();
 
-            refreshGraphViewer();
+            if (graphViewer.isVisible()) {
+                refreshGraphViewer();
+            } else {
+                graphViewerPendingUpdate = true;
+            }
         }
 
         public void refresh(Node... nodes) {
             for (Node node : nodes)
                 grid.getDataProvider().refreshItem(node, true);
 
-            refreshGraphViewer();
+            if (graphViewer.isVisible()) {
+                refreshGraphViewer();
+            } else {
+                graphViewerPendingUpdate = true;
+            }
         }
 
         public void refreshGraphViewer() {
             try {
                 graphViewer.reset();
+                graphViewerPendingUpdate = false;
             } catch (PMException e) {
                 e.printStackTrace();
             }
