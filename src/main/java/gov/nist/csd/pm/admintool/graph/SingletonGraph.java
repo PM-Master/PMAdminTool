@@ -58,6 +58,8 @@ public class SingletonGraph {
     private static Set<PolicyClassWithActive> activePCs;
     private static MySQLConnection connection = new MySQLConnection();
 
+    private NGACWSWebClient webClient = new NGACWSWebClient(NGACWSWebClient.LOCALHOST_URL);
+
     public boolean dacConfigured = false;
 
     private SingletonGraph(PAP pap) throws PMException {
@@ -320,11 +322,13 @@ public class SingletonGraph {
     }
 
     public Set<Node> getNodes() throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).getNodes();
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getNodes();
+
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).getNodes();
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Set<Node> getActiveNodes() throws PMException {
@@ -459,11 +463,13 @@ public class SingletonGraph {
     }
 
     public Node getNode(String name) throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).getNode(name);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getNode(name);
+
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).getNode(name);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void fromJson(String s) throws PMException {
