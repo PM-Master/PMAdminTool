@@ -108,7 +108,12 @@
         <dependency>
             <groupId>com.github.PM-Master</groupId>
             <artifactId>policy-machine-core</artifactId>
-            <version>5b1275698502298221223885b96f1ade612cd211</version>
+<!--            <version>5b1275698502298221223885b96f1ade612cd211</version>-->
+<!--            <version>8ccdc3d03da91bd0e8398098ad26ab67c5818d42</version>-->
+<!--            <version>e7eab788c68f72a46b0e15edfdb0962405a5e74b</version>-->
+<!--            <version>8c8ef47f00d720b3bccaf311febc9fa4525401b5</version>-->
+<!--            <version>99694afb0eef270ee84b20199a201f7201b8b8f3</version>-->
+            <version>08f4d3889c75cf19e91fd789bc2dee2f0eba90d5</version>
         </dependency>
     </dependencies>
 
@@ -117,6 +122,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>9</source>
+                    <target>9</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>

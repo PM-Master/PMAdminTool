@@ -2221,7 +2221,7 @@ public class GraphEditor extends VerticalLayout {
                 childNode.expandPolicies();
                 parentNode.resetGrid();
                 parentNode.expandPolicies();
-            } catch (PMException e) {
+            } catch (Exception e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }

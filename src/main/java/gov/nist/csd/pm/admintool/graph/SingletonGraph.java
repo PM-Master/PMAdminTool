@@ -1,5 +1,6 @@
 package gov.nist.csd.pm.admintool.graph;
 
+
 import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.customObligationFunctions.RecordFunctionExecutor;
 import gov.nist.csd.pm.epp.EPPOptions;
@@ -12,10 +13,6 @@ import gov.nist.csd.pm.pap.ObligationsAdmin;
 import gov.nist.csd.pm.pap.PAP;
 import gov.nist.csd.pm.pap.ProhibitionsAdmin;
 import gov.nist.csd.pm.pdp.PDP;
-import gov.nist.csd.pm.pdp.audit.model.Explain;
-import gov.nist.csd.pm.pdp.audit.model.Path;
-import gov.nist.csd.pm.pdp.audit.model.PolicyClass;
-import gov.nist.csd.pm.pdp.services.AnalyticsService;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.Graph;
 import gov.nist.csd.pm.pip.graph.MemDBGraph;
@@ -35,7 +32,6 @@ import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 import gov.nist.csd.pm.policies.dac.DAC;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import static gov.nist.csd.pm.pdp.PDP.newPDP;
 
@@ -250,15 +246,17 @@ public class SingletonGraph {
         return "Active pcs: " + pcs.toString();
     }
 
-    public static Node createPolicyClass(String name, Map<String, String> properties) throws PMException {
-
-        if (userContext != null) {
-            Node newPC = getPDP().getGraphService(userContext).createPolicyClass(name, properties);
-            activePCs.add(new PolicyClassWithActive(newPC));
-            return newPC;
-        } else {
-            throw new PMException("User Conext is Null");
-        }
+    public Node createPolicyClass(String name, Map<String, String> properties) throws PMException {
+        Node newPC = webClient.createPolicyClass(name, properties);
+        activePCs.add(new PolicyClassWithActive(newPC));
+//        if (userContext != null) {
+//            Node newPC = getPDP().getGraphService(userContext).createPolicyClass(name, properties);
+//            activePCs.add(new PolicyClassWithActive(newPC));
+//            return newPC;
+//        } else {
+//            throw new PMException("User Conext is Null");
+//        }
+        return newPC;
     }
 
     public SingletonGraph updateGraph (boolean isMySQL){
@@ -274,43 +272,51 @@ public class SingletonGraph {
     }
 
     // graph service methods
-    public void reset() throws PMException {
-        getPDP().getGraphService(userContext).reset(userContext);
-        dacConfigured = false;
+    public void reset() throws PMException{
+        webClient.reset();
+//        getPDP().getGraphService(userContext).reset(userContext);
+//        dacConfigured = false;
     }
 
     public Node createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).createNode(name, type, properties, parent );
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.createNode(new Node(name, type, properties), parent);
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).createNode(name, type, properties, parent );
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public String getPolicyClassDefault(String pc, NodeType type) throws PMException {
-        if (pc.equalsIgnoreCase("0")) {
-            if (userContext != null) {
-                return getPDP().getGraphService(userContext).getPolicyClassDefault(superPCId, type);
-            } else {
-                throw new PMException("User Context is Null");
-            }
-        } else return getPDP().getGraphService(userContext).getPolicyClassDefault(pc, type);
+        return webClient.getPolicyClassDefault(pc, type);
+//        if (pc.equalsIgnoreCase("0")) {
+//            if (userContext != null) {
+//                return getPDP().getGraphService(userContext).getPolicyClassDefault(superPCId, type);
+//            } else {
+//                throw new PMException("User Context is Null");
+//            }
+//        } else return getPDP().getGraphService(userContext).getPolicyClassDefault(pc, type);
     }
 
     public void updateNode(String name, Map<String, String> properties) throws PMException {
-        if (userContext != null) {
-            getPDP().getGraphService(userContext).updateNode(name, properties);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        Node node = new Node();
+        node.setName(name);
+        node.setProperties(properties);
+        webClient.updateNode(name,node);
+//        if (userContext != null) {
+//            getPDP().getGraphService(userContext).updateNode(name, properties);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void deleteNode(String name) throws PMException {
-        if (userContext != null) {
-            getPDP().getGraphService(userContext).deleteNode(name);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.deleteNode(name);
+//        if (userContext != null) {
+//            getPDP().getGraphService(userContext).deleteNode(name);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public boolean exists(String name) throws PMException {
@@ -370,88 +376,114 @@ public class SingletonGraph {
     }
 
     public Set<String> getPolicies() throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).getPolicyClasses();
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        String pcs  = webClient.getPolicies().iterator().next();
+        return stringToSet(pcs);
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).getPolicyClasses();
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
+    // Utility function
+
+    private Set<String> stringToSet(String str) {
+        Set<String> set = new HashSet<>();
+        str = str
+                .replace("[","")
+                .replace("]","")
+                .replaceAll("\"","");
+        if (str.isEmpty()) return set;
+        set =  new HashSet<String>(Arrays.asList(str.split(",")));
+        return set;
+    }
     public Set<String> getChildren(String name) throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).getChildren(name);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        String children  = webClient.getChildren(name).iterator().next();
+        return stringToSet(children);
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).getChildren(name);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Set<String> getChildrenNoSuperPolicy(String name) throws PMException {
-        if (userContext != null) {
-            Set<String> children_noSuperPolicy = getPDP().getGraphService(userContext).getChildren(name);
-            Collection<String> superPolicyNames = new ArrayList<>();
-            superPolicyNames.add("super_ua1");
-            superPolicyNames.add("super_ua2");
-            children_noSuperPolicy.removeAll(superPolicyNames);
-            return children_noSuperPolicy;
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        String children = webClient.getChildrenNoSuperPolicy(name).iterator().next();
+        return stringToSet(children);
+//        if (userContext != null) {
+//            Set<String> children_noSuperPolicy = getPDP().getGraphService(userContext).getChildren(name);
+//            Collection<String> superPolicyNames = new ArrayList<>();
+//            superPolicyNames.add("super_ua1");
+//            superPolicyNames.add("super_ua2");
+//            children_noSuperPolicy.removeAll(superPolicyNames);
+//            return children_noSuperPolicy;
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Set<String> getParents(String node) throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).getParents(node);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        String parents  = webClient.getParents(node).iterator().next();
+        return stringToSet(parents);
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).getParents(node);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void assign(String child, String parent) throws PMException {
-        if (userContext != null) {
-            getPDP().getGraphService(userContext).assign(child, parent);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.assign(child, parent);
+//        if (userContext != null) {
+//            getPDP().getGraphService(userContext).assign(child, parent);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void deassign(String child, String parent) throws PMException {
-        if (userContext != null) {
-            getPDP().getGraphService(userContext).deassign(child, parent);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.deassign(child, parent);
+//        if (userContext != null) {
+//            getPDP().getGraphService(userContext).deassign(child, parent);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void associate(String ua, String target, OperationSet operations) throws PMException {
-        if (userContext != null) {
-            getPDP().getGraphService(userContext).associate(ua, target, operations);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.associate(ua, target, operations);
+//        if (userContext != null) {
+//            getPDP().getGraphService(userContext).associate(ua, target, operations);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void dissociate(String ua, String target) throws PMException {
-        if (userContext != null) {
-            getPDP().getGraphService(userContext).dissociate(ua, target);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.dissociate(ua, target);
+//        if (userContext != null) {
+//            getPDP().getGraphService(userContext).dissociate(ua, target);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Map<String, OperationSet> getSourceAssociations(String source) throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).getSourceAssociations(source);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getSourceAssociations(source);
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).getSourceAssociations(source);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Map<String, OperationSet> getTargetAssociations(String target) throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).getTargetAssociations(target);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getTargetAssociations(target);
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).getTargetAssociations(target);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Set<Node> search(String name, String type, Map<String, String> properties) throws PMException {
@@ -473,30 +505,33 @@ public class SingletonGraph {
     }
 
     public void fromJson(String s) throws PMException {
-        if (userContext != null) {
-            getPDP().getGraphService(userContext).fromJson(s);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.fromJson(s);
+//        if (userContext != null) {
+//            getPDP().getGraphService(userContext).fromJson(s);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public String toJson() throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).toJson();
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.toJson();
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).toJson();
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 /*    public HashSet<PolicyClassWithActive> getActivePcs () {
         //return the active pcs within the graph
     }*/
 
     public void processEvent (EventContext eventCtx) throws PMException {
-        if (userContext != null) {
-            getPDP().getEPP().processEvent(eventCtx);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.processEvent(eventCtx);
+//        if (userContext != null) {
+//            getPDP().getEPP().processEvent(eventCtx);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     // obligation service methods
@@ -510,59 +545,66 @@ public class SingletonGraph {
     }
 
     public void addObl(Obligation obligation) throws PMException {
-        if (userContext != null) {
-            getPDP().getObligationsService(userContext).add(obligation, true);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.addObl(obligation);
+//        if (userContext != null) {
+//            getPDP().getObligationsService(userContext).add(obligation, true);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Obligation getObl(String label) throws PMException {
-        if (userContext != null) {
-            return getPDP().getObligationsService(userContext).get(label);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getObl(label);
+//        if (userContext != null) {
+//            return getPDP().getObligationsService(userContext).get(label);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public List<Obligation> getAllObls() throws PMException {
-        if (userContext != null) {
-            return getPDP().getObligationsService(userContext).getAll();
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getAllObls();
+//        if (userContext != null) {
+//            return getPDP().getObligationsService(userContext).getAll();
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void updateObl(String label, Obligation obligation) throws PMException {
-        if (userContext != null) {
-            getPDP().getObligationsService(userContext).update(label, obligation);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.updateObl(label,obligation);
+//        if (userContext != null) {
+//            getPDP().getObligationsService(userContext).update(label, obligation);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void deleteObl(String label) throws PMException {
-        if (userContext != null) {
-            getPDP().getObligationsService(userContext).delete(label);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.deleteObl(label);
+//        if (userContext != null) {
+//            getPDP().getObligationsService(userContext).delete(label);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void enableObl(String label) throws PMException {
-        if (userContext != null) {
-            getPDP().getObligationsService(userContext).setEnable(label, true);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.enableObl(label);
+//        if (userContext != null) {
+//            getPDP().getObligationsService(userContext).setEnable(label, true);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public List<Obligation> getEnabledObls() throws PMException {
-        if (userContext != null) {
-            return getPDP().getObligationsService(userContext).getEnabled();
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getEnabledObls();
+//        if (userContext != null) {
+//            return getPDP().getObligationsService(userContext).getEnabled();
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     /*public void resetAllObls () throws PMException {
@@ -577,67 +619,81 @@ public class SingletonGraph {
 
     // prohibition service methods
     public List<Prohibition> getAllProhibitions() throws PMException {
-        if (userContext != null) {
-            return getPDP().getProhibitionsService(userContext).getAll();
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getAllProhibitions();
+//        if (userContext != null) {
+//            return getPDP().getProhibitionsService(userContext).getAll();
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void addProhibition(String prohibitionName, String subject, Map<String, Boolean> containers, OperationSet ops, boolean intersection) throws PMException {
         Prohibition.Builder builder = new Prohibition.Builder(prohibitionName, subject, ops)
                 .setIntersection(intersection);
         containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
-        if (userContext != null) {
-            getPDP().getProhibitionsService(userContext).add(builder.build());
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        NGACWSWebClient.ProhibitionInfo prohibitionInfo = new NGACWSWebClient.ProhibitionInfo();
+        prohibitionInfo.containers = containers;
+        prohibitionInfo.ops = ops;
+        webClient.addProhibition(prohibitionName,subject,prohibitionInfo,intersection);
+//        if (userContext != null) {
+//            getPDP().getProhibitionsService(userContext).add(builder.build());
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Prohibition getProhibition(String prohibitionName) throws PMException {
-        if (userContext != null) {
-            return getPDP().getProhibitionsService(userContext).get(prohibitionName);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getProhibition(prohibitionName);
+//        if (userContext != null) {
+//            return getPDP().getProhibitionsService(userContext).get(prohibitionName);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public List<Prohibition> getProhibitionsFor(String subject) throws PMException {
-        if (userContext != null) {
-            return getPDP().getProhibitionsService(userContext).getProhibitionsFor(subject);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getProhibitionsFor(subject);
+//        if (userContext != null) {
+//            return getPDP().getProhibitionsService(userContext).getProhibitionsFor(subject);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public List<Prohibition> getProhibitionsFrom(String target) throws PMException {
-        if (userContext != null) {
-            List<Prohibition> allProhibitions = getPDP().getProhibitionsService(userContext).getAll();
-            allProhibitions.removeIf((prohibition) -> !prohibition.getContainers().keySet().contains(target));
-            return allProhibitions;
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        return webClient.getProhibitionsFrom(target);
+//        if (userContext != null) {
+//            List<Prohibition> allProhibitions = getPDP().getProhibitionsService(userContext).getAll();
+//            allProhibitions.removeIf((prohibition) -> !prohibition.getContainers().keySet().contains(target));
+//            return allProhibitions;
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public void updateProhibition(String prohibitionName, String subject, Map<String, Boolean> containers, OperationSet ops, boolean intersection) throws PMException {
         Prohibition.Builder builder = new Prohibition.Builder(prohibitionName, subject, ops)
                 .setIntersection(intersection);
         containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
-        if (userContext != null) {
-            getPDP().getProhibitionsService(userContext).update(prohibitionName, builder.build());
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        NGACWSWebClient.ProhibitionInfo prohibitionInfo = new NGACWSWebClient.ProhibitionInfo();
+        prohibitionInfo.containers = containers;
+        prohibitionInfo.ops = ops;
+        webClient.updateProhibition(prohibitionName,subject,prohibitionInfo,intersection);
+//        if (userContext != null) {
+//            getPDP().getProhibitionsService(userContext).update(prohibitionName, builder.build());
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
+
     public void deleteProhibition(String prohibitionName) throws PMException {
-        if (userContext != null) {
-            getPDP().getProhibitionsService(userContext).delete(prohibitionName);
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        webClient.deleteProhibition(prohibitionName);
+//        if (userContext != null) {
+//            getPDP().getProhibitionsService(userContext).delete(prohibitionName);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
 //    public void resetProhibitions(UserContext userCtx) throws PMException {
@@ -651,36 +707,44 @@ public class SingletonGraph {
 
     // operation methods
     public Set<String> getAdminOps() throws PMException {
-        if (userContext != null) {
-            return Operations.ADMIN_OPS;
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        String ops = webClient.getAdminOps().iterator().next();
+        return stringToSet(ops);
+//        if (userContext != null) {
+//            return Operations.ADMIN_OPS;
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Set<String> getAdminOpsWithStars() throws PMException {
-        if (userContext != null) {
-            Set<String> ret = getAdminOps();
-            ret.add(Operations.ALL_ADMIN_OPS);
-            return ret;
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        String ops = webClient.getAdminOpsWithStars().iterator().next();
+        return stringToSet(ops);
+//        if (userContext != null) {
+//            Set<String> ret = getAdminOps();
+//            ret.add(Operations.ALL_ADMIN_OPS);
+//            return ret;
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Set<String> getResourceOps() throws PMException {
-        return getPDP().getResourceOps();
+        String ops = webClient.getResourceOps().iterator().next();
+        return stringToSet(ops);
+//        return getPDP().getResourceOps();
     }
 
     public Set<String> getResourceOpsWithStars() throws PMException {
-        if (userContext != null) {
-            Set<String> ret = getResourceOps();
-            ret.add(Operations.ALL_OPS);
-            ret.add(Operations.ALL_RESOURCE_OPS);
-            return ret;
-        } else {
-            throw new PMException("User Context is Null");
-        }
+        String ops = webClient.getResourceOpsWithStars().iterator().next();
+        return stringToSet(ops);
+//        if (userContext != null) {
+//            Set<String> ret = getResourceOps();
+//            ret.add(Operations.ALL_OPS);
+//            ret.add(Operations.ALL_RESOURCE_OPS);
+//            return ret;
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
     }
 
     public Set<String> getAllOps() throws PMException {
@@ -698,92 +762,97 @@ public class SingletonGraph {
     }
 
     public void addResourceOps (String... ops) throws PMException {
-        getPDP().addResourceOps(ops);
+        webClient.addResourceOps(ops);
+//        getPDP().addResourceOps(ops);
     }
 
     public void deleteResourceOps (String... ops) throws PMException {
-        getPDP().deleteResourceOps(ops);
+        webClient.deleteResourceOps(ops);
+//        getPDP().deleteResourceOps(ops);
     }
 
     public String getExplanation(String target) {
-        AnalyticsService analyticsService = getPDP().getAnalyticsService(userContext);
-        String explanation;
-        Explain explain = null;
-
-        try {
-            explain = analyticsService.explain(userContext.getUser(), target);
-        } catch (PMException e) {
-            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-            e.printStackTrace();
-        }
-
-        if (explain != null) {
-            String ret = "";
-            // Explain returns two things:
-            //  1. The permissions the user has on the target
-            //  2. A breakdown of permissions per policy class and paths in each policy class
-            ret +=  "'" + userContext.getUser() + "' has the following permissions on the target '" + target + "': \n";
-            Set<String> permissions = explain.getPermissions();
-            for (String perm: permissions) {
-                ret += "\t- " + perm + "\n";
-            }
-            ret += "\n";
-
-
-            // policyClasses maps the name of a policy class node to a Policy Class object
-            // a policy class object contains the permissions the user has on the target node
-            //   in that policy class
-            ret += "The following section shows a more detailed permission breakdown from the perspective of each policy class:\n";
-            Map<String, PolicyClass> policyClasses = explain.getPolicyClasses();
-            int i = 1;
-            for (String pcName : policyClasses.keySet()) {
-                ret += "\t" + i + ". '" + pcName + "':\n";
-                PolicyClass policyClass = policyClasses.get(pcName);
-
-                // the operations available to the user on the target under this policy class
-                Set<String> operations = policyClass.getOperations();
-                ret += "\t\t- Permissions (Given by this PC):\n";
-                for (String op: operations) {
-                    ret += "\t\t\t- " + op + "\n";
-                }
-                // the paths from the user to the target
-                // A Path object contains the path and the permissions the path provides
-                // the path is just a list of nodes starting at the user and ending at the target node
-                // example: u1 -> ua1 -> oa1 -> o1 [read]
-                //   the association ua1 -> oa1 has the permission [read]
-                ret += "\t\t- Paths (How each permission is found):\n";
-                Set<Path> paths = policyClass.getPaths();
-                for (Path path : paths) {
-                    ret += "\t\t\t";
-                    // this is just a list of nodes -> [u1, ua1, oa1, o1]
-                    List<Node> nodes = path.getNodes();
-                    for (Node n: nodes) {
-                        ret += "'" + n.getName() + "'";
-                        if (!nodes.get(nodes.size()-1).equals(n)) { // not final node
-                            ret += " > ";
-                        }
-                    }
-
-                    // this is the operations in the association between ua1 and oa1
-                    Set<String> pathOps = path.getOperations();
-                    ret += ":\n\t\t\t\t" + pathOps;
-                    // This is the string representation of the path (i.e. "u1-ua1-oa1-o1 ops=[r, w]")
-                    String pathString = path.toString();
-                    ret += "\n";
-                }
-                i++;
-            }
-
-            explanation = ret;
-        } else {
-            explanation = "Returned Audit was null";
-        }
-        return explanation;
+        return webClient.getExplanation(target);
     }
+//        AnalyticsService analyticsService = getPDP().getAnalyticsService(userContext);
+//        String explanation;
+//        Explain explain = null;
+//
+//        try {
+//            explain = analyticsService.explain(userContext.getUser(), target);
+//        } catch (PMException e) {
+//            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+//            e.printStackTrace();
+//        }
+//
+//        if (explain != null) {
+//            String ret = "";
+//            // Explain returns two things:
+//            //  1. The permissions the user has on the target
+//            //  2. A breakdown of permissions per policy class and paths in each policy class
+//            ret +=  "'" + userContext.getUser() + "' has the following permissions on the target '" + target + "': \n";
+//            Set<String> permissions = explain.getPermissions();
+//            for (String perm: permissions) {
+//                ret += "\t- " + perm + "\n";
+//            }
+//            ret += "\n";
+//
+//
+//            // policyClasses maps the name of a policy class node to a Policy Class object
+//            // a policy class object contains the permissions the user has on the target node
+//            //   in that policy class
+//            ret += "The following section shows a more detailed permission breakdown from the perspective of each policy class:\n";
+//            Map<String, PolicyClass> policyClasses = explain.getPolicyClasses();
+//            int i = 1;
+//            for (String pcName : policyClasses.keySet()) {
+//                ret += "\t" + i + ". '" + pcName + "':\n";
+//                PolicyClass policyClass = policyClasses.get(pcName);
+//
+//                // the operations available to the user on the target under this policy class
+//                Set<String> operations = policyClass.getOperations();
+//                ret += "\t\t- Permissions (Given by this PC):\n";
+//                for (String op: operations) {
+//                    ret += "\t\t\t- " + op + "\n";
+//                }
+//                // the paths from the user to the target
+//                // A Path object contains the path and the permissions the path provides
+//                // the path is just a list of nodes starting at the user and ending at the target node
+//                // example: u1 -> ua1 -> oa1 -> o1 [read]
+//                //   the association ua1 -> oa1 has the permission [read]
+//                ret += "\t\t- Paths (How each permission is found):\n";
+//                Set<Path> paths = policyClass.getPaths();
+//                for (Path path : paths) {
+//                    ret += "\t\t\t";
+//                    // this is just a list of nodes -> [u1, ua1, oa1, o1]
+//                    List<Node> nodes = path.getNodes();
+//                    for (Node n: nodes) {
+//                        ret += "'" + n.getName() + "'";
+//                        if (!nodes.get(nodes.size()-1).equals(n)) { // not final node
+//                            ret += " > ";
+//                        }
+//                    }
+//
+//                    // this is the operations in the association between ua1 and oa1
+//                    Set<String> pathOps = path.getOperations();
+//                    ret += ":\n\t\t\t\t" + pathOps;
+//                    // This is the string representation of the path (i.e. "u1-ua1-oa1-o1 ops=[r, w]")
+//                    String pathString = path.toString();
+//                    ret += "\n";
+//                }
+//                i++;
+//            }
+//
+//            explanation = ret;
+//        } else {
+//            explanation = "Returned Audit was null";
+//        }
+//        return explanation;
+//    }
 
     public boolean checkPermissions (String target, String... ops) throws PMException {
-        Set<String> permissions = getPDP().getAnalyticsService(userContext).getPermissions(target);
-        return Stream.of(ops).allMatch(op -> permissions.contains(op));
+        return webClient.checkPermissions(target, ops);
+//        Set<String> permissions = getPDP().getAnalyticsService(userContext).getPermissions(target);
+//        return Stream.of(ops).allMatch(op -> permissions.contains(op));
     }
 
     // policies methods
