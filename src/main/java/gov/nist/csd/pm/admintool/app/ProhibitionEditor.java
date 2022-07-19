@@ -17,7 +17,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
@@ -31,14 +31,14 @@ import java.util.Map;
 
 @Tag("prohibition-editor")
 public class ProhibitionEditor extends VerticalLayout {
-    private SingletonGraph g;
+    private SingletonClient g;
     private HorizontalLayout layout;
     private ButtonGroup buttonGroup;
     private ProhibitionViewer prohibitionViewer;
     private Prohibition selectedProhibition;
 
     public ProhibitionEditor() {
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);

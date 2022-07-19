@@ -6,7 +6,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
@@ -69,7 +69,7 @@ public class Rule2Parser extends SptRuleParser {
         }
     }
 
-    SingletonGraph graph = SingletonGraph.getInstance();
+    SingletonClient graph = SingletonClient.getInstance();
 
     public class Purpose {
         Node fromNode;
@@ -636,7 +636,7 @@ public class Rule2Parser extends SptRuleParser {
         3. Create associations
     */
     private void buildPolicy() throws PMException {
-        SingletonGraph graph = SingletonGraph.getInstance();
+        SingletonClient graph = SingletonClient.getInstance();
         ///// for PC1
 //        graph.reset();
         long id=generateRandomId();

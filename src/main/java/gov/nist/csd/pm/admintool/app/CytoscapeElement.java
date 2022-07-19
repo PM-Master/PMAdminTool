@@ -7,7 +7,7 @@ import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.page.PendingJavaScriptResult;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 
 @Tag("cytoscape-element")
@@ -21,11 +21,11 @@ import gov.nist.csd.pm.exceptions.PMException;
 
 public class CytoscapeElement extends Div {
     private ClickCallback clickCallback;
-    private SingletonGraph g;
+    private SingletonClient g;
 
     public CytoscapeElement(String elementID) throws PMException {
         // get singleton instance
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
 
         // html meta info
         this.setId(elementID);

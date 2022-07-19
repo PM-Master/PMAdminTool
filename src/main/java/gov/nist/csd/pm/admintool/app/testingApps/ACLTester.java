@@ -8,7 +8,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import gov.nist.csd.pm.admintool.app.MainView;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
@@ -20,7 +20,7 @@ public class ACLTester extends VerticalLayout {
     private Select<Node> attrSelect;
     private Grid<NodeAndPermissions> grid;
     private Node attr;
-    private SingletonGraph g;
+    private SingletonClient g;
 
     public ACLTester () {
         setPadding(false);
@@ -29,7 +29,7 @@ public class ACLTester extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.START);
 
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
         attrSelect = new Select<>();
         grid = new Grid<>(NodeAndPermissions.class);
         attr = null;

@@ -1,6 +1,6 @@
 package gov.nist.csd.pm.admintool.actions.tests;
 
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pdp.audit.model.Explain;
 import gov.nist.csd.pm.pdp.audit.model.Path;
@@ -30,17 +30,13 @@ public class CheckPermission extends Test {
         String permission = (String)getParams().get("permission").getValue();
 
         if (uID != null && targetID != null && permission != null) {
-            SingletonGraph g = SingletonGraph.getInstance();
-            try {
-                Set<String> perms = g.getPDP().getAnalyticsService(new UserContext(uID.getName(), rand.toString())).getPermissions(targetID.getName());
-                for (String perm: perms) {
-                    if (perm.equals(permission)) {
-                        return true;
-                    }
+            SingletonClient g = SingletonClient.getInstance();
+//                Set<String> perms = g.getPDP().getAnalyticsService(new UserContext(uID.getName(), rand.toString())).getPermissions(targetID.getName());
+            Set<String> perms = g.explain(new UserContext(uID.getName(), rand.toString()),targetID.getName()).getPermissions();
+            for (String perm: perms) {
+                if (perm.equals(permission)) {
+                    return true;
                 }
-            } catch (PMException e) {
-                e.printStackTrace();
-                System.out.println(e.getMessage());
             }
         }
         return false;
@@ -52,15 +48,8 @@ public class CheckPermission extends Test {
         Node target = ((Node)getParams().get("targetID").getValue());
 
         if (user != null && target != null) {
-            SingletonGraph g = SingletonGraph.getInstance();
-            Explain explain = null;
-
-            try {
-                explain = g.getPDP().getAnalyticsService(new UserContext(user.getName(), rand.toString())).explain(user.getName(), target.getName());
-            } catch (PMException e) {
-                e.printStackTrace();
-                System.out.println(e.getMessage());
-            }
+            SingletonClient g = SingletonClient.getInstance();
+            Explain explain = g.explain(new UserContext(user.getName(), rand.toString()), target.getName());
 
             if (explain != null) {
                 String ret = "";

@@ -8,17 +8,16 @@ import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
 import com.vaadin.flow.component.radiobutton.RadioGroupVariant;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 
 @Tag("settings")
 public class Settings extends VerticalLayout {
 
-    public SingletonGraph g;
+    public SingletonClient g;
     private SettingsViewer settingsViewer;
     public static boolean hidePolicy;
     public boolean mysqlBool;
@@ -42,7 +41,7 @@ public class Settings extends VerticalLayout {
         setSizeFull();
         setMargin(false);
         setPadding(false);
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
         setUpLayout();
     }
 
@@ -74,7 +73,7 @@ public class Settings extends VerticalLayout {
             databaseRadio.addValueChangeListener(event -> {
                     Dialog dialog = new Dialog();
                     HorizontalLayout form = new HorizontalLayout();
-                    form.setAlignItems(FlexComponent.Alignment.BASELINE);
+                    form.setAlignItems(Alignment.BASELINE);
                     dialog.add(new Label("WARNING: "));
                     dialog.add(new Paragraph("\n"));
                     dialog.add(new Paragraph("Switching database will reset your in-memory data. Are you sure ?"));
@@ -82,7 +81,7 @@ public class Settings extends VerticalLayout {
                         mysqlBool = event.getValue().equalsIgnoreCase("MySQL");
                         databaseRadio.setValue(event.getValue());
                         setMysqlBool(mysqlBool);
-                        SingletonGraph g = SingletonGraph.getInstance();
+                        SingletonClient g = SingletonClient.getInstance();
                         g.updateGraph(mysqlBool);
                         dialog.close();
                         UI.getCurrent().getPage().reload();
@@ -118,9 +117,9 @@ public class Settings extends VerticalLayout {
                     });
             layout.add(toggleHidePolicy);
 
-//            CheckboxGroup<SingletonGraph.PolicyClassWithActive> checkboxGroup = new CheckboxGroup<>();
+//            CheckboxGroup<SingletonClient.PolicyClassWithActive> checkboxGroup = new CheckboxGroup<>();
 //            checkboxGroup.setLabel("Which Policy Classes do you want to be active?");
-//            Set<SingletonGraph.PolicyClassWithActive> policies = g.getActivePCs();
+//            Set<SingletonClient.PolicyClassWithActive> policies = g.getActivePCs();
 //            checkboxGroup.setItems(policies);
 //            policies.removeIf((pc) -> !pc.isActive());
 //            checkboxGroup.setValue(policies);

@@ -18,7 +18,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pip.obligations.evr.EVRException;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
@@ -32,13 +32,13 @@ import static gov.nist.csd.pm.operations.Operations.*;
 
 @Tag("obligation-editor")
 public class ObligationEditor extends VerticalLayout {
-    private SingletonGraph g;
+    private SingletonClient g;
     private HorizontalLayout layout;
     private YamlImporter yamlImporter;
     private ObligationViewer obligationViewer;
 
     public ObligationEditor() throws PMException {
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
 
         // check permissions
         if (!g.checkPermissions("super_oa", GET_OBLIGATION, UPDATE_OBLIGATION, DELETE_OBLIGATION, ENABLE_OBLIGATION))

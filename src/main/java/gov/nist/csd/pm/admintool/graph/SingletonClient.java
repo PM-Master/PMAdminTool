@@ -1,148 +1,126 @@
 package gov.nist.csd.pm.admintool.graph;
 
-import gov.nist.csd.pm.admintool.graph.customObligationFunctions.RecordFunctionExecutor;
-import gov.nist.csd.pm.epp.EPPOptions;
 import gov.nist.csd.pm.epp.events.EventContext;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.operations.Operations;
-import gov.nist.csd.pm.pap.GraphAdmin;
-import gov.nist.csd.pm.pap.ObligationsAdmin;
-import gov.nist.csd.pm.pap.PAP;
-import gov.nist.csd.pm.pap.ProhibitionsAdmin;
-import gov.nist.csd.pm.pdp.PDP;
+import gov.nist.csd.pm.pdp.audit.model.Explain;
 import gov.nist.csd.pm.pdp.services.UserContext;
-import gov.nist.csd.pm.pip.graph.Graph;
-import gov.nist.csd.pm.pip.graph.MemDBGraph;
-import gov.nist.csd.pm.pip.graph.MemGraph;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
-import gov.nist.csd.pm.pip.graph.mysql.MySQLConnection;
-import gov.nist.csd.pm.pip.graph.mysql.MySQLGraph;
-import gov.nist.csd.pm.pip.obligations.MemObligations;
 import gov.nist.csd.pm.pip.obligations.evr.EVRParser;
 import gov.nist.csd.pm.pip.obligations.model.Obligation;
-import gov.nist.csd.pm.pip.prohibitions.MemDBProhibitions;
-import gov.nist.csd.pm.pip.prohibitions.MemProhibitions;
-import gov.nist.csd.pm.pip.prohibitions.Prohibitions;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
-import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
-import gov.nist.csd.pm.policies.dac.DAC;
-import gov.nist.ngacclient.api.*;
+import gov.nist.ngacclient.api.NGACWSWebClient;
 
 import java.util.*;
-
-import static gov.nist.csd.pm.pdp.PDP.newPDP;
 
 /**
  * The "In-Memory" graph used throughout the entirety of the admin tool.
  *
- * There is only one instance which can be retrieved using SingletonGraph.getInstance().
+ * There is only one instance which can be retrieved using SingletonClient.getInstance().
  *
  * UserContext is used to track the current user of the application. At the start of the application it is the
  * super user, but if the setUserContext() method is used it will change from the super context.
  *
  */
-public class SingletonGraph {
-    private static Boolean isMysql;
-    private static SingletonGraph g; // the single instance
-    private static PDP pdp;
+public class SingletonClient {
+    private static SingletonClient g; // the single instance
     private static UserContext userContext;
-    private static String superPCId, superUAId, superOAId;
     private static Random rand;
     private static Set<PolicyClassWithActive> activePCs;
-    private static MySQLConnection connection = new MySQLConnection();
+//    private static MySQLConnection connection = new MySQLConnection();
 
-    private NGACWSWebClient webClient = new NGACWSWebClient(NGACWSWebClient.LOCALHOST_URL);
+    private static NGACWSWebClient webClient = new NGACWSWebClient(NGACWSWebClient.LOCALHOST_URL);
 
-    public boolean dacConfigured = false;
-
-    private SingletonGraph() throws PMException {
+    public SingletonClient() throws PMException {
     }
 
-    public synchronized static PDP getPDP() {
-        return getInstance().pdp;
-    }
+//    public synchronized static PDP getPDP() {
+//        return getInstance().pdp;
+//    }
 
     public Boolean getMysql() {
-        return isMysql;
+        return webClient.getMySQL();
     }
 
-    public void setMysql(Boolean mysql) {
-        isMysql = mysql;
-    }
+//    public void setMysql(Boolean mysql) {
+//        isMysql = mysql;
+//    }
 
     /**
      * Gets the singleton instance of this class
      */
-    public synchronized static SingletonGraph getInstance() {
+    public synchronized static SingletonClient getInstance() {
         rand = new Random();
-        if (g == null) { // if there is no instance available... create new one
-            fixGraphDataMem(new MemGraph());
-            g.setMysql(false);
+        if (g == null) {
+            try {
+                return new SingletonClient();
+            } catch (PMException e) {
+                e.printStackTrace();
+            }
         }
         return g;
     }
 
-    private synchronized static void fixGraphData(Graph graph) {
-        try {
-            graph = new MemDBGraph(graph);
-
-            Prohibitions prohibitions = new MySQLProhibitions(connection);
-            prohibitions = new MemDBProhibitions(prohibitions);
-
-            PAP pap = new PAP(
-                    new GraphAdmin(graph),
-                    new ProhibitionsAdmin(prohibitions),
-                    new ObligationsAdmin(new MemObligations())
-            );
-
-            g = new SingletonGraph();
-
-            PDP pdp = newPDP(
-                    pap,
-                    new EPPOptions(new RecordFunctionExecutor()),
-                    new OperationSet(Operations.READ, Operations.WRITE, Operations.OBJECT_ACCESS));
-
-            g.pdp = pdp;
-
-
-            System.out.println("MySQLGraph");
-            findSuperConfigurationNodes(graph);
-            findActivePCS(graph);
-        } catch (PMException e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private synchronized static void fixGraphDataMem(Graph graph) {
-        try {
-            /// Creating new PAP and PDP
-            PAP pap = new PAP(
-                    new GraphAdmin(graph),
-                    new ProhibitionsAdmin(new MemProhibitions()),
-                    new ObligationsAdmin(new MemObligations())
-            );
-
-            g = new SingletonGraph();
-
-            PDP pdp = newPDP(
-                    pap,
-                    new EPPOptions(new RecordFunctionExecutor()),
-                    new OperationSet(Operations.READ, Operations.WRITE, Operations.OBJECT_ACCESS)
-            );
-
-            g.pdp = pdp;
-
-            System.out.println("MemGraph");
-            findSuperConfigurationNodes(graph);
-            findActivePCS(graph);
-        } catch (PMException e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-        }
-    }
+//    private synchronized static void fixGraphData(Graph graph) {
+//        try {
+//            graph = new MemDBGraph(graph);
+//
+//            Prohibitions prohibitions = new MySQLProhibitions(connection);
+//            prohibitions = new MemDBProhibitions(prohibitions);
+//
+//            PAP pap = new PAP(
+//                    new GraphAdmin(graph),
+//                    new ProhibitionsAdmin(prohibitions),
+//                    new ObligationsAdmin(new MemObligations())
+//            );
+//
+//            g = new SingletonClient();
+//
+//            PDP pdp = newPDP(
+//                    pap,
+//                    new EPPOptions(new RecordFunctionExecutor()),
+//                    new OperationSet(Operations.READ, Operations.WRITE, Operations.OBJECT_ACCESS));
+//
+//            g.pdp = pdp;
+//
+//
+//            System.out.println("MySQLGraph");
+//            findSuperConfigurationNodes(graph);
+//            findActivePCS(graph);
+//        } catch (PMException e) {
+//            System.out.println(e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    private synchronized static void fixGraphDataMem(Graph graph) {
+//        try {
+//            /// Creating new PAP and PDP
+//            PAP pap = new PAP(
+//                    new GraphAdmin(graph),
+//                    new ProhibitionsAdmin(new MemProhibitions()),
+//                    new ObligationsAdmin(new MemObligations())
+//            );
+//
+//            g = new SingletonClient();
+//
+//            PDP pdp = newPDP(
+//                    pap,
+//                    new EPPOptions(new RecordFunctionExecutor()),
+//                    new OperationSet(Operations.READ, Operations.WRITE, Operations.OBJECT_ACCESS)
+//            );
+//
+//            g.pdp = pdp;
+//
+//            System.out.println("MemGraph");
+//            findSuperConfigurationNodes(graph);
+//            findActivePCS(graph);
+//        } catch (PMException e) {
+//            System.out.println(e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
 
     public void setUserContext(String username) {
         userContext = new UserContext(username, rand.toString());
@@ -155,44 +133,44 @@ public class SingletonGraph {
             return "No User Context";
     }
 
-    private static void findActivePCS(Graph graph) throws PMException{
-        activePCs = new HashSet<>();
-        for (Node n : graph.getNodes()) {
-            if (n.getType().equals(NodeType.PC)) {
-                activePCs.add(new PolicyClassWithActive(n));
-            }
-        }
-    }
+//    private static void findActivePCS(Graph graph) throws PMException{
+//        activePCs = new HashSet<>();
+//        for (Node n : graph.getNodes()) {
+//            if (n.getType().equals(NodeType.PC)) {
+//                activePCs.add(new PolicyClassWithActive(n));
+//            }
+//        }
+//    }
 
-    private static void findSuperConfigurationNodes(Graph graph) throws PMException {
-        userContext = null;
-        for (Node n : graph.getNodes()) {
-            if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
-                switch (n.getType()) {
-                    case OA:
-                        System.out.println("Super OA: " + n.getName());
-                        superOAId = n.getName();
-                        break;
-                    case UA:
-                        if (n.getName().equals("super_ua2")) {
-                            System.out.println("Super UA: " + n.getName());
-                            superUAId = n.getName();
-                        }
-                        break;
-                    case U:
-                        System.out.println("Super U: " + n.getName());
-                        userContext = new UserContext(n.getName(), rand.toString());
-                        break;
-                    case PC:
-                        System.out.println("Super PC: " + n.getName());
-                        superPCId = n.getName();
-                        break;
-                }
-            }
-
-
-        }
-    }
+//    private static void findSuperConfigurationNodes(Graph graph) throws PMException {
+//        userContext = null;
+//        for (Node n : graph.getNodes()) {
+//            if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
+//                switch (n.getType()) {
+//                    case OA:
+//                        System.out.println("Super OA: " + n.getName());
+//                        superOAId = n.getName();
+//                        break;
+//                    case UA:
+//                        if (n.getName().equals("super_ua2")) {
+//                            System.out.println("Super UA: " + n.getName());
+//                            superUAId = n.getName();
+//                        }
+//                        break;
+//                    case U:
+//                        System.out.println("Super U: " + n.getName());
+//                        userContext = new UserContext(n.getName(), rand.toString());
+//                        break;
+//                    case PC:
+//                        System.out.println("Super PC: " + n.getName());
+//                        superPCId = n.getName();
+//                        break;
+//                }
+//            }
+//
+//
+//        }
+//    }
 
 //    private static UserContext getUserContext() {
 //        return userContext;
@@ -211,10 +189,18 @@ public class SingletonGraph {
 //    }
 
     public static Set<PolicyClassWithActive> getActivePCs() {
+        Set<PolicyClassWithActive> activePCs = new HashSet<>();
+        Set<Node> activeNodes = webClient.getActivePCs();
+        for (Node activeNode: activeNodes)
+        {
+            activePCs.add(new PolicyClassWithActive(activeNode));
+        }
         return activePCs;
     }
 
     public boolean isPCActive(Node pc) {
+
+        activePCs = this.getActivePCs();
         for (PolicyClassWithActive pcsa : activePCs) {
             if (pcsa.pc.equals(pc)) {
                 return pcsa.isActive();
@@ -224,10 +210,11 @@ public class SingletonGraph {
         return false;
     }
 
-
     public static void resetActivePCs() {
-        activePCs.removeIf(policyClassWithActive -> !policyClassWithActive.getName().equals("super_pc"));
+        webClient.resetActivePCs();
+//        activePCs.removeIf(policyClassWithActive -> !policyClassWithActive.getName().equals("super_pc"));
     }
+
 
     public String toString() {
         List<String> pcs = new ArrayList<>();
@@ -236,7 +223,7 @@ public class SingletonGraph {
                 pcs.add(pc.name);
             }
         }
-        return "Active pcs: " + pcs.toString();
+        return "Active pcs: " + pcs;
     }
 
     public Node createPolicyClass(String name, Map<String, String> properties) throws PMException {
@@ -252,16 +239,17 @@ public class SingletonGraph {
         return newPC;
     }
 
-    public SingletonGraph updateGraph (boolean isMySQL){
-        g = null;
-        if (isMySQL) {
-            fixGraphData(new MySQLGraph(connection));
-            g.setMysql(true);
-        } else {
-            fixGraphDataMem(new MemGraph());
-            g.setMysql(false);
-        }
-        return g;
+    public void updateGraph (boolean isMySQL){
+        webClient.updateGraph(isMySQL);
+//        g = null;
+//        if (isMySQL) {
+//            fixGraphData(new MySQLGraph(connection));
+//            g.setMysql(true);
+//        } else {
+//            fixGraphDataMem(new MemGraph());
+//            g.setMysql(false);
+//        }
+//        return g;
     }
 
     // graph service methods
@@ -546,14 +534,14 @@ public class SingletonGraph {
 //        }
     }
 
-    public Obligation getObl(String label) throws PMException {
-        return webClient.getObl(label);
-//        if (userContext != null) {
-//            return getPDP().getObligationsService(userContext).get(label);
-//        } else {
-//            throw new PMException("User Context is Null");
-//        }
-    }
+//    public Obligation getObl(String label) throws PMException {
+//        return webClient.getObl(label);
+////        if (userContext != null) {
+////            return getPDP().getObligationsService(userContext).get(label);
+////        } else {
+////            throw new PMException("User Context is Null");
+////        }
+//    }
 
     public List<Obligation> getAllObls() throws PMException {
         return webClient.getAllObls();
@@ -582,23 +570,23 @@ public class SingletonGraph {
 //        }
     }
 
-    public void enableObl(String label) throws PMException {
-        webClient.enableObl(label);
-//        if (userContext != null) {
-//            getPDP().getObligationsService(userContext).setEnable(label, true);
-//        } else {
-//            throw new PMException("User Context is Null");
-//        }
-    }
+//    public void enableObl(String label) throws PMException {
+//        webClient.enableObl(label);
+////        if (userContext != null) {
+////            getPDP().getObligationsService(userContext).setEnable(label, true);
+////        } else {
+////            throw new PMException("User Context is Null");
+////        }
+//    }
 
-    public List<Obligation> getEnabledObls() throws PMException {
-        return webClient.getEnabledObls();
-//        if (userContext != null) {
-//            return getPDP().getObligationsService(userContext).getEnabled();
-//        } else {
-//            throw new PMException("User Context is Null");
-//        }
-    }
+//    public List<Obligation> getEnabledObls() throws PMException {
+//        return webClient.getEnabledObls();
+////        if (userContext != null) {
+////            return getPDP().getObligationsService(userContext).getEnabled();
+////        } else {
+////            throw new PMException("User Context is Null");
+////        }
+//    }
 
     /*public void resetAllObls () throws PMException {
         if (superContext != null) {
@@ -635,14 +623,14 @@ public class SingletonGraph {
 //        }
     }
 
-    public Prohibition getProhibition(String prohibitionName) throws PMException {
-        return webClient.getProhibition(prohibitionName);
-//        if (userContext != null) {
-//            return getPDP().getProhibitionsService(userContext).get(prohibitionName);
-//        } else {
-//            throw new PMException("User Context is Null");
-//        }
-    }
+//    public Prohibition getProhibition(String prohibitionName) throws PMException {
+//        return webClient.getProhibition(prohibitionName);
+////        if (userContext != null) {
+////            return getPDP().getProhibitionsService(userContext).get(prohibitionName);
+////        } else {
+////            throw new PMException("User Context is Null");
+////        }
+//    }
 
     public List<Prohibition> getProhibitionsFor(String subject) throws PMException {
         return webClient.getProhibitionsFor(subject);
@@ -653,16 +641,16 @@ public class SingletonGraph {
 //        }
     }
 
-    public List<Prohibition> getProhibitionsFrom(String target) throws PMException {
-        return webClient.getProhibitionsFrom(target);
-//        if (userContext != null) {
-//            List<Prohibition> allProhibitions = getPDP().getProhibitionsService(userContext).getAll();
-//            allProhibitions.removeIf((prohibition) -> !prohibition.getContainers().keySet().contains(target));
-//            return allProhibitions;
-//        } else {
-//            throw new PMException("User Context is Null");
-//        }
-    }
+//    public List<Prohibition> getProhibitionsFrom(String target) throws PMException {
+//        return webClient.getProhibitionsFrom(target);
+////        if (userContext != null) {
+////            List<Prohibition> allProhibitions = getPDP().getProhibitionsService(userContext).getAll();
+////            allProhibitions.removeIf((prohibition) -> !prohibition.getContainers().keySet().contains(target));
+////            return allProhibitions;
+////        } else {
+////            throw new PMException("User Context is Null");
+////        }
+//    }
 
     public void updateProhibition(String prohibitionName, String subject, Map<String, Boolean> containers, OperationSet ops, boolean intersection) throws PMException {
         Prohibition.Builder builder = new Prohibition.Builder(prohibitionName, subject, ops)
@@ -764,6 +752,9 @@ public class SingletonGraph {
 //        getPDP().deleteResourceOps(ops);
     }
 
+    public Explain explain(UserContext userContext, String target) {
+        return webClient.explain(userContext, target);
+    }
     public String getExplanation(String target) {
         return webClient.getExplanation(target);
     }
@@ -868,22 +859,10 @@ public class SingletonGraph {
         String name;
         boolean active;
 
-        public PolicyClassWithActive() {
-            pc = null;
-            name = null;
-            active = true;
-        }
-
         public PolicyClassWithActive(Node pc) {
             this.pc = pc;
             name = pc.getName();
             this.active = true;
-        }
-
-        public PolicyClassWithActive(Node pc, boolean active) {
-            this.pc = pc;
-            name = pc.getName();
-            this.active = active;
         }
 
         public String getName() {

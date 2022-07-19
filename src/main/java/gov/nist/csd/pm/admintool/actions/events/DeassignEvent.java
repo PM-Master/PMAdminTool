@@ -1,7 +1,7 @@
 package gov.nist.csd.pm.admintool.actions.events;
 
 import com.vaadin.flow.component.notification.Notification;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pdp.services.UserContext;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
@@ -19,7 +19,7 @@ public class DeassignEvent extends Event {
     public boolean run() {
         Node child = ((Node)getParams().get("childID").getValue());
         Node parent = ((Node)getParams().get("parentID").getValue());
-        SingletonGraph g = SingletonGraph.getInstance();
+        SingletonClient g = SingletonClient.getInstance();
         if (child == null || parent == null) {
             if (g == null) {
                 explanation = "";
@@ -48,7 +48,7 @@ public class DeassignEvent extends Event {
         if (explanation == null) {
             Node child = ((Node)getParams().get("childID").getValue());
             Node parent = ((Node)getParams().get("parentID").getValue());
-            SingletonGraph g = SingletonGraph.getInstance();
+            SingletonClient g = SingletonClient.getInstance();
             if (child == null || parent == null) {
                 if (g == null) {
                     explanation = "In Memory Graph is null";

@@ -1,6 +1,6 @@
 package gov.nist.csd.pm.admintool.actions.tests;
 
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 
@@ -19,7 +19,7 @@ public class AssertAssignment extends Test {
         Node parent = ((Node)getParams().get("parentID").getValue());
 
         if (child != null && parent != null) {
-            SingletonGraph g = SingletonGraph.getInstance();
+            SingletonClient g = SingletonClient.getInstance();
             try {
                 Set<String> children = g.getChildren(parent.getName());
                 for (String childNode: children){

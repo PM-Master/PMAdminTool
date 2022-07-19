@@ -26,7 +26,7 @@ import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
 import gov.nist.csd.pm.admintool.app.blips.ProhibitonBlip;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.app.customElements.Toggle;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
@@ -43,7 +43,7 @@ import static gov.nist.csd.pm.operations.Operations.*;
 
 @Tag("graph-editor")
 public class GraphEditor extends VerticalLayout {
-    private final SingletonGraph g;
+    private final SingletonClient g;
     private final HorizontalLayout layout;
     private NodeLayout childNode;
     private NodeLayout parentNode;
@@ -55,7 +55,7 @@ public class GraphEditor extends VerticalLayout {
     private Node dragNode;
 
     public GraphEditor() {
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
@@ -822,7 +822,7 @@ public class GraphEditor extends VerticalLayout {
 
 //            if (gridSelecNode.getType() == NodeType.UA || gridSelecNode.getType() == NodeType.OA
 //                    || gridSelecNode.getType() == NodeType.U || gridSelecNode.getType() == NodeType.O) {
-//                List<Prohibition> incomingList = SingletonGraph.getPap().getProhibitionsPAP().getAll();
+//                List<Prohibition> incomingList = SingletonClient.getPap().getProhibitionsPAP().getAll();
 //                incomingList.removeIf(prohibition -> !prohibition.getContainers().keySet().contains(gridSelecNode.getName()));
 //                Iterator<Prohibition> incomingIterator = incomingList.iterator();
 //                if (!incomingIterator.hasNext()) {
@@ -835,7 +835,7 @@ public class GraphEditor extends VerticalLayout {
 //                            String targetName = containerKeySetIterator.next();
 //                            boolean isComplement = prohibition.getContainers().get(targetName);
 //                            if (targetName.equals(gridSelecNode.getName())) {
-//                                Node subject = SingletonGraph.getPap().getGraphPAP().getNode(prohibition.getSubject());
+//                                Node subject = SingletonClient.getPap().getGraphPAP().getNode(prohibition.getSubject());
 //                                incomingProhibitionList.add(
 //                                        new ProhibitonBlip(
 //                                                subject,
@@ -2214,7 +2214,7 @@ public class GraphEditor extends VerticalLayout {
 
         Button button = new Button("Reset", event -> {
             try {
-                SingletonGraph.resetActivePCs();
+                SingletonClient.resetActivePCs();
                 g.reset();
                 MainView.notify("Graph has been reset", MainView.NotificationType.SUCCESS);
                 childNode.resetGrid();

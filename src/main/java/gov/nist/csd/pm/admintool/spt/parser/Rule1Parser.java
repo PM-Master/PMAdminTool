@@ -2,7 +2,7 @@ package gov.nist.csd.pm.admintool.spt.parser;
 
 
 import com.vaadin.flow.component.notification.Notification;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
@@ -351,7 +351,7 @@ public class Rule1Parser extends SptRuleParser {
         3. Create associations
     */
     private void buildPolicy() throws PMException {
-        SingletonGraph graph = SingletonGraph.getInstance();
+        SingletonClient graph = SingletonClient.getInstance();
 //        graph.reset();
         int pc1UASize = pc1uas.size();
         int pc1OASize = pc1oas.size();

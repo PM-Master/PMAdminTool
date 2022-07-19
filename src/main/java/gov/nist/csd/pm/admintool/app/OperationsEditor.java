@@ -12,7 +12,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 
 import java.util.ArrayList;
@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 
 public class OperationsEditor extends VerticalLayout {
 
-    private SingletonGraph g;
+    private SingletonClient g;
     private HorizontalLayout layout;
     private OperationsViewer resourcesLayout;
     private OperationsViewer adminLayout;
 
     public OperationsEditor() {
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
         layout = new HorizontalLayout();
         layout.setWidthFull();
         layout.setFlexGrow(1.0);

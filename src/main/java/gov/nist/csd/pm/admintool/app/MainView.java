@@ -18,7 +18,7 @@ import gov.nist.csd.pm.admintool.actions.Action;
 import gov.nist.csd.pm.admintool.actions.SingletonActiveActions;
 import gov.nist.csd.pm.admintool.actions.events.Event;
 import gov.nist.csd.pm.admintool.actions.tests.Test;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
@@ -43,10 +43,10 @@ public class MainView extends HorizontalLayout{
 
     private VerticalLayout navbar;
 
-    private SingletonGraph g;
+    private SingletonClient g;
 
     public MainView() {
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
 
         testResults = new Div();
         actions = SingletonActiveActions.getInstance();

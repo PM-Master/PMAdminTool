@@ -1,6 +1,6 @@
 package gov.nist.csd.pm.admintool.spt.parser;
 
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pdp.audit.model.Explain;
@@ -173,7 +173,7 @@ public class SptRuleParser{
                 rp.graph.assign(dummyObject.getName(), p.toNode.getName());
                 // Check permissions for (dummyUser, ,dummyObject
                 if (dummyUser != null && dummyObject != null && rp.associationOperations != null) {
-                    SingletonGraph g = SingletonGraph.getInstance();
+                    SingletonClient g = SingletonClient.getInstance();
                     try {
                         Set<String> perms = g.getAnalyticsService(new UserContext(dummyUser.getName(),rand.toString() )).getPermissions(dummyObject.getName());
                         if (!perms.containsAll(rp.associationOperations)) {
@@ -274,15 +274,9 @@ public class SptRuleParser{
 
     public String explain(Node user, Node target) {
         if (user != null && target != null) {
-            SingletonGraph g = SingletonGraph.getInstance();
-            Explain explain = null;
+            SingletonClient g = SingletonClient.getInstance();
 
-            try {
-                explain = g.getPDP().getAnalyticsService((new UserContext(user.getName(), rand.toString()))).explain(user.getName(), target.getName());
-            } catch (PMException e) {
-                e.printStackTrace();
-                System.out.println(e.getMessage());
-            }
+            Explain explain = g.explain(new UserContext(user.getName(), rand.toString()), target.getName());
 
             if (explain != null) {
                 String ret = "";

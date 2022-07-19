@@ -5,19 +5,19 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.admintool.spt.parser.SptRuleParser;
 
 
 @Tag("SPTEditor")
     public class SPTEditor extends VerticalLayout {
-        public SingletonGraph g;
+        public SingletonClient g;
         private VerticalLayout layout;
         private SPTInput editorLayout;
         private RuleAnalysis ruleAnalysis;
 
         public SPTEditor() {
-            g = SingletonGraph.getInstance();
+            g = SingletonClient.getInstance();
             layout = new VerticalLayout();
             layout.setFlexGrow(1.0);
             layout.setJustifyContentMode(JustifyContentMode.CENTER);

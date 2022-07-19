@@ -21,14 +21,14 @@ import gov.nist.csd.pm.admintool.actions.tests.AssertAssociation;
 import gov.nist.csd.pm.admintool.actions.tests.CheckPermission;
 import gov.nist.csd.pm.admintool.actions.tests.Test;
 import gov.nist.csd.pm.admintool.app.MainView;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 
 import java.util.Map;
 
 public class UnitTester extends VerticalLayout {
-    private SingletonGraph g;
+    private SingletonClient g;
     private SingletonActiveActions actions;
     private ComboBox<String> testSelect;
     private Action tempTest;
@@ -44,7 +44,7 @@ public class UnitTester extends VerticalLayout {
 
         params = new HorizontalLayout();
 
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
         actions = SingletonActiveActions.getInstance();
         results = new Accordion();
         refreshListOfTests();

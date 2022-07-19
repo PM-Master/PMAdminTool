@@ -8,11 +8,9 @@ import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.pip.graph.Graph;
-import gov.nist.csd.pm.pip.graph.MemGraph;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
@@ -26,13 +24,13 @@ import static gov.nist.csd.pm.operations.Operations.*;
 
 @Tag("import-export")
 public class ImportExport extends VerticalLayout {
-    private SingletonGraph g;
+    private SingletonClient g;
     private HorizontalLayout layout;
     private ImportLayout importLayout;
     private ExportLayout exportLayout;
 
     public ImportExport() throws PMException {
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
 
         // check permission
         if (!g.checkPermissions("super_pc_rep", TO_JSON, FROM_JSON))
@@ -133,14 +131,14 @@ public class ImportExport extends VerticalLayout {
             Button importButton = new Button("Import JSON", click -> {
                 try {
                     g.fromJson(inputJson.getValue());
-                    Set<SingletonGraph.PolicyClassWithActive> activesPc = SingletonGraph.getActivePCs();
+                    Set<SingletonClient.PolicyClassWithActive> activesPc = SingletonClient.getActivePCs();
                     Set<String> nodeNames = activesPc.stream().map(e -> e.getName()).collect(Collectors.toSet());
-                    Set<SingletonGraph.PolicyClassWithActive> activesPcCopy = new HashSet<>();
+                    Set<SingletonClient.PolicyClassWithActive> activesPcCopy = new HashSet<>();
                     for (Node node : g.getNodes()) {
                         if (node.getType() == NodeType.PC) {
                             //compare the pc in the graph to the activePCs
                             if (!nodeNames.contains(node.getName())) {
-                                SingletonGraph.PolicyClassWithActive newPc = new SingletonGraph.PolicyClassWithActive(node);
+                                SingletonClient.PolicyClassWithActive newPc = new SingletonClient.PolicyClassWithActive(node);
                                 activesPcCopy.add(newPc);
                             }
                         }
@@ -177,9 +175,9 @@ public class ImportExport extends VerticalLayout {
 
             Button exportButton = new Button("Export JSON", click -> {
                 try {
-                    //exportJson.setValue(SingletonGraph.getInstance().getGraphService(userCtx).toJson());
+                    //exportJson.setValue(SingletonClient.getInstance().getGraphService(userCtx).toJson());
                     exportJson.setValue(g.toJson());
-                    //exportJson.setValue(SingletonGraph.getInstance().getPAP().getGraphPAP().toJson());
+                    //exportJson.setValue(SingletonClient.getInstance().getPAP().getGraphPAP().toJson());
                     MainView.notify("The graph has been exported into a JSON", MainView.NotificationType.SUCCESS);
                 } catch (PMException e) {
                     e.printStackTrace();
@@ -192,7 +190,7 @@ public class ImportExport extends VerticalLayout {
         }
     }
 
-    public static String toFullJson (SingletonGraph graph) throws PMException{
+    public static String toFullJson (SingletonClient graph) throws PMException{
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         Collection<Node> nodes = graph.getNodes();

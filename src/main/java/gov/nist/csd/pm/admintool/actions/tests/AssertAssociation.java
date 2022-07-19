@@ -1,6 +1,6 @@
 package gov.nist.csd.pm.admintool.actions.tests;
 
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
@@ -22,7 +22,7 @@ public class AssertAssociation extends Test {
         String operation = (String)getParams().get("op").getValue();
 
         if (uaID != null && targetID != null && operation != null) {
-            SingletonGraph g = SingletonGraph.getInstance();
+            SingletonClient g = SingletonClient.getInstance();
             try {
                 Map<String, OperationSet> sourceAssociations = g.getSourceAssociations(uaID.getName());
                 for (String tID: sourceAssociations.keySet()){

@@ -12,19 +12,19 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph;
-import gov.nist.csd.pm.admintool.graph.SingletonGraph.PolicyClassWithActive;
+import gov.nist.csd.pm.admintool.graph.SingletonClient;
+import gov.nist.csd.pm.admintool.graph.SingletonClient.PolicyClassWithActive;
 
 import java.util.Map;
 import java.util.Set;
 
 public class PolicyClassEditor extends VerticalLayout {
-    private SingletonGraph g;
+    private SingletonClient g;
 //    private HorizontalLayout layout;
     private PolicyClassViewer policyClassViewer;
 
     public PolicyClassEditor() {
-        g = SingletonGraph.getInstance();
+        g = SingletonClient.getInstance();
         setFlexGrow(1.0);
         setSizeFull();
         setPadding(false);
@@ -79,7 +79,7 @@ public class PolicyClassEditor extends VerticalLayout {
         }
 
         public void refreshGrid() {
-            Set<PolicyClassWithActive> currObls = SingletonGraph.getActivePCs();
+            Set<PolicyClassWithActive> currObls = SingletonClient.getActivePCs();
             System.out.println(g.toString());
             policyClassWithActiveGrid.setItems(currObls);
         }
@@ -154,7 +154,7 @@ public class PolicyClassEditor extends VerticalLayout {
 
         private void togglePolicyClassActive(PolicyClassWithActive pcwa) {
             pcwa.setActive(!pcwa.isActive());
-            SingletonGraph.getActivePCs().forEach(pcs -> {
+            SingletonClient.getActivePCs().forEach(pcs -> {
                 if (pcs.getName().equalsIgnoreCase(pcwa.getName())) {
                     pcs.setActive(pcwa.isActive());
                 }
@@ -173,7 +173,7 @@ public class PolicyClassEditor extends VerticalLayout {
             form.setAlignItems(FlexComponent.Alignment.BASELINE);
             form.setPadding(false);
 
-            Set<PolicyClassWithActive> activePCs = SingletonGraph.getActivePCs();
+            Set<PolicyClassWithActive> activePCs = SingletonClient.getActivePCs();
             for (PolicyClassWithActive pc: activePCs) {
                 Checkbox checkbox = new Checkbox(pc.getName());
                 checkbox.setWidthFull();
