@@ -121,16 +121,11 @@ public class MainView extends HorizontalLayout{
         page7.setSizeFull();
         page7.setVisible(false);
 
-        Tab tab8 = new Tab("Policies");
-        VerticalLayout page8 = new Policies();
+        Tab tab8 = new Tab("Settings");
+        VerticalLayout page8 = new PolicyClassEditor();
+        page8.add(new Settings());
         page8.setSizeFull();
         page8.setVisible(false);
-
-        Tab tab9 = new Tab("Settings");
-        VerticalLayout page9 = new PolicyClassEditor();
-        page9.add(new Settings());
-        page9.setSizeFull();
-        page9.setVisible(false);
 
         Map<Tab, Component> tabsToPages = new HashMap<>();
         tabsToPages.put(tab1, page1);
@@ -141,9 +136,8 @@ public class MainView extends HorizontalLayout{
         tabsToPages.put(tab6, page6);
         tabsToPages.put(tab7, page7);
         tabsToPages.put(tab8, page8);
-        tabsToPages.put(tab9, page9);
 
-        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9);
+        Tabs tabs = new Tabs(tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8);
         tabs.setOrientation(Tabs.Orientation.VERTICAL);
         tabs.setFlexGrowForEnclosedTabs(1);
         navbar.add(tabs);

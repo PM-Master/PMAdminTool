@@ -1,7 +1,5 @@
 package gov.nist.csd.pm.admintool.graph;
 
-
-import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.customObligationFunctions.RecordFunctionExecutor;
 import gov.nist.csd.pm.epp.EPPOptions;
 import gov.nist.csd.pm.epp.events.EventContext;
@@ -30,6 +28,7 @@ import gov.nist.csd.pm.pip.prohibitions.Prohibitions;
 import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
 import gov.nist.csd.pm.pip.prohibitions.mysql.MySQLProhibitions;
 import gov.nist.csd.pm.policies.dac.DAC;
+import gov.nist.ngacclient.api.*;
 
 import java.util.*;
 
@@ -58,13 +57,7 @@ public class SingletonGraph {
 
     public boolean dacConfigured = false;
 
-    private SingletonGraph(PAP pap) throws PMException {
-//        pdp = newPDP(pap, new EPPOptions(), new OperationSet());
-
-        //Prevent form the reflection api.
-//        if (pdp == null){
-//            throw new RuntimeException("Use getInstance() method to get the single instance of this class.");
-//        }
+    private SingletonGraph() throws PMException {
     }
 
     public synchronized static PDP getPDP() {
@@ -104,7 +97,7 @@ public class SingletonGraph {
                     new ObligationsAdmin(new MemObligations())
             );
 
-            g = new SingletonGraph(pap);
+            g = new SingletonGraph();
 
             PDP pdp = newPDP(
                     pap,
@@ -132,7 +125,7 @@ public class SingletonGraph {
                     new ObligationsAdmin(new MemObligations())
             );
 
-            g = new SingletonGraph(pap);
+            g = new SingletonGraph();
 
             PDP pdp = newPDP(
                     pap,
@@ -201,21 +194,21 @@ public class SingletonGraph {
         }
     }
 
-    private static UserContext getUserContext() {
-        return userContext;
-    }
-
-    public static String getSuperPCId() {
-        return superPCId;
-    }
-
-    public static String getSuperOAId() {
-        return superOAId;
-    }
-
-    public static String getSuperUAId() {
-        return superUAId;
-    }
+//    private static UserContext getUserContext() {
+//        return userContext;
+//    }
+//
+//    public static String getSuperPCId() {
+//        return superPCId;
+//    }
+//
+//    public static String getSuperOAId() {
+//        return superOAId;
+//    }
+//
+//    public static String getSuperUAId() {
+//        return superUAId;
+//    }
 
     public static Set<PolicyClassWithActive> getActivePCs() {
         return activePCs;
@@ -319,13 +312,13 @@ public class SingletonGraph {
 //        }
     }
 
-    public boolean exists(String name) throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).exists(name);
-        } else {
-            throw new PMException("User Context is Null");
-        }
-    }
+//    public boolean exists(String name) throws PMException {
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).exists(name);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
+//    }
 
     public Set<Node> getNodes() throws PMException {
         return webClient.getNodes();
@@ -486,13 +479,13 @@ public class SingletonGraph {
 //        }
     }
 
-    public Set<Node> search(String name, String type, Map<String, String> properties) throws PMException {
-        if (userContext != null) {
-            return getPDP().getGraphService(userContext).search(NodeType.toNodeType(type), properties);
-        } else {
-            throw new PMException("User Context is Null");
-        }
-    }
+//    public Set<Node> search(String name, String type, Map<String, String> properties) throws PMException {
+//        if (userContext != null) {
+//            return getPDP().getGraphService(userContext).search(NodeType.toNodeType(type), properties);
+//        } else {
+//            throw new PMException("User Context is Null");
+//        }
+//    }
 
     public Node getNode(String name) throws PMException {
         return webClient.getNode(name);
@@ -540,9 +533,9 @@ public class SingletonGraph {
         return parser.parse(userContext.getUser(), oblString);
     }
 
-    public void addObl(String oblString) throws PMException {
-        addObl(parseObligationYaml(oblString));
-    }
+//    public void addObl(String oblString) throws PMException {
+//        addObl(parseObligationYaml(oblString));
+//    }
 
     public void addObl(Obligation obligation) throws PMException {
         webClient.addObl(obligation);
@@ -747,12 +740,12 @@ public class SingletonGraph {
 //        }
     }
 
-    public Set<String> getAllOps() throws PMException {
-        HashSet<String> ops = new HashSet<>();
-        ops.addAll(getAdminOps());
-        ops.addAll(getResourceOps());
-        return ops;
-    }
+//    public Set<String> getAllOps() throws PMException {
+//        HashSet<String> ops = new HashSet<>();
+//        ops.addAll(getAdminOps());
+//        ops.addAll(getResourceOps());
+//        return ops;
+//    }
 
     public Set<String> getAllOpsWithStars() throws PMException {
         HashSet<String> ops = new HashSet<>();
@@ -856,17 +849,17 @@ public class SingletonGraph {
     }
 
     // policies methods
-    public void configureDAC(String DACname) throws PMException {
-        DAC.configure(DACname, pdp, userContext);
-        findActivePCS(pdp.getGraphService(userContext));
-        dacConfigured = true;
-    }
+//    public void configureDAC(String DACname) throws PMException {
+//        DAC.configure(DACname, pdp, userContext);
+//        findActivePCS(pdp.getGraphService(userContext));
+//        dacConfigured = true;
+//    }
 
-    public void delegate(String delegatorName, String delegateeName,
-                         OperationSet ops, Set<String> targetNames) throws PMException {
-        UserContext delegatorContext = new UserContext(delegatorName);
-        DAC.delegate(pdp, delegatorContext, delegateeName, ops, targetNames);
-    }
+//    public void delegate(String delegatorName, String delegateeName,
+//                         OperationSet ops, Set<String> targetNames) throws PMException {
+//        UserContext delegatorContext = new UserContext(delegatorName);
+//        DAC.delegate(pdp, delegatorContext, delegateeName, ops, targetNames);
+//    }
 
 
     // Policy class with active feild class
