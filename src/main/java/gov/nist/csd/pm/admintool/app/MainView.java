@@ -201,7 +201,8 @@ public class MainView extends HorizontalLayout{
         // get all users that are not the current user
         Collection<Node> nodeCollection;
         try {
-            nodeCollection = new HashSet<>(g.getActiveNodes());
+            nodeCollection = new HashSet<>(g.getNodes());
+//            nodeCollection = new HashSet<>(g.getActiveNodes());
             nodeCollection.removeIf(curr -> !(curr.getType() == NodeType.U) || curr.getName().equals(g.getCurrentContext()));
         } catch (PMException e) {
             nodeCollection = new HashSet<>();

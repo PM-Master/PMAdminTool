@@ -191,7 +191,8 @@ public class ProhibitionEditor extends VerticalLayout {
         // get all current nodes
         HashSet<Node> nodesCol = new HashSet<>();
         try {
-            nodesCol.addAll(g.getActiveNodes());
+            nodesCol.addAll(g.getNodes());
+//            nodesCol.addAll(g.getActiveNodes());
         } catch (PMException e) {
             MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();
@@ -340,7 +341,8 @@ public class ProhibitionEditor extends VerticalLayout {
         // get all current nodes
         HashSet<Node> nodesCol = new HashSet<>();
         try {
-            nodesCol.addAll(g.getActiveNodes());
+            nodesCol.addAll(g.getNodes());
+//            nodesCol.addAll(g.getActiveNodes());
         } catch (PMException e) {
             MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
             e.printStackTrace();

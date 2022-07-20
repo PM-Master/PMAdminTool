@@ -335,7 +335,8 @@ public class GraphEditor extends VerticalLayout {
                         Set<String> children = g.getChildren(n.getName());
                         if (!children.isEmpty()) {
                             prevNodes.push(currNodes);
-                            currNodes = g.getActiveNodes().stream()
+//                            currNodes = g.getActiveNodes().stream()
+                            currNodes = g.getNodes().stream()
                                     .filter(node_k -> children.contains(node_k.getName())).collect(Collectors.toList());
                             //grid.setItems(currNodes);
                             updateGridNodes(currNodes);
@@ -1004,7 +1005,8 @@ public class GraphEditor extends VerticalLayout {
         public void resetGrid() {
             currNodes = new HashSet<>();
             try {
-                Set<Node> allNodes = g.getActiveNodes();
+                Set<Node> allNodes = g.getNodes();
+//                Set<Node> allNodes = g.getActiveNodes();
                 Set<String> visitedNodes = new HashSet<>();
 
                 for (Node n: allNodes) {
@@ -1014,9 +1016,9 @@ public class GraphEditor extends VerticalLayout {
                         // if no parents, add to curr nodes
                         if (g.getParents(n.getName()).isEmpty()) {
                             if (n.getType().equals(NodeType.PC)) {
-                                if (g.isPCActive(n)) {
+//                                if (g.isPCActive(n)) {
                                     currNodes.add(n);
-                                }
+//                                }
                             } else {
                                 currNodes.add(n);
                             }
@@ -1336,7 +1338,8 @@ public class GraphEditor extends VerticalLayout {
         typeSelect.addValueChangeListener(event -> {
             Collection<Node> nodeCollection;
             try {
-                nodeCollection = new HashSet<>(g.getActiveNodes());
+                nodeCollection = new HashSet<>(g.getNodes());
+//                nodeCollection = new HashSet<>(g.getActiveNodes());
             } catch (PMException e) {
                 nodeCollection = new HashSet<>();
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1459,7 +1462,8 @@ public class GraphEditor extends VerticalLayout {
 
         Collection<Node> nodeCollection;
         try {
-            nodeCollection = new HashSet<>(g.getActiveNodes());
+            nodeCollection = new HashSet<>(g.getNodes());
+//            nodeCollection = new HashSet<>(g.getActiveNodes());
 
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
@@ -1551,7 +1555,7 @@ public class GraphEditor extends VerticalLayout {
         try {
             //filter nodes
             g.getNodes();
-            nodeCollection = new HashSet<>(g.getActiveNodes());
+            nodeCollection = new HashSet<>(g.getNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
             MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -2214,7 +2218,7 @@ public class GraphEditor extends VerticalLayout {
 
         Button button = new Button("Reset", event -> {
             try {
-                SingletonClient.resetActivePCs();
+                SingletonClient.resetAllPCs();
                 g.reset();
                 MainView.notify("Graph has been reset", MainView.NotificationType.SUCCESS);
                 childNode.resetGrid();

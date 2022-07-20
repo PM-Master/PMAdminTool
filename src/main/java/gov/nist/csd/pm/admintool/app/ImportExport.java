@@ -12,13 +12,11 @@ import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.exceptions.PMException;
 import gov.nist.csd.pm.operations.OperationSet;
 import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static gov.nist.csd.pm.operations.Operations.*;
 
@@ -58,16 +56,16 @@ public class ImportExport extends VerticalLayout {
     }
     //            add(new Paragraph(g.getGraphService().getNode(userCtx,-1).getName()));
     // todo: make sure this works
-    public void updateGraph (String json) {
-        System.out.println("Importing following JSON now ........................... ");
-        System.out.println(json);
-
-/*        try {
-            //g = g.updateGraph(GraphSerializer.fromJson(g.getPAP().getGraphPAP(), json));
-        } catch (PMException e) {
-            e.printStackTrace();
-        }*/
-    }
+//    public void updateGraph (String json) {
+//        System.out.println("Importing following JSON now ........................... ");
+//        System.out.println(json);
+//
+///*        try {
+//            //g = g.updateGraph(GraphSerializer.fromJson(g.getPAP().getGraphPAP(), json));
+//        } catch (PMException e) {
+//            e.printStackTrace();
+//        }*/
+//    }
 
     private class ImportLayout extends VerticalLayout {
         public ImportLayout () {
@@ -131,19 +129,19 @@ public class ImportExport extends VerticalLayout {
             Button importButton = new Button("Import JSON", click -> {
                 try {
                     g.fromJson(inputJson.getValue());
-                    Set<SingletonClient.PolicyClassWithActive> activesPc = SingletonClient.getActivePCs();
-                    Set<String> nodeNames = activesPc.stream().map(e -> e.getName()).collect(Collectors.toSet());
-                    Set<SingletonClient.PolicyClassWithActive> activesPcCopy = new HashSet<>();
-                    for (Node node : g.getNodes()) {
-                        if (node.getType() == NodeType.PC) {
-                            //compare the pc in the graph to the activePCs
-                            if (!nodeNames.contains(node.getName())) {
-                                SingletonClient.PolicyClassWithActive newPc = new SingletonClient.PolicyClassWithActive(node);
-                                activesPcCopy.add(newPc);
-                            }
-                        }
-                    }
-                    activesPc.addAll(activesPcCopy);
+//                    Set<Node> activesPc = SingletonClient.getAllPCs();
+//                    Set<String> nodeNames = activesPc.stream().map(e -> e.getName()).collect(Collectors.toSet());
+//                    Set<Node> activesPcCopy = new HashSet<>();
+//                    for (Node node : g.getNodes()) {
+//                        if (node.getType() == NodeType.PC) {
+//                            //compare the pc in the graph to the activePCs
+//                            if (!nodeNames.contains(node.getName())) {
+//                                SingletonClient.PolicyClassWithActive newPc = new SingletonClient.PolicyClassWithActive(node);
+//                                activesPcCopy.add(newPc);
+//                            }
+//                        }
+//                    }
+//                    activesPc.addAll(activesPcCopy);
                     MainView.notify("The Json has been imported", MainView.NotificationType.SUCCESS);
                     //UI.getCurrent().getPage().reload();
                 } catch (PMException e) {

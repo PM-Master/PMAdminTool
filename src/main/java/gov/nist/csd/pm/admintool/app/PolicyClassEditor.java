@@ -1,7 +1,6 @@
 package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
@@ -13,7 +12,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.admintool.graph.SingletonClient.PolicyClassWithActive;
+import gov.nist.csd.pm.pip.graph.model.nodes.Node;
 
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +38,7 @@ public class PolicyClassEditor extends VerticalLayout {
     }
 
     private class PolicyClassViewer extends VerticalLayout {
-        private Grid<PolicyClassWithActive> policyClassWithActiveGrid;
+        private Grid<Node> policyClassWithActiveGrid;
 
         public PolicyClassViewer () {
             getStyle().set("background", "lightblue");
@@ -48,7 +47,7 @@ public class PolicyClassEditor extends VerticalLayout {
 
             add(new H2("Policy Class Editor:"));
 
-            policyClassWithActiveGrid = new Grid<>(PolicyClassWithActive.class);
+            policyClassWithActiveGrid = new Grid<>(Node.class);
             policyClassWithActiveGrid.getStyle()
                     .set("border-radius", "2px");
             policyClassWithActiveGrid.setColumnReorderingAllowed(true);
@@ -56,8 +55,8 @@ public class PolicyClassEditor extends VerticalLayout {
                 col.setFlexGrow(1);
             });
             policyClassWithActiveGrid.removeAllColumns();
-            policyClassWithActiveGrid.addColumn(PolicyClassWithActive::getName).setHeader("Policy Class Name").setSortable(true);
-            policyClassWithActiveGrid.addColumn(PolicyClassWithActive::isActive).setHeader("Is Active?").setSortable(true);
+            policyClassWithActiveGrid.addColumn(Node::getName).setHeader("Policy Class Name").setSortable(true);
+//            policyClassWithActiveGrid.addColumn(Node::isActive).setHeader("Is Active?").setSortable(true);
             add(policyClassWithActiveGrid);
             createContextMenu();
 
@@ -79,21 +78,21 @@ public class PolicyClassEditor extends VerticalLayout {
         }
 
         public void refreshGrid() {
-            Set<PolicyClassWithActive> currObls = SingletonClient.getActivePCs();
-            System.out.println(g.toString());
+            Set<Node> currObls = SingletonClient.getAllPCs();
+            System.out.println(g.getPCNames());
             policyClassWithActiveGrid.setItems(currObls);
         }
 
         private void createContextMenu() {
-            GridContextMenu<PolicyClassWithActive> contextMenu = new GridContextMenu<>(policyClassWithActiveGrid);
+            GridContextMenu<Node> contextMenu = new GridContextMenu<>(policyClassWithActiveGrid);
 
             contextMenu.addItem("Add", event -> addPolicyClass());
-            contextMenu.addItem("Toggle", event -> {
-                event.getItem().ifPresent(obli -> {
-                    togglePolicyClassActive(obli);
-                    refreshGrid();
-                });
-            });
+//            contextMenu.addItem("Toggle", event -> {
+//                event.getItem().ifPresent(obli -> {
+//                    togglePolicyClassActive(obli);
+//                    refreshGrid();
+//                });
+//            });
         }
 
         private void addPolicyClass() {
@@ -152,15 +151,15 @@ public class PolicyClassEditor extends VerticalLayout {
             nameField.focus();
         }
 
-        private void togglePolicyClassActive(PolicyClassWithActive pcwa) {
-            pcwa.setActive(!pcwa.isActive());
-            SingletonClient.getActivePCs().forEach(pcs -> {
-                if (pcs.getName().equalsIgnoreCase(pcwa.getName())) {
-                    pcs.setActive(pcwa.isActive());
-                }
-            });
-            refreshGrid();
-        }
+//        private void togglePolicyClassActive(PolicyClassWithActive pcwa) {
+//            pcwa.setActive(!pcwa.isActive());
+//            SingletonClient.getActivePCs().forEach(pcs -> {
+//                if (pcs.getName().equalsIgnoreCase(pcwa.getName())) {
+//                    pcs.setActive(pcwa.isActive());
+//                }
+//            });
+//            refreshGrid();
+//        }
 
         private void choosePolicyClasses() {
             Dialog dialog = new Dialog();
@@ -173,29 +172,29 @@ public class PolicyClassEditor extends VerticalLayout {
             form.setAlignItems(FlexComponent.Alignment.BASELINE);
             form.setPadding(false);
 
-            Set<PolicyClassWithActive> activePCs = SingletonClient.getActivePCs();
-            for (PolicyClassWithActive pc: activePCs) {
-                Checkbox checkbox = new Checkbox(pc.getName());
-                checkbox.setWidthFull();
-                checkbox.getStyle().set("border-radius", "3px");
-                checkbox.setValue(pc.isActive());
-                if (checkbox.getValue()) {
-                    checkbox.getStyle().set("background", "lightblue");
-                } else {
-                    checkbox.getStyle().set("background", "lightcoral");
-                }
-                checkbox.addValueChangeListener(event -> {
-                    activePCs.remove(pc);
-                    activePCs.add(pc.setActive(event.getValue()));
-                    if (event.getValue()) {
-                        checkbox.getStyle().set("background", "lightblue");
-                    } else {
-                        checkbox.getStyle().set("background", "lightcoral");
-                    }
-                    refreshGrid();
-                });
-                form.add(checkbox);
-            }
+//            Set<Node> activePCs = SingletonClient.getAllPCs();
+//            for (Node pc: activePCs) {
+//                Checkbox checkbox = new Checkbox(pc.getName());
+//                checkbox.setWidthFull();
+//                checkbox.getStyle().set("border-radius", "3px");
+//                checkbox.setValue(pc.isActive());
+//                if (checkbox.getValue()) {
+//                    checkbox.getStyle().set("background", "lightblue");
+//                } else {
+//                    checkbox.getStyle().set("background", "lightcoral");
+//                }
+//                checkbox.addValueChangeListener(event -> {
+//                    activePCs.remove(pc);
+//                    activePCs.add(pc.setActive(event.getValue()));
+//                    if (event.getValue()) {
+//                        checkbox.getStyle().set("background", "lightblue");
+//                    } else {
+//                        checkbox.getStyle().set("background", "lightcoral");
+//                    }
+//                    refreshGrid();
+//                });
+//                form.add(checkbox);
+//            }
 
             HorizontalLayout titleLayout = TitleFactory.generate(
                     "Choose Active Policy Classes");
