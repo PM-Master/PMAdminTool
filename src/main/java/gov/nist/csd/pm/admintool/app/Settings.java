@@ -2,12 +2,7 @@ package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Label;
-import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.radiobutton.RadioButtonGroup;
@@ -20,14 +15,6 @@ public class Settings extends VerticalLayout {
     public SingletonClient g;
     private SettingsViewer settingsViewer;
     public static boolean hidePolicy;
-    public boolean mysqlBool;
-
-    public boolean getMysqlBool() {
-        return mysqlBool;
-    }
-    public void setMysqlBool(boolean mysqlBool) {
-        this.mysqlBool = mysqlBool;
-    }
 
     public boolean isHidePolicy() {
         return hidePolicy;
@@ -61,44 +48,44 @@ public class Settings extends VerticalLayout {
             HorizontalLayout layout = new HorizontalLayout();
             add(layout);
 
-            RadioButtonGroup<String> databaseRadio = new RadioButtonGroup<>();
-            databaseRadio.setLabel("What kind of database do you want to use ?");
-            databaseRadio.setItems("In-Memory", "MySQL");
-            databaseRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
-            if (g.getMysql()) {
-                databaseRadio.setValue("MySQL");
-            } else {
-                databaseRadio.setValue("In-Memory");
-            }
-            databaseRadio.addValueChangeListener(event -> {
-                    Dialog dialog = new Dialog();
-                    HorizontalLayout form = new HorizontalLayout();
-                    form.setAlignItems(Alignment.BASELINE);
-                    dialog.add(new Label("WARNING: "));
-                    dialog.add(new Paragraph("\n"));
-                    dialog.add(new Paragraph("Switching database will reset your in-memory data. Are you sure ?"));
-                    Button button = new Button("Yes", eventSwitch -> {
-                        mysqlBool = event.getValue().equalsIgnoreCase("MySQL");
-                        databaseRadio.setValue(event.getValue());
-                        setMysqlBool(mysqlBool);
-                        SingletonClient g = SingletonClient.getInstance();
-                        g.updateGraph(mysqlBool);
-                        dialog.close();
-                        UI.getCurrent().getPage().reload();
-                    });
-                    button.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-                    form.add(button);
+//            RadioButtonGroup<String> databaseRadio = new RadioButtonGroup<>();
+//            databaseRadio.setLabel("What kind of database do you want to use ?");
+//            databaseRadio.setItems("In-Memory", "MySQL");
+//            databaseRadio.addThemeVariants(RadioGroupVariant.LUMO_VERTICAL);
+//            if (g.getMysql()) {
+//                databaseRadio.setValue("MySQL");
+//            } else {
+//                databaseRadio.setValue("In-Memory");
+//            }
+//            databaseRadio.addValueChangeListener(event -> {
+//                    Dialog dialog = new Dialog();
+//                    HorizontalLayout form = new HorizontalLayout();
+//                    form.setAlignItems(Alignment.BASELINE);
+//                    dialog.add(new Label("WARNING: "));
+//                    dialog.add(new Paragraph("\n"));
+//                    dialog.add(new Paragraph("Switching database will reset your in-memory data. Are you sure ?"));
+//                    Button button = new Button("Yes", eventSwitch -> {
+//                        mysqlBool = event.getValue().equalsIgnoreCase("MySQL");
+//                        databaseRadio.setValue(event.getValue());
+//                        setMysqlBool(mysqlBool);
+//                        SingletonClient g = SingletonClient.getInstance();
+//                        g.updateGraph(mysqlBool);
+//                        dialog.close();
+//                        UI.getCurrent().getPage().reload();
+//                    });
+//                    button.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+//                    form.add(button);
+//
+//                Button cancel = new Button("Cancel", eventCancel -> {
+//                    dialog.close();
+//                });
+//                cancel.addThemeVariants(ButtonVariant.LUMO_ERROR);
+//                form.add(cancel);
+//                dialog.add(form);
+//                dialog.open();
+//            });
 
-                Button cancel = new Button("Cancel", eventCancel -> {
-                    dialog.close();
-                });
-                cancel.addThemeVariants(ButtonVariant.LUMO_ERROR);
-                form.add(cancel);
-                dialog.add(form);
-                dialog.open();
-            });
-
-            layout.add(databaseRadio);
+//            layout.add(databaseRadio);
 
             RadioButtonGroup<String> toggleHidePolicy = new RadioButtonGroup<>();
             toggleHidePolicy.setLabel("Do you want to hide the super policy configuration ?");

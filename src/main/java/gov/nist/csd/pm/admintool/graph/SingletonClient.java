@@ -28,7 +28,6 @@ public class SingletonClient {
     private static UserContext userContext;
     private static Random rand;
     private static Set<Node> allPCs;
-//    private static MySQLConnection connection = new MySQLConnection();
 
     private static NGACWSWebClient webClient = new NGACWSWebClient(NGACWSWebClient.LOCALHOST_URL);
 
@@ -88,10 +87,6 @@ public class SingletonClient {
         Node newPC = webClient.createPolicyClass(name, properties);
         allPCs.add(newPC);
         return newPC;
-    }
-
-    public void updateGraph (boolean isMySQL){
-        webClient.updateGraph(isMySQL);
     }
 
     // graph service methods
