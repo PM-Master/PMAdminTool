@@ -1140,7 +1140,7 @@ public class GraphEditor extends VerticalLayout {
             addUserButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);*/
             //addUserButton.setWidthFull();
 
-            addMultipleUserButton = new Button("Add Multiple Users", evt -> {addMultipleUserSameParents();});
+            addMultipleUserButton = new Button("Add User(s)", evt -> {addMultipleUserSameParents();});
             addMultipleUserButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
             addMultipleUserButton.getElement().setAttribute("title", "Add User(s)");
             addMultipleUserButton.setWidthFull();
@@ -1149,7 +1149,7 @@ public class GraphEditor extends VerticalLayout {
             /*addObjectButton = new Button("Add Object", evt -> {addObject();});
             addObjectButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);*/
 
-            addMultipleObjectButton = new Button("Add Multiple Objects", evt -> {addMultipleObject();});
+            addMultipleObjectButton = new Button("Add Object(s)", evt -> {addMultipleObject();});
             addMultipleObjectButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
             addMultipleObjectButton.getElement().setAttribute("title", "Add Object(s)");
             //addObjectButton.setWidth("45%");
