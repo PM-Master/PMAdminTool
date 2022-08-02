@@ -1322,6 +1322,22 @@ public class GraphEditor extends VerticalLayout {
         nameField.setPlaceholder("Enter Name...");
         form.add(nameField);
 
+        MapInput<String, String> propsFieldNewNodesNames = new MapInput<>(
+                TextField.class, null,
+                (valueFieldInstance) -> {
+                    if (valueFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) valueFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }
+        );
+        propsFieldNewNodesNames.setLabel("Enter the name of additional nodes: ");
+        form.add(propsFieldNewNodesNames);
+
         NodeType[] types = new NodeType[4];
         types[0] = NodeType.U;
         types[1] = NodeType.UA;
@@ -1399,6 +1415,10 @@ public class GraphEditor extends VerticalLayout {
             Set<Node> parents = parentSelect.getSelectedItems();
             try {
                 Map<String, String> props = propsField.getValue();
+                HashSet<String> additionalNodes = propsFieldNewNodesNames.getValueCol();
+                Collection<String> additionalNamesCollec = new ArrayList<>(additionalNodes);
+                List<String> additionalNames = additionalNamesCollec.stream().filter(name_ -> (name_ != null && !name_.equals("")))
+                        .collect(Collectors.toList());
                 if (name == null || name.equals("")) {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
@@ -1439,6 +1459,40 @@ public class GraphEditor extends VerticalLayout {
                         }
                     }
                     MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
+
+                    for (String additionalNode: additionalNames) {
+                        g.createNode(additionalNode, type, props, parents.iterator().next().getName());
+                        for (Node parent : parents) {
+                            switch (type) {
+                                case UA:
+                                    if (!g.getParents(additionalNode).contains(parent.getName())) {
+                                        if (parent.getType() == NodeType.UA) {
+                                            g.assign(additionalNode, parent.getName());
+                                        }
+                                    }
+                                    break;
+                                case O:
+                                    if (parent.getType() == NodeType.OA && !g.getParents(additionalNode).contains(parent.getName())) {
+                                        g.assign(additionalNode, parent.getName());
+                                    }
+                                    break;
+                                case U:
+                                    if (parent.getType() == NodeType.UA && !g.getParents(additionalNode).contains(parent.getName())) {
+                                        g.assign(additionalNode, parent.getName());
+                                    }
+                                    break;
+                                case OA:
+                                    if (!g.getParents(additionalNode).contains(parent.getName())) {
+                                        if (parent.getType() == NodeType.OA) {
+                                            g.assign(additionalNode, parent.getName());
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
+                        MainView.notify("Node with name: " + additionalNode + " created", MainView.NotificationType.SUCCESS);
+                    }
+
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
@@ -1525,7 +1579,8 @@ public class GraphEditor extends VerticalLayout {
                 HashSet<String> additionalNodes = propsFieldNewNodesNames.getValueCol();
                 Collection<String> additionalNamesCollec = new ArrayList<>(additionalNodes);
                 List<String> additionalNames = additionalNamesCollec.stream().filter(name_ -> (name_ != null && !name_.equals("")))
-                        .collect(Collectors.toList());                if (name == null || name == "") {
+                        .collect(Collectors.toList());
+                if (name == null || name == "") {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
                 } else if (parents.isEmpty()) {
