@@ -1124,6 +1124,16 @@ public class GraphEditor extends VerticalLayout {
             add(childNodeText, connectorSymbol, parentNodeText);
             add(new Paragraph("\n"), new Paragraph("\n"));
 
+            childNodeText.getStyle()
+                    .set("text-align", "center")
+                    .set("display", "inline-block")
+                    .set("justify-content", "center");
+
+            parentNodeText.getStyle()
+                    .set("text-align", "center")
+                    .set("display", "inline-block")
+                    .set("justify-content", "center");
+
             createButtons();
         }
 
