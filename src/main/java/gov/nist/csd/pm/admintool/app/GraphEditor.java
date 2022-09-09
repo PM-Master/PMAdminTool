@@ -15,6 +15,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.data.provider.hierarchy.AbstractBackEndHierarchicalDataProvider;
@@ -1095,7 +1096,7 @@ public class GraphEditor extends VerticalLayout {
     }
 
     private class GraphButtonGroup extends VerticalLayout {
-        private Button addNodeButton, addUserButton, addObjectButton,
+        private Button addNodeButton, addUserButton, addObjectButton, addMultipleUserButton, addMultipleObjectButton,
                 addAssignmentButton, deleteAssignmentButton,
                 addAssociationButton, editAssociationButton, deleteAssociationButton,
                 addProhibitionButton,
@@ -1123,6 +1124,16 @@ public class GraphEditor extends VerticalLayout {
             add(childNodeText, connectorSymbol, parentNodeText);
             add(new Paragraph("\n"), new Paragraph("\n"));
 
+            childNodeText.getStyle()
+                    .set("text-align", "center")
+                    .set("display", "inline-block")
+                    .set("justify-content", "center");
+
+            parentNodeText.getStyle()
+                    .set("text-align", "center")
+                    .set("display", "inline-block")
+                    .set("justify-content", "center");
+
             createButtons();
         }
 
@@ -1135,19 +1146,25 @@ public class GraphEditor extends VerticalLayout {
             addNodeButton.setWidthFull();
             add(addNodeButton);
 
-            addUserButton = new Button("Add User", evt -> {
-                addUser();
-            });
-            addUserButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-            addUserButton.setWidthFull();
-            add(addUserButton);
+            /*addUserButton = new Button("Add User", evt -> {addUser();});
+            addUserButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);*/
+            //addUserButton.setWidthFull();
 
-            addObjectButton = new Button("Add Object", evt -> {
-                addObject();
-            });
-            addObjectButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-            addObjectButton.setWidthFull();
-            add(addObjectButton);
+            addMultipleUserButton = new Button("Add User(s)", evt -> {addMultipleUserSameParents();});
+            addMultipleUserButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+            addMultipleUserButton.getElement().setAttribute("title", "Add User(s)");
+            addMultipleUserButton.setWidthFull();
+            add(addMultipleUserButton);
+
+            /*addObjectButton = new Button("Add Object", evt -> {addObject();});
+            addObjectButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);*/
+
+            addMultipleObjectButton = new Button("Add Object(s)", evt -> {addMultipleObject();});
+            addMultipleObjectButton.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
+            addMultipleObjectButton.getElement().setAttribute("title", "Add Object(s)");
+            //addObjectButton.setWidth("45%");
+            addMultipleObjectButton.setWidthFull();
+            add(addMultipleObjectButton);
 //            Button editNodeButton = new Button("Edit Node", evt -> {
 //                editNode();
 //            });
@@ -1315,6 +1332,22 @@ public class GraphEditor extends VerticalLayout {
         nameField.setPlaceholder("Enter Name...");
         form.add(nameField);
 
+        MapInput<String, String> propsFieldNewNodesNames = new MapInput<>(
+                TextField.class, null,
+                (valueFieldInstance) -> {
+                    if (valueFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) valueFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }
+        );
+        propsFieldNewNodesNames.setLabel("Enter the name of additional nodes: ");
+        form.add(propsFieldNewNodesNames);
+
         NodeType[] types = new NodeType[4];
         types[0] = NodeType.U;
         types[1] = NodeType.UA;
@@ -1392,6 +1425,10 @@ public class GraphEditor extends VerticalLayout {
             Set<Node> parents = parentSelect.getSelectedItems();
             try {
                 Map<String, String> props = propsField.getValue();
+                HashSet<String> additionalNodes = propsFieldNewNodesNames.getValueCol();
+                Collection<String> additionalNamesCollec = new ArrayList<>(additionalNodes);
+                List<String> additionalNames = additionalNamesCollec.stream().filter(name_ -> (name_ != null && !name_.equals("")))
+                        .collect(Collectors.toList());
                 if (name == null || name.equals("")) {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
@@ -1432,6 +1469,40 @@ public class GraphEditor extends VerticalLayout {
                         }
                     }
                     MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
+
+                    for (String additionalNode: additionalNames) {
+                        g.createNode(additionalNode, type, props, parents.iterator().next().getName());
+                        for (Node parent : parents) {
+                            switch (type) {
+                                case UA:
+                                    if (!g.getParents(additionalNode).contains(parent.getName())) {
+                                        if (parent.getType() == NodeType.UA) {
+                                            g.assign(additionalNode, parent.getName());
+                                        }
+                                    }
+                                    break;
+                                case O:
+                                    if (parent.getType() == NodeType.OA && !g.getParents(additionalNode).contains(parent.getName())) {
+                                        g.assign(additionalNode, parent.getName());
+                                    }
+                                    break;
+                                case U:
+                                    if (parent.getType() == NodeType.UA && !g.getParents(additionalNode).contains(parent.getName())) {
+                                        g.assign(additionalNode, parent.getName());
+                                    }
+                                    break;
+                                case OA:
+                                    if (!g.getParents(additionalNode).contains(parent.getName())) {
+                                        if (parent.getType() == NodeType.OA) {
+                                            g.assign(additionalNode, parent.getName());
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
+                        MainView.notify("Node with name: " + additionalNode + " created", MainView.NotificationType.SUCCESS);
+                    }
+
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
@@ -1446,6 +1517,119 @@ public class GraphEditor extends VerticalLayout {
         dialog.add(titleLayout, new Hr(), form);
         dialog.open();
         nameField.focus();
+    }
+
+    private void addMultipleUserSameParents() {
+        Dialog dialog = new Dialog();
+        HorizontalLayout form = new HorizontalLayout();
+
+        TextField nameField = new TextField("Name");
+        nameField.setRequiredIndicatorVisible(true);
+        nameField.setPlaceholder("Enter Name...");
+        form.add(nameField);
+
+        MapInput<String, String> propsFieldNewNodesNames = new MapInput<>(
+                TextField.class, null,
+                (valueFieldInstance) -> {
+                    if (valueFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) valueFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }
+        );
+        propsFieldNewNodesNames.setLabel("Enter the name of additional nodes: ");
+        form.add(propsFieldNewNodesNames);
+
+        Collection<Node> nodeCollection;
+        try {
+            nodeCollection = new HashSet<>(g.getNodes());
+
+        } catch (PMException e) {
+            nodeCollection = new HashSet<>();
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+            e.printStackTrace();
+        }
+
+        nodeCollection.removeIf(curr -> !(curr.getType() == NodeType.UA || curr.getType() == NodeType.PC));
+        MultiselectComboBox<Node> parentSelect = new MultiselectComboBox<>();
+        List<Node> nodes = new ArrayList<>(nodeCollection);
+        parentSelect.setLabel("Parent");
+        parentSelect.setPlaceholder("Select UA or PC...");
+
+        parentSelect.setItemLabelGenerator(Node::getName);
+        parentSelect.setItems(nodes);
+        form.add(parentSelect);
+
+        MapInput<String, String> propsField = new MapInput<>(
+                TextField.class, TextField.class,
+                null, null,
+                (keyFieldInstance) -> {
+                    if (keyFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) keyFieldInstance;
+                        String value = temp.getValue();
+                        return !value.isEmpty() ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }, null
+        );
+        propsField.setLabel("Properties");
+        form.add(propsField);
+        Button button = new Button("Submit", event -> {
+            Set<Node> parents = parentSelect.getSelectedItems();
+            String name = nameField.getValue();
+
+            try {
+                Map<String, String> props = propsField.getValue();
+                HashSet<String> additionalNodes = propsFieldNewNodesNames.getValueCol();
+                Collection<String> additionalNamesCollec = new ArrayList<>(additionalNodes);
+                List<String> additionalNames = additionalNamesCollec.stream().filter(name_ -> (name_ != null && !name_.equals("")))
+                        .collect(Collectors.toList());
+                if (name == null || name == "") {
+                    nameField.focus();
+                    MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                } else if (parents.isEmpty()) {
+                    MainView.notify("At least one parent is required", MainView.NotificationType.DEFAULT);
+                } else {
+                    g.createNode(name, NodeType.U, props, parents.iterator().next().getName());
+                    for (Node parent : parents) {
+                        if (parent.getType() == NodeType.UA && !g.getParents(name).contains(parent.getName())) {
+                            g.assign(name, parent.getName());
+                        }
+                    }
+                    MainView.notify("User with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
+                    for (String nameMultiple : additionalNames) {
+                        if (nameMultiple != null && !nameMultiple.isEmpty()) {
+                            g.createNode(nameMultiple, NodeType.U, props, parents.iterator().next().getName());
+                            for (Node parent : parents) {
+                                if (parent.getType() == NodeType.UA && !g.getParents(nameMultiple).contains(parent.getName())) {
+                                    g.assign(nameMultiple, parent.getName());
+                                }
+                            }
+                            MainView.notify("User with name: " + nameMultiple + " has been created", MainView.NotificationType.SUCCESS);
+                        }
+                    }
+                    childNode.refresh(parents.toArray(new Node[0]));
+                    parentNode.refresh(parents.toArray(new Node[0]));
+                    dialog.close();
+                }
+            } catch (Exception e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+            }
+        });
+        if (nodeCollection.size() == 0) {
+            button.setEnabled(false);
+        }
+        HorizontalLayout titleLayout = TitleFactory.generate("Add Multiple User", button);
+
+        dialog.add(titleLayout, new Hr(), form);
+        dialog.open();
     }
 
     private void addUser() {
@@ -1622,6 +1806,123 @@ public class GraphEditor extends VerticalLayout {
         dialog.add(titleLayout, new Hr(), form);
         dialog.open();
         nameField.focus();
+    }
+
+    private void addMultipleObject() {
+
+        Dialog dialog = new Dialog();
+        HorizontalLayout form = new HorizontalLayout();
+
+        TextField nameField = new TextField("Name");
+        nameField.setRequiredIndicatorVisible(true);
+        nameField.setPlaceholder("Enter Name...");
+        form.add(nameField);
+
+        MapInput<String, String> propsFieldNewNodesNames = new MapInput<>(
+                TextField.class, null,
+                (valueFieldInstance) -> {
+                    if (valueFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) valueFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }
+        );
+        propsFieldNewNodesNames.setLabel("Enter the name of additional nodes: ");
+        form.add(propsFieldNewNodesNames);
+
+        Collection<Node> nodeCollection;
+        try {
+            //filter nodes
+            g.getNodes();
+            nodeCollection = new HashSet<>(g.getActiveNodes());
+        } catch (PMException e) {
+            nodeCollection = new HashSet<>();
+            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+            e.printStackTrace();
+        }
+        nodeCollection.removeIf(curr -> curr.getType() != NodeType.OA);
+
+        MultiselectComboBox<Node> parentSelect = new MultiselectComboBox<Node>("Parent", nodeCollection);
+        if (nodeCollection.size() == 0) {
+            parentSelect.setEnabled(false);
+        }
+
+        parentSelect.setItemLabelGenerator(Node::getName);
+        parentSelect.setRequiredIndicatorVisible(true);
+        parentSelect.setPlaceholder("Select OA...");
+        form.add(parentSelect);
+
+        MapInput<String, String> propsField = new MapInput<>(
+                TextField.class, TextField.class,
+                null, null,
+                (keyFieldInstance) -> {
+                    if (keyFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) keyFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }, null
+        );
+        propsField.setLabel("Properties");
+        form.add(propsField);
+
+        Button button = new Button("Submit", event -> {
+            String name = nameField.getValue();
+            Set<Node> parents = parentSelect.getSelectedItems();
+            try {
+                Map<String, String> props = propsField.getValue();
+                HashSet<String> additionalNodes = propsFieldNewNodesNames.getValueCol();
+                Collection<String> additionalNamesCollec = new ArrayList<>(additionalNodes);
+                List<String> additionalNames = additionalNamesCollec.stream().filter(name_ -> (name_ != null && !name_.equals("")))
+                        .collect(Collectors.toList());
+                if (name == null || name == "") {
+                    nameField.focus();
+                    MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
+                } else if (parents.isEmpty()) {
+                    MainView.notify("At least one parent is required", MainView.NotificationType.DEFAULT);
+                } else {
+                    g.createNode(name, NodeType.O, props, parents.iterator().next().getName());
+                    for (Node parent : parents) {
+                        if (parent.getType() == NodeType.OA && !g.getParents(name).contains(parent.getName())) {
+                            g.assign(name, parent.getName());
+                        }
+                    }
+                    MainView.notify("Object with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
+                    for (String newNode: additionalNames) {
+                        g.createNode(newNode, NodeType.O, props, parents.iterator().next().getName());
+                        for (Node parent : parents) {
+                            if (parent.getType() == NodeType.OA && !g.getParents(newNode).contains(parent.getName())) {
+                                g.assign(newNode, parent.getName());
+                            }
+                        }
+                        MainView.notify("Object with name: " + newNode + " has been created", MainView.NotificationType.SUCCESS);
+                    }
+
+                    childNode.refresh(parents.toArray(new Node[0]));
+                    parentNode.refresh(parents.toArray(new Node[0]));
+                    dialog.close();
+                }
+            } catch (Exception e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+            }
+        });
+        if (nodeCollection.size() == 0) {
+            button.setEnabled(false);
+        }
+        HorizontalLayout titleLayout = TitleFactory.generate("Add Object", button);
+
+        dialog.add(titleLayout, new Hr(), form);
+        dialog.open();
+        nameField.focus();
+
     }
 
     private void editNode(Node n) {

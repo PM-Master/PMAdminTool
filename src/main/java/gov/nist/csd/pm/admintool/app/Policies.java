@@ -1,11 +1,15 @@
 package gov.nist.csd.pm.admintool.app;
 
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.details.DetailsVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -110,21 +114,40 @@ public class Policies extends VerticalLayout {
 
             // submit button
             Button configureButton = new Button("Configure DAC", event -> {
-                // todo: Add Warning Dialog - Will reset graph
-                try {
-                    if (policySelect.getValue() != null) {
-                        g.reset();
-                        g.configureDAC(policySelect.getValue().getName());
-                    } else {
-                        g.configureDAC(null);
+                Dialog dialogWarning = new Dialog();
+                HorizontalLayout form = new HorizontalLayout();
+                form.setAlignItems(Alignment.BASELINE);
+                dialogWarning.add(new Label("WARNING: "));
+                dialogWarning.add(new Paragraph("\n"));
+                dialogWarning.add(new Paragraph("Configuring DAC will reset your in-memory data. Are you sure ?"));
+                Button buttonWarning = new Button("Yes", eventSwitch -> {
+                    try {
+                        if (policySelect.getValue() != null) {
+                            g.reset();
+                            g.configureDAC(policySelect.getValue().getName());
+                        } else {
+                            g.configureDAC(null);
+                        }
+                    } catch (PMException e) {
+                        MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                        e.printStackTrace();
                     }
 
                     MainView.notify("DAC has been configured.", MainView.NotificationType.SUCCESS);
+                    dialogWarning.close();
+                    UI.getCurrent().getPage().reload();
+                });
+                buttonWarning.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+                form.add(buttonWarning);
 
-                } catch (PMException e) {
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                    e.printStackTrace();
-                }
+                Button cancel = new Button("Cancel", eventCancel -> {
+                    dialogWarning.close();
+                });
+                cancel.addThemeVariants(ButtonVariant.LUMO_ERROR);
+                form.add(cancel);
+                dialogWarning.add(form);
+                dialogWarning.open();
+
             });
             configureButton.setEnabled(true);
             configureForm.add(configureButton);

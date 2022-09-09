@@ -27,6 +27,10 @@ public class MapInput<K, V> extends VerticalLayout {
     private Div label;
     private Div rowsSection;
 
+    private Set<Col> cols = new HashSet<>();
+    private VerticalLayout labelSection2;
+    private Div colsSection;
+
     public MapInput(Class keyField, Class valueField,
                     FieldConfig keyFieldConfig, FieldConfig valueFieldConfig,
                     FieldRetriever keyFieldRetriever, FieldRetriever valueFieldRetriever) {
@@ -73,6 +77,43 @@ public class MapInput<K, V> extends VerticalLayout {
         getStyle().remove("width");
     }
 
+    /***
+     * Overload method of MapInput for adding one element
+     */
+    public MapInput (Class valueField, FieldConfig valueFieldConfig,FieldRetriever valueFieldRetriever) {
+        this.valueField = valueField;
+        this.valueFieldConfig = valueFieldConfig;
+        this.valueFieldRetriever = valueFieldRetriever;
+
+        labelSection = new HorizontalLayout();
+        labelSection.setPadding(false);
+        labelSection.setMargin(false);
+        add(labelSection);
+
+        label = new Div();
+        label.getStyle().set("font-size", "13px");
+        labelSection.add(label);
+
+        // new col button
+        Div newColButton = new Div();
+        newColButton.setText("+");
+        newColButton.addClickListener((buttonClickEvent) -> {
+            addCol(null);
+        });
+        newColButton.getStyle()
+                .set("font-size", "13px")
+                .set("color", "blue")
+                .set("cursor", "pointer");
+        newColButton.getElement().setAttribute("title", "Enter the name of additional nodes");
+        labelSection.add(newColButton);
+
+        // ----- cols section -----
+        colsSection = new Div();
+        colsSection.getStyle().set("margin", "0").set("padding", "0");
+        add(colsSection);
+
+        getStyle().remove("width");
+    }
 
     private void addRow (K key, V value) {
         Row newRow = new Row(key, value);
@@ -80,10 +121,23 @@ public class MapInput<K, V> extends VerticalLayout {
         rowsSection.add(newRow);
     }
 
+    private void addCol(V value) {
+        Col newCol = new Col(value);
+        cols.add(newCol);
+        colsSection.add(newCol);
+    }
+
     public void deleteRow (Row row) {
         if (rows.contains(row)) {
             rows.remove(row);
             rowsSection.remove(row);
+        }
+    }
+
+    private void deleteCol(Col col) {
+        if (cols.contains(col)) {
+            cols.remove(col);
+            colsSection.remove(col);
         }
     }
 
@@ -103,6 +157,16 @@ public class MapInput<K, V> extends VerticalLayout {
                 }
             }
 
+        }
+        return ret;
+    }
+
+    public HashSet<V> getValueCol() throws Exception {
+        HashSet<V> ret = new HashSet<>();
+        for (Col col : cols) {
+            if (col.getValueCol() != null) {
+                    ret.add(col.getValueCol());
+            }
         }
         return ret;
     }
@@ -188,7 +252,46 @@ public class MapInput<K, V> extends VerticalLayout {
         public void setValue(V value) { valueFieldInstance.setValue(value); }
     }
 
-    @FunctionalInterface
+    private class Col extends HorizontalLayout {
+        private AbstractField valueFieldInstance;
+
+        private Col(V value) {
+            setAlignItems(Alignment.CENTER);
+
+            Button deleteButton = new Button(new Icon(VaadinIcon.MINUS));
+            deleteButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
+            deleteButton.addClickListener(buttonClickEvent -> deleteCol(this));
+            add(deleteButton);
+
+            try {
+
+                Object valueFieldObject = valueField.newInstance();
+                if (valueFieldObject instanceof AbstractField) {
+                    valueFieldInstance = (AbstractField) valueFieldObject;
+                    if (valueFieldConfig != null)
+                        valueFieldConfig.config(valueFieldInstance);
+                    if (value != null)
+                        valueFieldInstance.setValue(value);
+                    add(valueFieldInstance);
+                }
+            } catch (InstantiationException | IllegalAccessException e) {
+                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                e.printStackTrace();
+            }
+        }
+
+        public Component getValueFieldInstance() { return valueFieldInstance; }
+
+        public V getValueCol() {
+            if (valueFieldRetriever != null)
+                return (V) valueFieldRetriever.retrieve(valueFieldInstance);
+            else
+                return (V) valueFieldInstance.getValue();
+        }
+        public void setValue(V value) { valueFieldInstance.setValue(value); }
+    }
+
+        @FunctionalInterface
     public interface FieldConfig {
         void config(AbstractField field);
     }
