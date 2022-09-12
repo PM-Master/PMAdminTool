@@ -12,11 +12,9 @@ import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.policy.exceptions.PMException;
 import gov.nist.csd.pm.policy.model.access.AccessRightSet;
 import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.relationships.Association;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 @Tag("import-export")
@@ -202,10 +200,10 @@ public class ImportExport extends VerticalLayout {
             }
 
             try {
-                Map<String, AccessRightSet> associations = graph.getSourceAssociations(node.getName());
-                for (String target : associations.keySet()) {
-                    AccessRightSet ops = associations.get(target);
-                    Node targetNode = graph.getNode(target);
+                List<Association> associations = graph.getSourceAssociations(node.getName());
+                for (Association target : associations) {
+                    AccessRightSet ops = target.getAccessRightSet();
+                    Node targetNode = graph.getNode(target.getSource());
 
                     jsonAssociations.add(new JsonAssociation(node.getName(), targetNode.getName(), ops));
                 }

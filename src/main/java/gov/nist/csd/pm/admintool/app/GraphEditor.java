@@ -31,6 +31,7 @@ import gov.nist.csd.pm.policy.exceptions.PMException;
 import gov.nist.csd.pm.policy.model.access.AccessRightSet;
 import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
+import gov.nist.csd.pm.policy.model.graph.relationships.Association;
 import gov.nist.csd.pm.policy.model.prohibition.Prohibition;
 import gov.nist.csd.pm.policy.model.prohibition.ProhibitionSubject;
 import org.vaadin.gatanaso.MultiselectComboBox;
@@ -768,16 +769,16 @@ public class GraphEditor extends VerticalLayout {
             // associations
             if (gridSelecNode.getType() == NodeType.UA) {
                 try {
-                    Map<String, AccessRightSet> outgoingMap = g.getSourceAssociations(gridSelecNode.getName());
-                    Iterator<String> outgoingKeySet = outgoingMap.keySet().iterator();
+                    List<Association> outgoingList = g.getSourceAssociations(gridSelecNode.getName());
+                    Iterator<Association> outgoingKeySet = outgoingList.iterator();
                     if (!outgoingKeySet.hasNext()) {
                         outgoingAssociationList.add(new Paragraph("None"));
                     } else {
                         while (outgoingKeySet.hasNext()) {
-                            String name = outgoingKeySet.next();
+                            String name = outgoingKeySet.next().getTarget();
                             try {
                                 Node node = g.getNode(name);
-                                outgoingAssociationList.add(new AssociationBlip(node, true, outgoingMap.get(name)));
+                                outgoingAssociationList.add(new AssociationBlip(node, true, outgoingKeySet.next().getAccessRightSet()));
                             } catch (PMException e) {
                                 outgoingAssociationList.add(new Paragraph(name));
                             }
@@ -790,16 +791,16 @@ public class GraphEditor extends VerticalLayout {
 
             if (gridSelecNode.getType() == NodeType.UA || gridSelecNode.getType() == NodeType.OA) {
                 try {
-                    Map<String, AccessRightSet> incomingMap = g.getTargetAssociations(gridSelecNode.getName());
-                    Iterator<String> incomingKeySet = incomingMap.keySet().iterator();
+                    List<Association> incomingList = g.getTargetAssociations(gridSelecNode.getName());
+                    Iterator<Association> incomingKeySet = incomingList.iterator();
                     if (!incomingKeySet.hasNext()) {
                         incomingAssociationList.add(new Paragraph("None"));
                     } else {
                         while (incomingKeySet.hasNext()) {
-                            String name = incomingKeySet.next();
+                            String name = incomingKeySet.next().getSource();
                             try {
                                 Node node = g.getNode(name);
-                                incomingAssociationList.add(new AssociationBlip(node, false, incomingMap.get(name)));
+                                incomingAssociationList.add(new AssociationBlip(node, false, incomingKeySet.next().getAccessRightSet()));
                             } catch (PMException e) {
                                 incomingAssociationList.add(new Paragraph(name));
                             }
@@ -1964,11 +1965,11 @@ public class GraphEditor extends VerticalLayout {
             form.add(opsSelectAdmin);
             try {
                 if (source.getType() == NodeType.UA) {
-                    Map<String, AccessRightSet> sourceOps = g.getSourceAssociations(source.getName());
+                    List<Association> sourceOps = g.getSourceAssociations(source.getName());
                     Set<String> sourceToTargetOps = new HashSet<>();
-                    sourceOps.forEach((targetName, targetOps) -> {
-                        if (targetName.equalsIgnoreCase(target.getName())) {
-                            sourceToTargetOps.addAll(targetOps);
+                    sourceOps.forEach((targetAssoc) -> {
+                        if (targetAssoc.getSource().equalsIgnoreCase(target.getName())) {
+                            sourceToTargetOps.addAll(targetAssoc.getAccessRightSet());
                         }
                     });
                     HashSet<String> existingResourcesOp = new HashSet<>();

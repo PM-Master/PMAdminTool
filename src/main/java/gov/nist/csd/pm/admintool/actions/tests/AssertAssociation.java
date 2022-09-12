@@ -4,7 +4,9 @@ import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.policy.exceptions.PMException;
 import gov.nist.csd.pm.policy.model.access.AccessRightSet;
 import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.relationships.Association;
 
+import java.util.List;
 import java.util.Map;
 
 public class AssertAssociation extends Test {
@@ -24,10 +26,10 @@ public class AssertAssociation extends Test {
         if (uaID != null && targetID != null && operation != null) {
             SingletonClient g = SingletonClient.getInstance();
             try {
-                Map<String, AccessRightSet> sourceAssociations = g.getSourceAssociations(uaID.getName());
-                for (String tID: sourceAssociations.keySet()){
-                    if (tID.equalsIgnoreCase(targetID.getName())) {
-                        return sourceAssociations.get(tID).contains(operation);
+                List<Association> sourceAssociations = g.getSourceAssociations(uaID.getName());
+                for (Association tID: sourceAssociations){
+                    if (tID.getTarget().equalsIgnoreCase(targetID.getName())) {
+                        return tID.getAccessRightSet().contains(operation);
                     }
                 }
             } catch (PMException e) {

@@ -7,6 +7,7 @@ import gov.nist.csd.pm.policy.model.access.UserContext;
 import gov.nist.csd.pm.policy.model.audit.Explain;
 import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
+import gov.nist.csd.pm.policy.model.graph.relationships.Association;
 import gov.nist.csd.pm.policy.model.obligation.Obligation;
 import gov.nist.csd.pm.policy.model.prohibition.ContainerCondition;
 import gov.nist.csd.pm.policy.model.prohibition.Prohibition;
@@ -166,11 +167,11 @@ public class SingletonClient {
         webClient.dissociate(ua, target);
     }
 
-    public Map<String, AccessRightSet> getSourceAssociations(String source) throws PMException {
+    public List<Association> getSourceAssociations(String source) throws PMException {
         return webClient.getSourceAssociations(source);
     }
 
-    public Map<String, AccessRightSet> getTargetAssociations(String target) throws PMException {
+    public List<Association> getTargetAssociations(String target) throws PMException {
         return webClient.getTargetAssociations(target);
     }
 

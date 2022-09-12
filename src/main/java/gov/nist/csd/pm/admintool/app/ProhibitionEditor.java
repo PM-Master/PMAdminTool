@@ -45,7 +45,7 @@ public class ProhibitionEditor extends VerticalLayout {
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
-        setUpLayout();
+        //setUpLayout();
     }
 
     private void setUpLayout() {
@@ -79,7 +79,7 @@ public class ProhibitionEditor extends VerticalLayout {
             grid.getStyle()
                     .set("border-radius", "1px")
                     .set("user-select", "none");
-            grid.setColumns("name", "operations", "subject", "containers", "intersection");
+            grid.setColumns("label", "accessRightSet", "subject", "containers", "intersection");
 
             // Single Click Action: select node
             grid.addItemClickListener(evt -> {

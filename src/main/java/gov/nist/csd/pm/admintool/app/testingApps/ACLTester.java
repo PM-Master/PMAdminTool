@@ -13,6 +13,7 @@ import gov.nist.csd.pm.policy.exceptions.PMException;
 import gov.nist.csd.pm.policy.model.access.AccessRightSet;
 import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
+import gov.nist.csd.pm.policy.model.graph.relationships.Association;
 
 import java.util.*;
 
@@ -118,9 +119,9 @@ public class ACLTester extends VerticalLayout {
         if (attr != null) {
             Set<NodeAndPermissions> currNodes = new HashSet<>();
             try {
-                Map<String, AccessRightSet> targetAssociations = g.getTargetAssociations(attr.getName());
-                for (String id: targetAssociations.keySet()) {
-                    updateGraphRecursiveHelper(g.getNode(id), targetAssociations.get(id), targetAssociations, currNodes);
+                List<Association> targetAssociations = g.getTargetAssociations(attr.getName());
+                for (Association id: targetAssociations) {
+                    updateGraphRecursiveHelper(g.getNode(id.getSource()), id.getAccessRightSet(), targetAssociations, currNodes);
 //                    currNodes.add(new NodeAndPermissions(g.getNode(id), targetAssociations.get(id)));
 //                    for (Node n: g.getChildren(id)) {
 //                        currNodes.add(new NodeAndPermissions(n, targetAssociations.get(id)));
@@ -136,17 +137,22 @@ public class ACLTester extends VerticalLayout {
         }
     }
 
-    private void updateGraphRecursiveHelper(Node n, Set<String> perms, Map<String, AccessRightSet> targetAssociations, Set<NodeAndPermissions> nodes) throws PMException{
+    private void updateGraphRecursiveHelper(Node n, Set<String> perms, List<Association> targetAssociations, Set<NodeAndPermissions> nodes) throws PMException{
         NodeAndPermissions currNodeAndPermissions = new NodeAndPermissions(n, perms);
         if (!nodes.contains(currNodeAndPermissions)) {
             nodes.add(currNodeAndPermissions);
             for (String child: g.getChildren(currNodeAndPermissions.getName())) {
                 HashSet<String> childPerms = new HashSet<>();
                 childPerms.addAll(perms);
-                Set<String> fromAssoc = targetAssociations.get(child);
+                for (Association a: targetAssociations) {
+                    if (a != null) {
+                        childPerms.add(a.getTarget());
+                    }
+                }
+                /*Set<String> fromAssoc = targetAssociations.get(child);
                 if (fromAssoc != null) {
                     childPerms.addAll(fromAssoc);
-                }
+                }*/
                 updateGraphRecursiveHelper(g.getNode(child), childPerms, targetAssociations, nodes);
             }
         }
