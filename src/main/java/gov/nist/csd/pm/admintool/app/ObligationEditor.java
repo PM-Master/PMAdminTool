@@ -19,16 +19,16 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MultiFileMemoryBuffer;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.pip.obligations.evr.EVRException;
-import gov.nist.csd.pm.pip.obligations.model.Obligation;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.obligation.Obligation;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import static gov.nist.csd.pm.operations.Operations.*;
+import static gov.nist.csd.pm.policy.model.access.AdminAccessRights.*;
+
 
 @Tag("obligation-editor")
 public class ObligationEditor extends VerticalLayout {
@@ -41,7 +41,7 @@ public class ObligationEditor extends VerticalLayout {
         g = SingletonClient.getInstance();
 
         // check permissions
-        if (!g.checkPermissions("super_oa", GET_OBLIGATION, UPDATE_OBLIGATION, DELETE_OBLIGATION, ENABLE_OBLIGATION))
+        if (!g.checkPermissions("super_oa", GET_OBLIGATION, UPDATE_OBLIGATION, DELETE_OBLIGATION))
             throw new PMException("Current user ('" + g.getCurrentContext() + "') does not have adequate permissions to use obligation editor");
 
 
@@ -142,7 +142,6 @@ public class ObligationEditor extends VerticalLayout {
 //            contextMenu.addItem("Add", event -> addObligation(true, "", ""));
             contextMenu.addItem("Toggle", event -> {
                 event.getItem().ifPresent(obli -> {
-                    toggleObligation(obli);
                     refreshGrid();
                 });
             });
@@ -203,21 +202,20 @@ public class ObligationEditor extends VerticalLayout {
                 MainView.notify("Must have a source");
             } else {
                 try {
-                    Obligation obligation = g.parseObligationYaml(source);
-                    obligation.setEnabled(enabled);
-                    obligation.setLabel(label);
-                    g.addObl(obligation);
+                    //Obligation obligation = g.parseObligationYaml(source);
+                    //obligation.setLabel(label);
+                    //g.addObl(obligation);
                     MainView.notify("Successfully imported obligation!", MainView.NotificationType.SUCCESS);
                     sourceField.clear();
                     dialog.close();
                     obligationViewer.refreshGrid();
-                } catch (EVRException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                } catch (PMException e) {
-                    e.printStackTrace();
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 }
+                /*catch (PMException e) {
+                    e.printStackTrace();
+                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+                }*/
             }
         });
         importButton.setWidth("20%");
@@ -231,18 +229,6 @@ public class ObligationEditor extends VerticalLayout {
         dialog.add(form);
         dialog.open();
         sourceField.focus();
-    }
-
-    private void toggleObligation(Obligation obligation) {
-        try {
-            obligation.setEnabled(!obligation.isEnabled());
-            g.updateObl(obligation.getLabel(), obligation);
-
-            obligationViewer.refreshGrid();
-        } catch (PMException e) {
-            MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-            e.printStackTrace();
-        }
     }
 
     private void editLabel(Obligation obli) {
@@ -316,7 +302,7 @@ public class ObligationEditor extends VerticalLayout {
         dialog.setHeight("90vh");
         dialog.setWidth("100vh");
 
-        String obligationSource = obli.getSource();
+        String obligationSource = obli.getLabel();
 
         VerticalLayout sourceLayout = new VerticalLayout();
         sourceLayout.setWidthFull();

@@ -8,7 +8,7 @@ import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.page.PendingJavaScriptResult;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.policy.exceptions.PMException;
 
 @Tag("cytoscape-element")
 @NpmPackage(value = "@polymer/polymer", version = "3.4.1")
@@ -23,7 +23,7 @@ public class CytoscapeElement extends Div {
     private ClickCallback clickCallback;
     private SingletonClient g;
 
-    public CytoscapeElement(String elementID) throws PMException {
+    public CytoscapeElement(String elementID) {
         // get singleton instance
         g = SingletonClient.getInstance();
 
@@ -86,6 +86,7 @@ public class CytoscapeElement extends Div {
                     } catch (PMException e) {
                         e.printStackTrace();
                     }
+
                 } else {
                     MainView.notify("No Node Selected! Please select node before highlighting");
                 }
@@ -100,7 +101,7 @@ public class CytoscapeElement extends Div {
         this.clickCallback = clickCallback;
     }
 
-    public void reset() throws PMException{
+    public void reset(){
         String graph = ImportExport.toFullJson(g);
         getElement().setProperty("graphFromVaadin", graph);
         getElement().callJsFunction("reset");

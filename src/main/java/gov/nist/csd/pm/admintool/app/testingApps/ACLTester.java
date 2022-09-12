@@ -9,10 +9,10 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import gov.nist.csd.pm.admintool.app.MainView;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
 
 import java.util.*;
 
@@ -118,7 +118,7 @@ public class ACLTester extends VerticalLayout {
         if (attr != null) {
             Set<NodeAndPermissions> currNodes = new HashSet<>();
             try {
-                Map<String, OperationSet> targetAssociations = g.getTargetAssociations(attr.getName());
+                Map<String, AccessRightSet> targetAssociations = g.getTargetAssociations(attr.getName());
                 for (String id: targetAssociations.keySet()) {
                     updateGraphRecursiveHelper(g.getNode(id), targetAssociations.get(id), targetAssociations, currNodes);
 //                    currNodes.add(new NodeAndPermissions(g.getNode(id), targetAssociations.get(id)));
@@ -136,7 +136,7 @@ public class ACLTester extends VerticalLayout {
         }
     }
 
-    private void updateGraphRecursiveHelper(Node n, Set<String> perms, Map<String, OperationSet> targetAssociations, Set<NodeAndPermissions> nodes) throws PMException{
+    private void updateGraphRecursiveHelper(Node n, Set<String> perms, Map<String, AccessRightSet> targetAssociations, Set<NodeAndPermissions> nodes) throws PMException{
         NodeAndPermissions currNodeAndPermissions = new NodeAndPermissions(n, perms);
         if (!nodes.contains(currNodeAndPermissions)) {
             nodes.add(currNodeAndPermissions);
@@ -156,7 +156,7 @@ public class ACLTester extends VerticalLayout {
         private Set<String> permissions;
 
         public NodeAndPermissions(Node node, Set<String> perms) {
-            super (node.getId(), node.getName(), node.getType(), node.getProperties());
+            super (node.getName(), node.getType(), node.getProperties());
             permissions = perms;
         }
 

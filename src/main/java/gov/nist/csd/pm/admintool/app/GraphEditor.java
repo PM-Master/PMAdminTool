@@ -23,15 +23,16 @@ import com.vaadin.flow.data.provider.hierarchy.HierarchicalQuery;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import gov.nist.csd.pm.admintool.app.blips.AssociationBlip;
 import gov.nist.csd.pm.admintool.app.blips.NodeDataBlip;
-import gov.nist.csd.pm.admintool.app.blips.ProhibitonBlip;
+import gov.nist.csd.pm.admintool.app.blips.ProhibitionBlip;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.app.customElements.Toggle;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
-import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
+import gov.nist.csd.pm.policy.model.prohibition.Prohibition;
+import gov.nist.csd.pm.policy.model.prohibition.ProhibitionSubject;
 import org.vaadin.gatanaso.MultiselectComboBox;
 
 import java.util.*;
@@ -39,7 +40,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static gov.nist.csd.pm.operations.Operations.*;
+import static gov.nist.csd.pm.policy.model.access.AdminAccessRights.*;
 
 @Tag("graph-editor")
 public class GraphEditor extends VerticalLayout {
@@ -54,7 +55,7 @@ public class GraphEditor extends VerticalLayout {
 
     private Node dragNode;
 
-    public GraphEditor() {
+    public GraphEditor() throws PMException {
         g = SingletonClient.getInstance();
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
@@ -62,7 +63,7 @@ public class GraphEditor extends VerticalLayout {
         setUpLayout();
     }
 
-    private void setUpLayout() {
+    private void setUpLayout() throws PMException {
         setSizeFull();
         setPadding(true);
         buttonGroup = new GraphButtonGroup();
@@ -113,7 +114,7 @@ public class GraphEditor extends VerticalLayout {
         // debugging things
         private int calls;
 
-        public NodeLayout(boolean isSource) {
+        public NodeLayout(boolean isSource) throws PMException {
             this.isSource = isSource;
             if (isSource) {
                 getStyle().set("background", "lightblue");
@@ -155,7 +156,11 @@ public class GraphEditor extends VerticalLayout {
 
                         // if new changes have occurred while in visible
                         if (graphViewerPendingUpdate) {
-                            refreshGraphViewer();
+                            try {
+                                refreshGraphViewer();
+                            } catch (PMException e) {
+                                e.printStackTrace();
+                            }
                         }
                         break;
                 }
@@ -197,7 +202,11 @@ public class GraphEditor extends VerticalLayout {
                         filters.remove("Objects");
                         break;
                 }
-                refresh();
+                try {
+                    refresh();
+                } catch (PMException e) {
+                    e.printStackTrace();
+                }
             });
             add(ouToggle);
 
@@ -280,7 +289,11 @@ public class GraphEditor extends VerticalLayout {
                 } else {
                     filters.remove("Name");
                 }
-                refresh();
+                try {
+                    refresh();
+                } catch (PMException e) {
+                    e.printStackTrace();
+                }
             });
             add(searchBar);
         }
@@ -314,7 +327,7 @@ public class GraphEditor extends VerticalLayout {
             grid.getStyle()
                     .set("border-radius", "1px")
                     .set("user-select", "none");
-            grid.removeColumnByKey("id");
+            //grid.removeColumnByKey("id");
             grid.removeColumnByKey("properties");
             grid.setColumnReorderingAllowed(true);
             grid.setRowsDraggable(true);
@@ -460,7 +473,7 @@ public class GraphEditor extends VerticalLayout {
             contextMenu.addItem("Edit Node", event -> {
                 event.getItem().ifPresent(node -> {
                     try {
-                        if (g.checkPermissions(node.getName(), UPDATE_NODE))
+                        if (g.checkPermissions(node.getName(), SET_NODE_PROPERTIES))
                             editNode(node);
                         else
                             MainView.notify("Current User ('" + g.getCurrentContext() +
@@ -484,35 +497,31 @@ public class GraphEditor extends VerticalLayout {
             });
         }
 
-        private void addGraphLayout() {
-            try {
-                graphViewer = new CytoscapeElement(isSource ? "cy1":"cy2");
-                graphViewer.addClassName("cy");
-                graphViewer.setHeight("100%");
-                graphViewer.setWidth("100%");
+        private void addGraphLayout() throws PMException {
+            graphViewer = new CytoscapeElement(isSource ? "cy1":"cy2");
+            graphViewer.addClassName("cy");
+            graphViewer.setHeight("100%");
+            graphViewer.setWidth("100%");
 
-                graphViewer.setClickListener(node_id -> {
-                    if (node_id == null || node_id.isEmpty()) {
+            graphViewer.setClickListener(node_id -> {
+                if (node_id == null || node_id.isEmpty()) {
+                    if (isSource) selectedChildNode = null;
+                    else selectedParentNode = null;
+                } else {
+                    try {
+                        if (isSource) selectedChildNode = g.getNode(node_id);
+                        else selectedParentNode = g.getNode(node_id);
+                    } catch (PMException e) {
+                        e.printStackTrace();
+
                         if (isSource) selectedChildNode = null;
                         else selectedParentNode = null;
-                    } else {
-                        try {
-                            if (isSource) selectedChildNode = g.getNode(node_id);
-                            else selectedParentNode = g.getNode(node_id);
-                        } catch (PMException e) {
-                            e.printStackTrace();
-
-                            if (isSource) selectedChildNode = null;
-                            else selectedParentNode = null;
-                        }
                     }
+                }
 
-                    buttonGroup.refreshButtonStates();
-                    buttonGroup.refreshNodeTexts();
-                });
-            } catch (PMException e) {
-                e.printStackTrace();
-            }
+                buttonGroup.refreshButtonStates();
+                buttonGroup.refreshNodeTexts();
+            });
         }
 
         private void addNodeInfoLayout() {
@@ -759,7 +768,7 @@ public class GraphEditor extends VerticalLayout {
             // associations
             if (gridSelecNode.getType() == NodeType.UA) {
                 try {
-                    Map<String, OperationSet> outgoingMap = g.getSourceAssociations(gridSelecNode.getName());
+                    Map<String, AccessRightSet> outgoingMap = g.getSourceAssociations(gridSelecNode.getName());
                     Iterator<String> outgoingKeySet = outgoingMap.keySet().iterator();
                     if (!outgoingKeySet.hasNext()) {
                         outgoingAssociationList.add(new Paragraph("None"));
@@ -781,7 +790,7 @@ public class GraphEditor extends VerticalLayout {
 
             if (gridSelecNode.getType() == NodeType.UA || gridSelecNode.getType() == NodeType.OA) {
                 try {
-                    Map<String, OperationSet> incomingMap = g.getTargetAssociations(gridSelecNode.getName());
+                    Map<String, AccessRightSet> incomingMap = g.getTargetAssociations(gridSelecNode.getName());
                     Iterator<String> incomingKeySet = incomingMap.keySet().iterator();
                     if (!incomingKeySet.hasNext()) {
                         incomingAssociationList.add(new Paragraph("None"));
@@ -813,7 +822,7 @@ public class GraphEditor extends VerticalLayout {
                     } else {
                         while (outgoingIterator.hasNext()) {
                             Prohibition prohibition = outgoingIterator.next();
-                            outgoingProhibitionList.add(new ProhibitonBlip(prohibition));
+                            outgoingProhibitionList.add(new ProhibitionBlip(prohibition));
                         }
                     }
                 } catch (PMException e) {
@@ -1049,7 +1058,7 @@ public class GraphEditor extends VerticalLayout {
             backButton.setEnabled(false);
         }
 
-        public void refresh() {
+        public void refresh() throws PMException {
 //            grid.getDataCommunicator().reset();
             grid.getDataProvider().refreshAll();
 
@@ -1060,7 +1069,7 @@ public class GraphEditor extends VerticalLayout {
             }
         }
 
-        public void refresh(Node... nodes) {
+        public void refresh(Node... nodes) throws PMException {
             for (Node node : nodes)
                 grid.getDataProvider().refreshItem(node, true);
 
@@ -1071,13 +1080,9 @@ public class GraphEditor extends VerticalLayout {
             }
         }
 
-        public void refreshGraphViewer() {
-            try {
-                graphViewer.reset();
-                graphViewerPendingUpdate = false;
-            } catch (PMException e) {
-                e.printStackTrace();
-            }
+        public void refreshGraphViewer() throws PMException {
+            graphViewer.reset();
+            graphViewerPendingUpdate = false;
         }
 
 
@@ -1281,7 +1286,7 @@ public class GraphEditor extends VerticalLayout {
                     boolean canAssociate = false, canDisassociate = false;
                     try {
                         canAssociate = g.checkPermissions(selectedChildNode.getName(), ASSOCIATE) && g.checkPermissions(selectedParentNode.getName(), ASSOCIATE);
-                        canDisassociate = g.checkPermissions(selectedChildNode.getName(), DISASSOCIATE) && g.checkPermissions(selectedParentNode.getName(), DISASSOCIATE);
+                        canDisassociate = g.checkPermissions(selectedChildNode.getName(), DISSOCIATE) && g.checkPermissions(selectedParentNode.getName(), DISSOCIATE);
                     } catch (PMException e) {
                         MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     }
@@ -1802,8 +1807,16 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();
                 }
-                childNode.refresh();
-                parentNode.refresh();
+                try {
+                    childNode.refresh();
+                } catch (PMException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    parentNode.refresh();
+                } catch (PMException e) {
+                    e.printStackTrace();
+                }
                 dialog.close();
             });
 
@@ -1889,7 +1902,7 @@ public class GraphEditor extends VerticalLayout {
                 List<String> opString = new ArrayList<>();
                 opString.addAll(opsSelectRessource.getValue());
                 opString.addAll(opsSelectAdmin.getValue());
-                OperationSet ops = new OperationSet(opString);
+                AccessRightSet ops = new AccessRightSet(opString);
                 if (opString == null) {
                     MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
                 } else {
@@ -1951,7 +1964,7 @@ public class GraphEditor extends VerticalLayout {
             form.add(opsSelectAdmin);
             try {
                 if (source.getType() == NodeType.UA) {
-                    Map<String, OperationSet> sourceOps = g.getSourceAssociations(source.getName());
+                    Map<String, AccessRightSet> sourceOps = g.getSourceAssociations(source.getName());
                     Set<String> sourceToTargetOps = new HashSet<>();
                     sourceOps.forEach((targetName, targetOps) -> {
                         if (targetName.equalsIgnoreCase(target.getName())) {
@@ -1985,7 +1998,7 @@ public class GraphEditor extends VerticalLayout {
                 List<String> opString = new ArrayList<>();
                 opString.addAll(opsSelectRessource.getValue());
                 opString.addAll(opsSelectAdmin.getValue());
-                OperationSet ops = new OperationSet(opString);
+                AccessRightSet ops = new AccessRightSet(opString);
                 if (opString == null) {
                     MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
                 } else {
@@ -2139,7 +2152,7 @@ public class GraphEditor extends VerticalLayout {
         // title
         Button submit = new Button("Submit", event -> {
             String name = nameField.getValue();
-            OperationSet ops = new OperationSet(rOpsField.getValue());
+            AccessRightSet ops = new AccessRightSet(rOpsField.getValue());
             ops.addAll(aOpsField.getValue());
             boolean intersection = intersectionFeild.getValue();
             try {
@@ -2152,7 +2165,9 @@ public class GraphEditor extends VerticalLayout {
                 } else if (containers.isEmpty()) {
                     MainView.notify("Containers are Required", MainView.NotificationType.DEFAULT);
                 } else {
-                    g.addProhibition(nameField.getValue(), selectedChildNode.getName(), containers, ops, intersection);
+                    //TODO : Check prohibition type
+                    ProhibitionSubject prohibitionSubject = new ProhibitionSubject(selectedChildNode.getName(), ProhibitionSubject.Type.USER_ATTRIBUTE);
+                    g.addProhibition(nameField.getValue(), prohibitionSubject, containers, ops, intersection);
                     MainView.notify("Prohibition with name: " + nameField.getValue() + " has been created", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();

@@ -1,5 +1,6 @@
 package gov.nist.csd.pm.admintool.actions;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 
 import java.util.HashMap;
 import java.util.Map;

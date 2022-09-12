@@ -1,19 +1,16 @@
 package gov.nist.csd.pm.admintool.spt.parser;
 
-
 import com.vaadin.flow.component.notification.Notification;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
-import gov.nist.csd.pm.pip.graph.model.relationships.Association;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
+import gov.nist.csd.pm.policy.model.graph.relationships.Association;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-
-
 
 public class Rule1Parser extends SptRuleParser {
 
@@ -33,7 +30,7 @@ public class Rule1Parser extends SptRuleParser {
     // Final variables
     ArrayList<Assignment> assignments = null;
     ArrayList<Association> associations = null;
-    OperationSet associationOperations = null;
+    AccessRightSet associationOperations = null;
 
     public Rule1Parser() {
         super();
@@ -341,7 +338,7 @@ public class Rule1Parser extends SptRuleParser {
         pcsforUA1 = new ArrayList<>();
         pcsforOA1 = new ArrayList<>();
         associations = new ArrayList<>();
-        associationOperations = new OperationSet();
+        associationOperations = new AccessRightSet();
     }
 
     /* Graph updates
@@ -362,7 +359,7 @@ public class Rule1Parser extends SptRuleParser {
 
         System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getName());
         // First parent UA
-        String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(),NodeType.UA);
+        String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(), NodeType.UA);
         pc1UaList.add(graph.createNode(pc1uas.get(pc1UASize-1), NodeType.UA,null, parentUAId ));
         for (int i=1;i<pcsforUA1.size();i++) {
             graph.assign(pc1UaList.get(pc1UASize-1).getName(), pcsforUA1.get(i).getName());

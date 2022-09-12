@@ -2,7 +2,7 @@ package gov.nist.csd.pm.admintool.app.blips;
 
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 
 public class NodeDataBlip extends Blip {
     public NodeDataBlip(Node node, boolean outgoing) {

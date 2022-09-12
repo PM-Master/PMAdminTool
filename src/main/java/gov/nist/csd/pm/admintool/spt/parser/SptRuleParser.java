@@ -2,12 +2,11 @@ package gov.nist.csd.pm.admintool.spt.parser;
 
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.pdp.audit.model.Explain;
-import gov.nist.csd.pm.pdp.audit.model.Path;
-import gov.nist.csd.pm.pdp.audit.model.PolicyClass;
-import gov.nist.csd.pm.pdp.services.UserContext;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.policy.model.access.UserContext;
+import gov.nist.csd.pm.policy.model.audit.Explain;
+import gov.nist.csd.pm.policy.model.audit.Path;
+import gov.nist.csd.pm.policy.model.audit.PolicyClass;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 
 import java.util.*;
 
@@ -317,16 +316,16 @@ public class SptRuleParser{
                     for (Path path : paths) {
                         ret += "\t\t\t";
                         // this is just a list of nodes -> [u1, ua1, oa1, o1]
-                        List<Node> nodes = path.getNodes();
-                        for (Node n : nodes) {
-                            ret += "'" + n.getName() + "'";
+                        List<String> nodes = path.getUserDagPath();
+                        for (String n : nodes) {
+                            ret += "'" + n + "'";
                             if (!nodes.get(nodes.size() - 1).equals(n)) { // not final node
                                 ret += " > ";
                             }
                         }
 
                         // this is the operations in the association between ua1 and oa1
-                        Set<String> pathOps = path.getOperations();
+                        Set<String> pathOps = path.getAssociation().getAccessRightSet();
                         ret += " " + pathOps;
                         // This is the string representation of the path (i.e. "u1-ua1-oa1-o1 ops=[r, w]")
                         String pathString = path.toString();

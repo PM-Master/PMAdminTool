@@ -19,9 +19,9 @@ import gov.nist.csd.pm.admintool.actions.SingletonActiveActions;
 import gov.nist.csd.pm.admintool.actions.events.Event;
 import gov.nist.csd.pm.admintool.actions.tests.Test;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,7 +45,7 @@ public class MainView extends HorizontalLayout{
 
     private SingletonClient g;
 
-    public MainView() {
+    public MainView() throws PMException {
         g = SingletonClient.getInstance();
 
         testResults = new Div();

@@ -3,8 +3,8 @@ package gov.nist.csd.pm.admintool.app.blips;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.details.DetailsVariant;
 import com.vaadin.flow.dom.Style;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
 
 public abstract class Blip extends Details {
     public Node node;
@@ -57,9 +57,6 @@ public abstract class Blip extends Details {
                 break;
             case O:
                 style.set("background", "#ACC6D6");
-                break;
-            case OS:
-                style.set("background", "#C1EDCC");
                 break;
         }
     }

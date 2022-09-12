@@ -9,16 +9,15 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static gov.nist.csd.pm.operations.Operations.*;
 
 @Tag("import-export")
 public class ImportExport extends VerticalLayout {
@@ -31,9 +30,10 @@ public class ImportExport extends VerticalLayout {
         g = SingletonClient.getInstance();
 
         // check permission
-        if (!g.checkPermissions("super_pc_rep", TO_JSON, FROM_JSON))
+        //TODO: Replace Json with PAL grammar
+ /*       if (!g.checkPermissions("super_pc_rep", TO_JSON, FROM_JSON))
             throw new PMException("Current user ('" + g.getCurrentContext() + "') does not have adequate permissions to use import export");
-
+*/
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
@@ -127,8 +127,7 @@ public class ImportExport extends VerticalLayout {
 
             inputJson.setHeight("80vh");
             Button importButton = new Button("Import JSON", click -> {
-                try {
-                    g.fromJson(inputJson.getValue());
+                //g.fromJson(inputJson.getValue());
 //                    Set<Node> activesPc = SingletonClient.getAllPCs();
 //                    Set<String> nodeNames = activesPc.stream().map(e -> e.getName()).collect(Collectors.toSet());
 //                    Set<Node> activesPcCopy = new HashSet<>();
@@ -142,12 +141,8 @@ public class ImportExport extends VerticalLayout {
 //                        }
 //                    }
 //                    activesPc.addAll(activesPcCopy);
-                    MainView.notify("The Json has been imported", MainView.NotificationType.SUCCESS);
-                    //UI.getCurrent().getPage().reload();
-                } catch (PMException e) {
-                    e.printStackTrace();
-                    MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
-                }
+                MainView.notify("The Json has been imported", MainView.NotificationType.SUCCESS);
+                //UI.getCurrent().getPage().reload();
                 //updateGraph(inputJson.getValue());
             });
             importButton.setHeight("5%");
@@ -172,15 +167,11 @@ public class ImportExport extends VerticalLayout {
 
 
             Button exportButton = new Button("Export JSON", click -> {
-                try {
-                    //exportJson.setValue(SingletonClient.getInstance().getGraphService(userCtx).toJson());
-                    exportJson.setValue(g.toJson());
-                    //exportJson.setValue(SingletonClient.getInstance().getPAP().getGraphPAP().toJson());
-                    MainView.notify("The graph has been exported into a JSON", MainView.NotificationType.SUCCESS);
-                } catch (PMException e) {
-                    e.printStackTrace();
-                    MainView.notify("error : " + e.getMessage(), MainView.NotificationType.ERROR);
-                }
+                //exportJson.setValue(SingletonClient.getInstance().getGraphService(userCtx).toJson());
+                //TODO : Replace Json by PAL
+                //exportJson.setValue(g.toJson());
+                //exportJson.setValue(SingletonClient.getInstance().getPAP().getGraphPAP().toJson());
+                MainView.notify("The graph has been exported into a JSON", MainView.NotificationType.SUCCESS);
             });
             exportButton.setHeight("5%");
             add(exportJson);
@@ -188,10 +179,15 @@ public class ImportExport extends VerticalLayout {
         }
     }
 
-    public static String toFullJson (SingletonClient graph) throws PMException{
+    public static String toFullJson (SingletonClient graph) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-        Collection<Node> nodes = graph.getNodes();
+        Collection<Node> nodes = null;
+        try {
+            nodes = graph.getNodes();
+        } catch (PMException e) {
+            e.printStackTrace();
+        }
         HashSet<String[]> jsonAssignments = new HashSet<>();
         HashSet<JsonAssociation> jsonAssociations = new HashSet<>();
         for (Node node : nodes) {
@@ -206,9 +202,9 @@ public class ImportExport extends VerticalLayout {
             }
 
             try {
-                Map<String, OperationSet> associations = graph.getSourceAssociations(node.getName());
+                Map<String, AccessRightSet> associations = graph.getSourceAssociations(node.getName());
                 for (String target : associations.keySet()) {
-                    OperationSet ops = associations.get(target);
+                    AccessRightSet ops = associations.get(target);
                     Node targetNode = graph.getNode(target);
 
                     jsonAssociations.add(new JsonAssociation(node.getName(), targetNode.getName(), ops));

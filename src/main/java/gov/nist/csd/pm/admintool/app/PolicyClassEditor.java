@@ -12,7 +12,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 
 import java.util.Map;
 import java.util.Set;

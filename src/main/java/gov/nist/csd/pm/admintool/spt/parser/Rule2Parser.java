@@ -8,11 +8,12 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.admintool.spt.common.SptToken;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
-import gov.nist.csd.pm.pip.graph.model.relationships.Association;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.exceptions.UnknownTypeException;
+import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
+import gov.nist.csd.pm.policy.model.graph.relationships.Association;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -47,7 +48,7 @@ public class Rule2Parser extends SptRuleParser {
     // Final variables
     ArrayList<Assignment> assignments = null;
     ArrayList<Association> associations = null;
-    OperationSet associationOperations = null;
+    AccessRightSet associationOperations = null;
 
     ArrayList<Purpose> purpose = new ArrayList<Purpose>();
 
@@ -490,23 +491,23 @@ public class Rule2Parser extends SptRuleParser {
         pc2OaList = new ArrayList<>();
         assignments = new ArrayList<>();
         associations = new ArrayList<>();
-        associationOperations = new OperationSet();
+        associationOperations = new AccessRightSet();
     }
 
     /* semopUA() - Add from uas to Nodes
         1. Add to nodes - uas, pcs
         2. Add to assignment - uas-> pc
     */
-    private void semopUA(){
+    private void semopUA() throws UnknownTypeException {
         Assignment assignment = new Assignment();
         // add UAs
         for (int i=0;i<=pc1uas.size()-1;i++) {
-            Node node = new Node(generateRandomId(), pc1uas.get(i), NodeType.toNodeType("UA"),null);
+            Node node = new Node(pc1uas.get(i), NodeType.toNodeType("UA"),null);
             pc1UaList.add(node);
         }
         // Add PCs
         for (int i=0;i<=pcs1UA.size()-1;i++) {
-            Node node = new Node(generateRandomId(), pcs1UA.get(i), NodeType.toNodeType("PC"),null);
+            Node node = new Node(pcs1UA.get(i), NodeType.toNodeType("PC"),null);
             pcsforUA1.add(node);
         }
         // Add Assignments in each PC
@@ -525,15 +526,15 @@ public class Rule2Parser extends SptRuleParser {
             1. Add to nodes - oas, pcs
             2. Add to assignment - oas-> pc
         */
-    private void semopOA(){
+    private void semopOA() throws UnknownTypeException {
         Assignment assignment = new Assignment();
 
         for (int i=0;i<=pc1oas.size()-1;i++) {
-            Node node = new Node(generateRandomId(), pc1oas.get(i), NodeType.toNodeType("OA"),null);
+            Node node = new Node(pc1oas.get(i), NodeType.toNodeType("OA"),null);
             pc1OaList.add(node);
         }
         for (int i=0;i<=pcs1OA.size()-1;i++) {
-            Node node = new Node(generateRandomId(), pcs1OA.get(i), NodeType.toNodeType("PC"),null);
+            Node node = new Node(pcs1OA.get(i), NodeType.toNodeType("PC"),null);
             pcsforOA1.add(node);
         }
         for (int i=0;i<pcsforOA1.size();i++) {
@@ -549,7 +550,7 @@ public class Rule2Parser extends SptRuleParser {
     }
     // Add to Associations
     private void semopAssociations() {
-        Association association = new Association(String.valueOf(pc1UaList.get(0).getId()),String.valueOf(pc1OaList.get(0).getId()), (OperationSet) associationOperations);
+        Association association = new Association(String.valueOf(pc1UaList.get(0)),String.valueOf(pc1OaList.get(0)), associationOperations);
         associations.add(association);
     }
     /*
@@ -558,25 +559,25 @@ public class Rule2Parser extends SptRuleParser {
         3. Add to assignments
         4. Add to Associations
          */
-    private void semopDynamicRelations() {
+    private void semopDynamicRelations() throws UnknownTypeException {
         // add PC first
-        Node pc2Node = new Node(generateRandomId(), pc2, NodeType.toNodeType("PC"),null);
+        Node pc2Node = new Node(pc2, NodeType.toNodeType("PC"),null);
         for (int i=0;i<pc2uas.size();i++) {
             System.out.println(pc2uas.get(i));
-            Node node = new Node(generateRandomId(), pc2uas.get(i), NodeType.toNodeType("UA"),null);
+            Node node = new Node(pc2uas.get(i), NodeType.toNodeType("UA"),null);
             pc2UaList.add(node);
             Assignment assignment = new Assignment(node, pc2Node);
             assignments.add(assignment);
         }
         for (int i=0;i<pc2oas.size();i++) {
-            Node node = new Node(generateRandomId(), pc2oas.get(i), NodeType.toNodeType("OA"),null);
+            Node node = new Node( pc2oas.get(i), NodeType.toNodeType("OA"),null);
             pc2OaList.add(node);
             Assignment assignment = new Assignment(node, pc2Node);
             assignments.add(assignment);
         }
         Association association;
         for (int i=0;i<pc2UaList.size();i++) {
-            association = new Association(String.valueOf(pc2UaList.get(i).getId()), String.valueOf(pc2OaList.get(i).getId()), (OperationSet) associationOperations);
+            association = new Association(String.valueOf(pc2UaList.get(i)), String.valueOf(pc2OaList.get(i)), associationOperations);
             associations.add(association);
         }
     }

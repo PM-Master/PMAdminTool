@@ -11,6 +11,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import gov.nist.csd.pm.admintool.app.MainView;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -130,7 +131,7 @@ public class MapInput<K, V> extends VerticalLayout {
             add(deleteButton);
 
             try {
-                Object keyFieldObject = keyField.newInstance();
+                Object keyFieldObject = keyField.getDeclaredConstructor().newInstance();
                 if (keyFieldObject instanceof AbstractField) {
                     keyFieldInstance = (AbstractField) keyFieldObject;
                     if (keyFieldConfig != null)
@@ -151,7 +152,7 @@ public class MapInput<K, V> extends VerticalLayout {
                     add(keyFieldInstance);
                 }
 
-                Object valueFieldObject = valueField.newInstance();
+                Object valueFieldObject = valueField.getDeclaredConstructor().newInstance();
                 if (valueFieldObject instanceof AbstractField) {
                     valueFieldInstance = (AbstractField) valueFieldObject;
                     if (valueFieldConfig != null)
@@ -160,11 +161,10 @@ public class MapInput<K, V> extends VerticalLayout {
                         valueFieldInstance.setValue(value);
                     add(valueFieldInstance);
                 }
-            } catch (InstantiationException e) {
+            } catch (InstantiationException | IllegalAccessException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
+            } catch (InvocationTargetException | NoSuchMethodException e) {
                 e.printStackTrace();
             }
         }

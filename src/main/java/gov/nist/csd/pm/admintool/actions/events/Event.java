@@ -1,6 +1,6 @@
 package gov.nist.csd.pm.admintool.actions.events;
 import gov.nist.csd.pm.admintool.actions.Action;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 
 public abstract class Event extends Action {
     @Override

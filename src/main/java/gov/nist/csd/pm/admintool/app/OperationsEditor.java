@@ -13,7 +13,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
+import gov.nist.csd.pm.policy.exceptions.PMException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -153,7 +153,7 @@ public class OperationsEditor extends VerticalLayout {
                 e.printStackTrace();
             }
 
-            grid.setDataProvider(DataProvider.ofCollection(opsList));
+            grid.setItems(DataProvider.ofCollection(opsList));
         }
 
         public void refresh() {

@@ -2,9 +2,8 @@ package gov.nist.csd.pm.admintool.actions.events;
 
 import com.vaadin.flow.component.notification.Notification;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.pdp.services.UserContext;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 
 public class DeassignFromEvent extends Event {
     String explanation;
@@ -30,8 +29,7 @@ public class DeassignFromEvent extends Event {
         }
 
         try {
-            UserContext userContext = new UserContext(child.getName(), parent.getName());
-            g.processEvent(new gov.nist.csd.pm.epp.events.DeassignFromEvent(userContext, parent, child));
+            g.processEvent(new gov.nist.csd.pm.policy.events.DeassignFromEvent(parent.getName(), child.getName()));
 //            notify("Deassignment from Event successfully executed");
             explanation = "Deassignment from Event successfully executed";
         } catch (PMException e) {

@@ -4,13 +4,13 @@ import com.vaadin.flow.component.html.ListItem;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.UnorderedList;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
+import gov.nist.csd.pm.policy.model.prohibition.Prohibition;
 
-public class ProhibitonBlip extends Blip {
+public class ProhibitionBlip extends Blip {
     Prohibition prohibition;
 
 
-    public ProhibitonBlip(Prohibition prohibition) {
+    public ProhibitionBlip(Prohibition prohibition) {
         super(true);
         this.prohibition = prohibition;
         setDetailSummaryText();
@@ -19,7 +19,7 @@ public class ProhibitonBlip extends Blip {
 
     @Override
     public void setDetailSummaryText() {
-        setSummaryText(prohibition.getName());
+        setSummaryText(prohibition.getLabel());
     }
 
     @Override
@@ -28,7 +28,7 @@ public class ProhibitonBlip extends Blip {
         HorizontalLayout subjectLayout = new HorizontalLayout();
         Paragraph subjectText = new Paragraph("Subject: ");
         subjectText.getStyle().set("font-weight", "bold");
-        subjectLayout.add(subjectText, new Paragraph(prohibition.getSubject()));
+        subjectLayout.add(subjectText, new Paragraph(prohibition.getSubject().name()));
         addContent(subjectLayout);
 
 
@@ -38,7 +38,7 @@ public class ProhibitonBlip extends Blip {
         addContent(operationsText);
 
         UnorderedList operationsUL = new UnorderedList();
-        prohibition.getOperations().forEach(op -> {
+        prohibition.getAccessRightSet().forEach(op -> {
             ListItem propertyItem = new ListItem(op);
             operationsUL.add(propertyItem);
         });
@@ -50,17 +50,18 @@ public class ProhibitonBlip extends Blip {
         addContent(containersText);
 
         UnorderedList containersUL = new UnorderedList();
-        prohibition.getContainers().forEach((target, complement) -> {
-            ListItem propertyItem = new ListItem(target + " [" + complement.toString() + "]");
+        //TODO: Fix class file for java.lang.Record not found
+        /*prohibition.getContainers().forEach((containerCondition) -> {
+            ListItem propertyItem = new ListItem(containerCondition.name() + " [" + containerCondition.complement() + "]");
             containersUL.add(propertyItem);
-        });
+        });*/
         addContent(containersUL);
 
         // intersection
         HorizontalLayout intersectionLayout = new HorizontalLayout();
         Paragraph intersectionText = new Paragraph("Intersection: ");
         intersectionText.getStyle().set("font-weight", "bold");
-        intersectionLayout.add(intersectionText, new Paragraph(new Boolean(prohibition.isIntersection()).toString()));
+        intersectionLayout.add(intersectionText, new Paragraph(Boolean.toString(prohibition.isIntersection())));
         addContent(intersectionLayout);
     }
 }

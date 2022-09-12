@@ -18,13 +18,16 @@ import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
-import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
+import gov.nist.csd.pm.policy.model.prohibition.ContainerCondition;
+import gov.nist.csd.pm.policy.model.prohibition.Prohibition;
+import gov.nist.csd.pm.policy.model.prohibition.ProhibitionSubject;
 import org.vaadin.gatanaso.MultiselectComboBox;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -176,7 +179,7 @@ public class ProhibitionEditor extends VerticalLayout {
 
         public void refresh() {
             if (selectedProhibition != null) {
-                selectedProhibitionText.setText(selectedProhibition.getName());
+                selectedProhibitionText.setText(selectedProhibition.getLabel());
                 editProhibitionButton.setEnabled(true);
                 deleteProhibitionButton.setEnabled(true);
             } else {
@@ -302,7 +305,7 @@ public class ProhibitionEditor extends VerticalLayout {
         Button submit = new Button("Submit", event -> {
             String name = nameField.getValue();
             String subject = subjectSelect.getValue();
-            OperationSet ops = new OperationSet(rOpsField.getValue());
+            AccessRightSet ops = new AccessRightSet(rOpsField.getValue());
             ops.addAll(aOpsField.getValue());
             boolean intersection = intersectionFeild.getValue();
             try {
@@ -318,7 +321,8 @@ public class ProhibitionEditor extends VerticalLayout {
                 } else if (containers.isEmpty()) {
                     MainView.notify("Containers are Required");
                 } else {
-                    g.addProhibition(name, subject, containers, ops, intersection);
+                    ProhibitionSubject prohibitionSubject = new ProhibitionSubject(subject, ProhibitionSubject.Type.USER_ATTRIBUTE);
+                    g.addProhibition(name, prohibitionSubject, containers, ops, intersection);
                     prohibitionViewer.refreshGraph();
                     dialog.close();
                 }
@@ -377,7 +381,7 @@ public class ProhibitionEditor extends VerticalLayout {
             }
         });
         form.add(subjectSelect);
-        subjectSelect.setValue(prohibition.getSubject());
+        subjectSelect.setValue(prohibition.getSubject().name());
         subjectSelect.setEnabled(false);
 
         // operations multi-select
@@ -391,7 +395,7 @@ public class ProhibitionEditor extends VerticalLayout {
             e.printStackTrace();
         }
         form.add(opsField);
-        opsField.setValue(prohibition.getOperations());
+        opsField.setValue(prohibition.getAccessRightSet());
 
         // getting list of targets
         HashSet<String> targets = new HashSet<>();
@@ -424,8 +428,14 @@ public class ProhibitionEditor extends VerticalLayout {
         );
         containerField.setLabel("Containers (Target, Complement)");
         form.add(containerField);
-        containerField.setValue(prohibition.getContainers());
 
+        Map<String, Boolean> prohibitionContainers = new HashMap<>();
+        //TODO : Fix class file for java.lang.Record not found
+        /*for (ContainerCondition containerCondition: prohibition.getContainers()) {
+            prohibitionContainers.put(containerCondition.name(), containerCondition.complement());
+        }*/
+
+        containerField.setValue(prohibitionContainers);
         // intersection checkbox
         Checkbox intersectionField = new Checkbox("Intersection");
         VerticalLayout intersectionFieldLayout = new VerticalLayout(intersectionField);
@@ -434,9 +444,10 @@ public class ProhibitionEditor extends VerticalLayout {
 
         // submit button
         Button submit = new Button("Submit", event -> {
-            String name = prohibition.getName();
+            String name = prohibition.getLabel();
             String subject = subjectSelect.getValue();
-            OperationSet ops = new OperationSet(opsField.getValue());
+            ProhibitionSubject prohibitionSubject = new ProhibitionSubject(subject, ProhibitionSubject.Type.USER_ATTRIBUTE);
+            AccessRightSet ops = new AccessRightSet(opsField.getValue());
             boolean intersection = intersectionField.getValue();
             try {
                 Map<String, Boolean> containers = containerField.getValue();
@@ -448,7 +459,7 @@ public class ProhibitionEditor extends VerticalLayout {
                 } else if (containers.isEmpty()) {
                     MainView.notify("Containers are Required");
                 } else {
-                    g.updateProhibition(name, subject, containers, ops, intersection);
+                    g.updateProhibition(name, prohibitionSubject, containers, ops, intersection);
                     prohibitionViewer.refreshGraph();
                     dialog.close();
                 }
@@ -459,7 +470,7 @@ public class ProhibitionEditor extends VerticalLayout {
         });
 
         // title layout
-        HorizontalLayout titleLayout = TitleFactory.generate("Edit Prohibition", prohibition.getName(), submit);
+        HorizontalLayout titleLayout = TitleFactory.generate("Edit Prohibition", prohibition.getLabel(), submit);
 
         // putting it all together
         dialog.add(titleLayout, new Hr(), form);
@@ -476,8 +487,8 @@ public class ProhibitionEditor extends VerticalLayout {
 
         Button button = new Button("Delete", event -> {
             try {
-                g.deleteProhibition(prohibition.getName());
-                MainView.notify("Prohibition with name: " + prohibition.getName() + " has been deleted", MainView.NotificationType.SUCCESS);
+                g.deleteProhibition(prohibition.getLabel());
+                MainView.notify("Prohibition with name: " + prohibition.getLabel() + " has been deleted", MainView.NotificationType.SUCCESS);
                 prohibitionViewer.refreshGraph();
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -493,7 +504,7 @@ public class ProhibitionEditor extends VerticalLayout {
         form.add(cancel);
 
         HorizontalLayout titleLayout = TitleFactory.generate("Delete Prohibtion",
-                prohibition.getName());
+                prohibition.getLabel());
 
         dialog.add(titleLayout, new Hr(), form);
         dialog.open();

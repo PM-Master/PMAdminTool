@@ -1,15 +1,16 @@
 package gov.nist.csd.pm.admintool.graph;
 
-import gov.nist.csd.pm.epp.events.EventContext;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.pdp.audit.model.Explain;
-import gov.nist.csd.pm.pdp.services.UserContext;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
-import gov.nist.csd.pm.pip.graph.model.nodes.NodeType;
-import gov.nist.csd.pm.pip.obligations.evr.EVRParser;
-import gov.nist.csd.pm.pip.obligations.model.Obligation;
-import gov.nist.csd.pm.pip.prohibitions.model.Prohibition;
+import gov.nist.csd.pm.policy.events.PolicyEvent;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.access.UserContext;
+import gov.nist.csd.pm.policy.model.audit.Explain;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
+import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
+import gov.nist.csd.pm.policy.model.obligation.Obligation;
+import gov.nist.csd.pm.policy.model.prohibition.ContainerCondition;
+import gov.nist.csd.pm.policy.model.prohibition.Prohibition;
+import gov.nist.csd.pm.policy.model.prohibition.ProhibitionSubject;
 import gov.nist.ngacclient.api.NGACWSWebClient;
 
 import java.util.*;
@@ -157,7 +158,7 @@ public class SingletonClient {
         webClient.deassign(child, parent);
     }
 
-    public void associate(String ua, String target, OperationSet operations) throws PMException {
+    public void associate(String ua, String target, AccessRightSet operations) throws PMException {
         webClient.associate(ua, target, operations);
     }
 
@@ -165,11 +166,11 @@ public class SingletonClient {
         webClient.dissociate(ua, target);
     }
 
-    public Map<String, OperationSet> getSourceAssociations(String source) throws PMException {
+    public Map<String, AccessRightSet> getSourceAssociations(String source) throws PMException {
         return webClient.getSourceAssociations(source);
     }
 
-    public Map<String, OperationSet> getTargetAssociations(String target) throws PMException {
+    public Map<String, AccessRightSet> getTargetAssociations(String target) throws PMException {
         return webClient.getTargetAssociations(target);
     }
 
@@ -177,23 +178,16 @@ public class SingletonClient {
         return webClient.getNode(name);
     }
 
-    public void fromJson(String s) throws PMException {
-        webClient.fromJson(s);
-    }
 
-    public String toJson() throws PMException {
-        return webClient.toJson();
-    }
-
-    public void processEvent (EventContext eventCtx) throws PMException {
+    public void processEvent (PolicyEvent eventCtx) throws PMException {
         webClient.processEvent(eventCtx);
     }
 
     // obligation service methods
-    public Obligation parseObligationYaml (String oblString) throws PMException {
+    /*public Obligation parseObligationYaml (String oblString) throws PMException {
         EVRParser parser = new EVRParser();
         return parser.parse(userContext.getUser(), oblString);
-    }
+    }*/
 
 
     public void addObl(Obligation obligation) throws PMException {
@@ -217,10 +211,15 @@ public class SingletonClient {
         return webClient.getAllProhibitions();
     }
 
-    public void addProhibition(String prohibitionName, String subject, Map<String, Boolean> containers, OperationSet ops, boolean intersection) throws PMException {
-        Prohibition.Builder builder = new Prohibition.Builder(prohibitionName, subject, ops)
-                .setIntersection(intersection);
-        containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
+    public void addProhibition(String prohibitionName, ProhibitionSubject subject, Map<String, Boolean> containers, AccessRightSet ops, boolean intersection) throws PMException {
+        List<ContainerCondition> containerConditions = new ArrayList<>(containers.size());
+
+        for (String c: containers.keySet()) {
+            containerConditions.add(new ContainerCondition(c, containers.get(c)));
+        }
+
+        Prohibition prohibition = new Prohibition(prohibitionName, subject, ops, intersection, containerConditions);
+
         NGACWSWebClient.ProhibitionInfo prohibitionInfo = new NGACWSWebClient.ProhibitionInfo();
         prohibitionInfo.containers = containers;
         prohibitionInfo.ops = ops;
@@ -231,10 +230,15 @@ public class SingletonClient {
         return webClient.getProhibitionsFor(subject);
     }
 
-    public void updateProhibition(String prohibitionName, String subject, Map<String, Boolean> containers, OperationSet ops, boolean intersection) throws PMException {
-        Prohibition.Builder builder = new Prohibition.Builder(prohibitionName, subject, ops)
-                .setIntersection(intersection);
-        containers.forEach((target, isComplement) -> builder.addContainer(target, isComplement));
+    public void updateProhibition(String prohibitionName, ProhibitionSubject subject, Map<String, Boolean> containers, AccessRightSet ops, boolean intersection) throws PMException {
+        List<ContainerCondition> containerConditions = new ArrayList<>(containers.size());
+
+        for (String c: containers.keySet()) {
+            containerConditions.add(new ContainerCondition(c, containers.get(c)));
+        }
+
+        Prohibition prohibition = new Prohibition(prohibitionName, subject, ops, intersection, containerConditions);
+
         NGACWSWebClient.ProhibitionInfo prohibitionInfo = new NGACWSWebClient.ProhibitionInfo();
         prohibitionInfo.containers = containers;
         prohibitionInfo.ops = ops;

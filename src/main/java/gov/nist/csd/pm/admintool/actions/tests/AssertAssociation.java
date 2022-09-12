@@ -1,9 +1,9 @@
 package gov.nist.csd.pm.admintool.actions.tests;
 
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
-import gov.nist.csd.pm.exceptions.PMException;
-import gov.nist.csd.pm.operations.OperationSet;
-import gov.nist.csd.pm.pip.graph.model.nodes.Node;
+import gov.nist.csd.pm.policy.exceptions.PMException;
+import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 
 import java.util.Map;
 
@@ -24,7 +24,7 @@ public class AssertAssociation extends Test {
         if (uaID != null && targetID != null && operation != null) {
             SingletonClient g = SingletonClient.getInstance();
             try {
-                Map<String, OperationSet> sourceAssociations = g.getSourceAssociations(uaID.getName());
+                Map<String, AccessRightSet> sourceAssociations = g.getSourceAssociations(uaID.getName());
                 for (String tID: sourceAssociations.keySet()){
                     if (tID.equalsIgnoreCase(targetID.getName())) {
                         return sourceAssociations.get(tID).contains(operation);
