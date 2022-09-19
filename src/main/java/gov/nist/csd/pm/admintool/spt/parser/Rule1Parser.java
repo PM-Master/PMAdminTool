@@ -354,30 +354,35 @@ public class Rule1Parser extends SptRuleParser {
         int pc1OASize = pc1oas.size();
         System.out.println("Build PCs..." + pcs1UA.size() + " PCs");
         for (int i=0;i<pcs1UA.size();i++) {
-            pcsforUA1.add(graph.createPolicyClass(pcs1UA.get(0), null));
+            graph.createPolicyClass(pcs1UA.get(0), null);
+            pcsforUA1.add(graph.getNode(pcs1UA.get(0)));
         }
 
         System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getName());
         // First parent UA
         String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(), NodeType.UA);
-        pc1UaList.add(graph.createNode(pc1uas.get(pc1UASize-1), NodeType.UA,null, parentUAId ));
+        graph.createNode(pc1uas.get(pc1UASize-1), NodeType.UA,null, parentUAId );
+        pc1UaList.add(graph.getNode(pc1uas.get(pc1UASize-1)));
         for (int i=1;i<pcsforUA1.size();i++) {
             graph.assign(pc1UaList.get(pc1UASize-1).getName(), pcsforUA1.get(i).getName());
         }
         // Other UAs
         for (int i=pc1UASize-2;i>=0;i--) {
-            pc1UaList.add(graph.createNode(pc1uas.get(i), NodeType.UA,null, pc1UaList.get(pc1UaList.size()-1).getName()));
+            graph.createNode(pc1uas.get(i), NodeType.UA,null, pc1UaList.get(pc1UaList.size()-1).getName());
+            pc1UaList.add(graph.getNode(pc1uas.get(i)));
         }
         // First parent OA
         String parentOA = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(), NodeType.OA);
         System.out.println("Build PC 1 OAs ...");
-        pc1OaList.add(graph.createNode(pc1oas.get(pc1OASize-1), NodeType.OA,null, parentOA));
+        graph.createNode(pc1oas.get(pc1OASize-1), NodeType.OA,null, parentOA);
+        pc1OaList.add(graph.getNode(pc1oas.get(pc1OASize-1)));
         for (int i=1;i<pcsforUA1.size();i++) {
             graph.assign(pc1OaList.get(pc1OASize-1).getName(), pcsforUA1.get(i).getName());
         }
         // Other OAs
         for (int i=pc1OASize-2;i>=0;i--) {
-            pc1OaList.add(graph.createNode( pc1oas.get(i), NodeType.OA,null, pc1OaList.get(pc1OaList.size()-1).getName()));
+            graph.createNode( pc1oas.get(i), NodeType.OA,null, pc1OaList.get(pc1OaList.size()-1).getName());
+            pc1OaList.add(graph.getNode(pc1oas.get(i)));
         }
 
         // Build Associations

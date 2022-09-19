@@ -64,11 +64,6 @@ public class PolicyClassEditor extends VerticalLayout {
             buttons.setWidthFull();
             add(buttons);
 
-            Button choosePCButton = new Button("Choose Active Policy Classes");
-            choosePCButton.setWidthFull();
-            choosePCButton.addClickListener(event -> choosePolicyClasses());
-            buttons.add(choosePCButton);
-
             Button addPCButton = new Button("Add Policy Class");
             addPCButton.setWidthFull();
             addPCButton.addClickListener(event -> addPolicyClass());

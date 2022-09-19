@@ -41,9 +41,10 @@ public class ObligationEditor extends VerticalLayout {
         g = SingletonClient.getInstance();
 
         // check permissions
-        if (!g.checkPermissions("super_oa", GET_OBLIGATION, UPDATE_OBLIGATION, DELETE_OBLIGATION))
+        //TODO : Check permission behavior for access rights
+       /* if (!g.checkPermissions("super_oa", GET_OBLIGATION, UPDATE_OBLIGATION, DELETE_OBLIGATION))
             throw new PMException("Current user ('" + g.getCurrentContext() + "') does not have adequate permissions to use obligation editor");
-
+*/
 
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
@@ -117,7 +118,7 @@ public class ObligationEditor extends VerticalLayout {
             obligationGrid.getColumns().forEach(col -> {
                 col.setFlexGrow(1);
             });
-            obligationGrid.removeColumnByKey("source");
+            //obligationGrid.removeColumnByKey("source");
             obligationGrid.removeColumnByKey("rules");
             add(obligationGrid);
             createContextMenu();

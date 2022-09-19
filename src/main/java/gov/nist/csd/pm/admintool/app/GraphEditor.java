@@ -1015,7 +1015,7 @@ public class GraphEditor extends VerticalLayout {
         public void resetGrid() {
             currNodes = new HashSet<>();
             try {
-                Set<Node> allNodes = g.getNodes();
+                List<Node> allNodes = g.getNodes();
 //                Set<Node> allNodes = g.getActiveNodes();
                 Set<String> visitedNodes = new HashSet<>();
 
@@ -1411,7 +1411,7 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify("Parent is Required", MainView.NotificationType.DEFAULT);
                 } else {
                     g.createNode(name, type, props, parents.iterator().next().getName());
-                    for (Node parent : parents) {
+                    /*for (Node parent : parents) {
 
                         switch (type) {
                             case UA:
@@ -1439,7 +1439,7 @@ public class GraphEditor extends VerticalLayout {
                                 }
                                 break;
                         }
-                    }
+                    }*/
                     MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
@@ -1707,7 +1707,7 @@ public class GraphEditor extends VerticalLayout {
         Button button = new Button("Delete", event -> {
             try {
                 String name = n.getName();
-                Set<String> parentStrings = g.getParents(n.getName());
+                List<String> parentStrings = g.getParents(n.getName());
                 Collection<Node> parents = new HashSet<>();
                 parentStrings.forEach((parentName) -> {
                     try {
@@ -2234,7 +2234,7 @@ public class GraphEditor extends VerticalLayout {
 
         Button button = new Button("Reset", event -> {
             try {
-                SingletonClient.resetAllPCs();
+                //SingletonClient.resetAllPCs();
                 g.reset();
                 MainView.notify("Graph has been reset", MainView.NotificationType.SUCCESS);
                 childNode.resetGrid();

@@ -30,7 +30,7 @@ public class SingletonClient {
     private static UserContext userContext;
     private static Random rand;
     private static Set<Node> allPCs;
-
+    private static String superPCId, superUAId, superOAId;
     private static NGACWSWebClient webClient = new NGACWSWebClient(NGACWSWebClient.LOCALHOST_URL);
 
     public SingletonClient() throws PMException {
@@ -39,7 +39,9 @@ public class SingletonClient {
     public Boolean getMysql() {
         return webClient.getMySQL();
     }
-
+    public static String getSuperPCId() {return superPCId;}
+    public static String getSuperUAId() {return superUAId;}
+    public static String getSuperOAId() {return superOAId;}
 
     /**
      * Gets the singleton instance of this class
@@ -48,12 +50,46 @@ public class SingletonClient {
         rand = new Random();
         if (g == null) {
             try {
-                return new SingletonClient();
+                //userContext = new UserContext("super", rand.toString());
+                g = new SingletonClient();
+                findSuperConfigurationNodes(g);
+                return g;
             } catch (PMException e) {
                 e.printStackTrace();
             }
         }
         return g;
+    }
+
+    private static void findSuperConfigurationNodes(SingletonClient graph) throws PMException {
+        userContext = null;
+        System.out.println(graph.getNodes());
+        for (Node n : graph.getNodes()) {
+            //if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
+                switch (n.getType()) {
+                    case OA:
+                        System.out.println("Super OA: " + n.getName());
+                        superOAId = n.getName();
+                        break;
+                    case UA:
+                        if (n.getName().equals("super_ua")) {
+                            System.out.println("Super UA: " + n.getName());
+                            superUAId = n.getName();
+                        }
+                        break;
+                    case U:
+                        System.out.println("Super U: " + n.getName());
+                        userContext = new UserContext(n.getName(), rand.toString());
+                        break;
+                    case PC:
+                        System.out.println("Super PC: " + n.getName());
+                        superPCId = n.getName();
+                        break;
+                }
+            //}
+        }
+        System.out.println("userCtx: " + userContext.getUser());
+
     }
 
     public void setUserContext(String username) {
@@ -85,10 +121,10 @@ public class SingletonClient {
         return "All pcs: " + pcs;
     }
 
-    public Node createPolicyClass(String name, Map<String, String> properties) throws PMException {
-        Node newPC = webClient.createPolicyClass(name, properties);
+    public void createPolicyClass(String name, Map<String, String> properties) throws PMException {
+        String newPC_name = webClient.createPolicyClass(name, properties);
+        Node newPC = g.getNode(newPC_name);
         allPCs.add(newPC);
-        return newPC;
     }
 
     // graph service methods
@@ -96,8 +132,8 @@ public class SingletonClient {
         webClient.reset();
     }
 
-    public Node createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
-        return webClient.createNode(new Node(name, type, properties), parent);
+    public void createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
+        webClient.createNode(new Node(name, type, properties), parent);
     }
 
     public String getPolicyClassDefault(String pc, NodeType type) throws PMException {
@@ -115,7 +151,7 @@ public class SingletonClient {
         webClient.deleteNode(name);
     }
 
-    public Set<Node> getNodes() throws PMException {
+    public List<Node> getNodes() throws PMException {
         return webClient.getNodes();
     }
 
@@ -146,9 +182,8 @@ public class SingletonClient {
         return stringToSet(children);
     }
 
-    public Set<String> getParents(String node) throws PMException {
-        String parents  = webClient.getParents(node).iterator().next();
-        return stringToSet(parents);
+    public List<String> getParents(String node) throws PMException {
+        return webClient.getParents(node);
     }
 
     public void assign(String child, String parent) throws PMException {
@@ -179,7 +214,6 @@ public class SingletonClient {
         return webClient.getNode(name);
     }
 
-
     public void processEvent (PolicyEvent eventCtx) throws PMException {
         webClient.processEvent(eventCtx);
     }
@@ -190,6 +224,13 @@ public class SingletonClient {
         return parser.parse(userContext.getUser(), oblString);
     }*/
 
+    public void fromPAL(String s) throws PMException {
+        webClient.fromPal(s);
+    }
+
+    public String toPal() throws PMException {
+        return webClient.toPal();
+    }
 
     public void addObl(Obligation obligation) throws PMException {
         webClient.addObl(obligation);

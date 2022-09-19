@@ -47,7 +47,6 @@ public class MainView extends HorizontalLayout{
 
     public MainView() throws PMException {
         g = SingletonClient.getInstance();
-
         testResults = new Div();
         actions = SingletonActiveActions.getInstance();
         navbar = new VerticalLayout();

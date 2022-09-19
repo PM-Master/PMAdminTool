@@ -645,30 +645,35 @@ public class Rule2Parser extends SptRuleParser {
         int pc1OASize = pc1oas.size();
         System.out.println("Build PCs..." + pcs1UA.size() + " PCs");
         for (int i=0;i<pcs1UA.size();i++) {
-            pcsforUA1.add(graph.createPolicyClass(pcs1UA.get(0), null));
+            graph.createPolicyClass(pcs1UA.get(0), null);
+            pcsforUA1.add(graph.getNode(pcs1UA.get(0)));
         }
 
         System.out.println("Build PC1 UAs ..." + "for PC " + pcsforUA1.get(0).getType());
         // First parent UA
         String parentUAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(),NodeType.UA);
-        pc1UaList.add(graph.createNode(pc1uas.get(pc1UASize-1), NodeType.UA,null, parentUAId));
+        graph.createNode(pc1uas.get(pc1UASize-1), NodeType.UA,null, parentUAId);
+        pc1UaList.add(graph.getNode(pc1uas.get(pc1UASize-1)));
         for (int i=1;i<pcsforUA1.size();i++) {
             graph.assign(pc1UaList.get(pc1UASize-1).getName(), pcsforUA1.get(i).getName());
         }
         // Other UAs
         for (int i=pc1UASize-2;i>=0;i--) {
-            pc1UaList.add(graph.createNode(pc1uas.get(i), NodeType.UA,null, pc1UaList.get(pc1UaList.size()-1).getName()));
+            graph.createNode(pc1uas.get(i), NodeType.UA,null, pc1UaList.get(pc1UaList.size()-1).getName());
+            pc1UaList.add(graph.getNode(pc1uas.get(i)));
         }
         // First parent OA
         String parentOAId = graph.getPolicyClassDefault(pcsforUA1.get(0).getName(),NodeType.OA);
         System.out.println("Build PC 1 OAs ...");
-        pc1OaList.add(graph.createNode(pc1oas.get(pc1OASize-1), NodeType.OA,null, parentOAId));
+        graph.createNode(pc1oas.get(pc1OASize-1), NodeType.OA,null, parentOAId);
+        pc1OaList.add(graph.getNode(pc1oas.get(pc1OASize-1)));
         for (int i=1;i<pcsforUA1.size();i++) {
             graph.assign(pc1OaList.get(pc1OASize-1).getName(), pcsforUA1.get(i).getName());
         }
         // Other OAs
         for (int i=pc1OASize-2;i>=0;i--) {
-            pc1OaList.add(graph.createNode(pc1oas.get(i), NodeType.OA,null, pc1OaList.get(pc1OaList.size()-1).getName()));
+            graph.createNode(pc1oas.get(i), NodeType.OA,null, pc1OaList.get(pc1OaList.size()-1).getName());
+            pc1OaList.add(graph.getNode(pc1oas.get(i)));
         }
 
         // Build Associations for PC1
@@ -679,18 +684,20 @@ public class Rule2Parser extends SptRuleParser {
 
         System.out.println("Building PC2 ...");
         // dummy id. PC is created but parent id is ignored
-        Node pc2Node = graph.createPolicyClass(pc2,null);
+        graph.createPolicyClass(pc2,null);
         // Build UAs
         System.out.println("Building PC 2 UAs ...");
         parentUAId = graph.getPolicyClassDefault(pc2Node.getName(),NodeType.UA);
         for (int i=0;i<pc2uas.size();i++) {
-            pc2UaList.add(graph.createNode(pc2uas.get(i), NodeType.UA,null, parentUAId));
+            graph.createNode(pc2uas.get(i), NodeType.UA,null, parentUAId);
+            pc2UaList.add(graph.getNode(pc2uas.get(i)));
         }
         //Build OAs
         System.out.println("Building PC 2 OAs ...");
         parentOAId = graph.getPolicyClassDefault(pc2Node.getName(),NodeType.OA);
         for (int i=0;i<pc2oas.size();i++) {
-            pc2OaList.add(graph.createNode(pc2oas.get(i), NodeType.OA,null, parentOAId));
+            graph.createNode(pc2oas.get(i), NodeType.OA,null, parentOAId);
+            pc2OaList.add(graph.getNode(pc2oas.get(i)));
         }
 
         // Build Associations

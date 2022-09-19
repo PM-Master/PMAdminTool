@@ -3,6 +3,7 @@ package gov.nist.csd.pm.admintool.app;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -122,25 +123,16 @@ public class ImportExport extends VerticalLayout {
                     "  ],\n" +
                     "  \"associations\": []\n" +
                     "}");
-
+            //TODO: Add example From PAL
             inputJson.setHeight("80vh");
-            Button importButton = new Button("Import JSON", click -> {
-                //g.fromJson(inputJson.getValue());
-//                    Set<Node> activesPc = SingletonClient.getAllPCs();
-//                    Set<String> nodeNames = activesPc.stream().map(e -> e.getName()).collect(Collectors.toSet());
-//                    Set<Node> activesPcCopy = new HashSet<>();
-//                    for (Node node : g.getNodes()) {
-//                        if (node.getType() == NodeType.PC) {
-//                            //compare the pc in the graph to the activePCs
-//                            if (!nodeNames.contains(node.getName())) {
-//                                SingletonClient.PolicyClassWithActive newPc = new SingletonClient.PolicyClassWithActive(node);
-//                                activesPcCopy.add(newPc);
-//                            }
-//                        }
-//                    }
-//                    activesPc.addAll(activesPcCopy);
-                MainView.notify("The Json has been imported", MainView.NotificationType.SUCCESS);
-                //UI.getCurrent().getPage().reload();
+            Button importButton = new Button("Import PAL", click -> {
+                try {
+                    g.fromPAL(inputJson.getValue());
+                } catch (PMException e) {
+                    e.printStackTrace();
+                }
+                MainView.notify("The PAL has been imported", MainView.NotificationType.SUCCESS);
+                UI.getCurrent().getPage().reload();
                 //updateGraph(inputJson.getValue());
             });
             importButton.setHeight("5%");
@@ -164,12 +156,16 @@ public class ImportExport extends VerticalLayout {
             //exportJson.getStyle().set("resize", "none");
 
 
-            Button exportButton = new Button("Export JSON", click -> {
-                //exportJson.setValue(SingletonClient.getInstance().getGraphService(userCtx).toJson());
+            Button exportButton = new Button("Export PAL", click -> {
+                try {
+                    exportJson.setValue(SingletonClient.getInstance().toPal());
+                } catch (PMException e) {
+                    e.printStackTrace();
+                }
                 //TODO : Replace Json by PAL
                 //exportJson.setValue(g.toJson());
                 //exportJson.setValue(SingletonClient.getInstance().getPAP().getGraphPAP().toJson());
-                MainView.notify("The graph has been exported into a JSON", MainView.NotificationType.SUCCESS);
+                MainView.notify("The graph has been exported into a PAL", MainView.NotificationType.SUCCESS);
             });
             exportButton.setHeight("5%");
             add(exportJson);
@@ -190,7 +186,7 @@ public class ImportExport extends VerticalLayout {
         HashSet<JsonAssociation> jsonAssociations = new HashSet<>();
         for (Node node : nodes) {
             try {
-                Set<String> parents = graph.getParents(node.getName());
+                List<String> parents = graph.getParents(node.getName());
 
                 for (String parent : parents) {
                     jsonAssignments.add(new String[]{node.getName(), parent});
