@@ -23,7 +23,7 @@ public class CytoscapeElement extends Div {
     private ClickCallback clickCallback;
     private SingletonClient g;
 
-    public CytoscapeElement(String elementID) {
+    public CytoscapeElement(String elementID) throws PMException{
         // get singleton instance
         g = SingletonClient.getInstance();
 

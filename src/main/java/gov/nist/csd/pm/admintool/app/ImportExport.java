@@ -207,7 +207,7 @@ public class ImportExport extends VerticalLayout {
                 System.err.println("To Full Json Error: " + e.getMessage());
             }
         }
-
+        System.out.println("nodes: " + nodes);
         return gson.toJson(new JsonGraph(nodes, jsonAssignments, jsonAssociations));
     }
 

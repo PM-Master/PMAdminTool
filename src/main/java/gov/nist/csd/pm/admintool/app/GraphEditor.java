@@ -58,6 +58,7 @@ public class GraphEditor extends VerticalLayout {
 
     public GraphEditor() throws PMException {
         g = SingletonClient.getInstance();
+        System.out.println(g.getNodes());
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
@@ -157,11 +158,7 @@ public class GraphEditor extends VerticalLayout {
 
                         // if new changes have occurred while in visible
                         if (graphViewerPendingUpdate) {
-                            try {
-                                refreshGraphViewer();
-                            } catch (PMException e) {
-                                e.printStackTrace();
-                            }
+                            refreshGraphViewer();
                         }
                         break;
                 }
@@ -203,11 +200,7 @@ public class GraphEditor extends VerticalLayout {
                         filters.remove("Objects");
                         break;
                 }
-                try {
-                    refresh();
-                } catch (PMException e) {
-                    e.printStackTrace();
-                }
+                refresh();
             });
             add(ouToggle);
 
@@ -290,11 +283,7 @@ public class GraphEditor extends VerticalLayout {
                 } else {
                     filters.remove("Name");
                 }
-                try {
-                    refresh();
-                } catch (PMException e) {
-                    e.printStackTrace();
-                }
+                refresh();
             });
             add(searchBar);
         }
@@ -328,8 +317,8 @@ public class GraphEditor extends VerticalLayout {
             grid.getStyle()
                     .set("border-radius", "1px")
                     .set("user-select", "none");
-            //grid.removeColumnByKey("id");
-            grid.removeColumnByKey("properties");
+
+            //grid.removeColumnByKey("properties");
             grid.setColumnReorderingAllowed(true);
             grid.setRowsDraggable(true);
             grid.setDropMode(GridDropMode.ON_TOP);
@@ -340,7 +329,7 @@ public class GraphEditor extends VerticalLayout {
             grid.getColumnByKey("type")
                     .setTextAlign(ColumnTextAlign.END)
                     .setWidth("20%");
-
+            
             // Double Click Action: go into current node's children
             grid.addItemDoubleClickListener(evt -> {
                 Node n = evt.getItem();
@@ -967,6 +956,7 @@ public class GraphEditor extends VerticalLayout {
                     return children.stream();
                 }
             };
+
             grid.setDataProvider(dataProvider);
         }
 
@@ -1016,6 +1006,7 @@ public class GraphEditor extends VerticalLayout {
             currNodes = new HashSet<>();
             try {
                 List<Node> allNodes = g.getNodes();
+                System.out.println("allNodes: " + allNodes);
 //                Set<Node> allNodes = g.getActiveNodes();
                 Set<String> visitedNodes = new HashSet<>();
 
@@ -1042,6 +1033,7 @@ public class GraphEditor extends VerticalLayout {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
+            System.out.println("currNodes: "+ currNodes);
             updateGridNodes(currNodes);
 //            expandPolicies();
 
@@ -1059,7 +1051,7 @@ public class GraphEditor extends VerticalLayout {
             backButton.setEnabled(false);
         }
 
-        public void refresh() throws PMException {
+        public void refresh() {
 //            grid.getDataCommunicator().reset();
             grid.getDataProvider().refreshAll();
 
@@ -1070,7 +1062,7 @@ public class GraphEditor extends VerticalLayout {
             }
         }
 
-        public void refresh(Node... nodes) throws PMException {
+        public void refresh(Node... nodes) {
             for (Node node : nodes)
                 grid.getDataProvider().refreshItem(node, true);
 
@@ -1081,7 +1073,7 @@ public class GraphEditor extends VerticalLayout {
             }
         }
 
-        public void refreshGraphViewer() throws PMException {
+        public void refreshGraphViewer() {
             graphViewer.reset();
             graphViewerPendingUpdate = false;
         }
@@ -1090,7 +1082,7 @@ public class GraphEditor extends VerticalLayout {
         public void expandPolicies() {
             Set<Node> policies = new HashSet<>();
             try {
-                Set<String> policyNames = g.getPolicies();
+                List<String> policyNames = g.getPolicies();
                 for (String policyName : policyNames) {
                     policies.add(g.getNode(policyName));
                 }
@@ -1560,7 +1552,7 @@ public class GraphEditor extends VerticalLayout {
         Collection<Node> nodeCollection;
         try {
             //filter nodes
-            g.getNodes();
+            //g.getNodes();
             nodeCollection = new HashSet<>(g.getNodes());
         } catch (PMException e) {
             nodeCollection = new HashSet<>();
@@ -1808,16 +1800,8 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();
                 }
-                try {
-                    childNode.refresh();
-                } catch (PMException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    parentNode.refresh();
-                } catch (PMException e) {
-                    e.printStackTrace();
-                }
+                childNode.refresh();
+                parentNode.refresh();
                 dialog.close();
             });
 

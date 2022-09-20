@@ -52,6 +52,7 @@ public class SingletonClient {
             try {
                 //userContext = new UserContext("super", rand.toString());
                 g = new SingletonClient();
+                //userContext = new UserContext("super", "1234");
                 findSuperConfigurationNodes(g);
                 return g;
             } catch (PMException e) {
@@ -78,8 +79,11 @@ public class SingletonClient {
                         }
                         break;
                     case U:
-                        System.out.println("Super U: " + n.getName());
-                        userContext = new UserContext(n.getName(), rand.toString());
+                        if (n.getName().equals("super")) {
+                            System.out.println("Super U: " + n.getName());
+                            userContext = new UserContext(n.getName(), rand.toString());
+                        }
+                        //webClient.getUserCtx(userContext.getUser());
                         break;
                     case PC:
                         System.out.println("Super PC: " + n.getName());
@@ -88,8 +92,6 @@ public class SingletonClient {
                 }
             //}
         }
-        System.out.println("userCtx: " + userContext.getUser());
-
     }
 
     public void setUserContext(String username) {
@@ -155,9 +157,8 @@ public class SingletonClient {
         return webClient.getNodes();
     }
 
-    public Set<String> getPolicies() throws PMException {
-        String pcs  = webClient.getPolicies().iterator().next();
-        return stringToSet(pcs);
+    public List<String> getPolicies() throws PMException {
+        return webClient.getPolicies();
     }
 
     // Utility function
@@ -173,13 +174,13 @@ public class SingletonClient {
         return set;
     }
     public Set<String> getChildren(String name) throws PMException {
-        String children  = webClient.getChildren(name).iterator().next();
-        return stringToSet(children);
+        List<String> children  = webClient.getChildren(name);
+        return new HashSet<>(children);
     }
 
     public Set<String> getChildrenNoSuperPolicy(String name) throws PMException {
-        String children = webClient.getChildrenNoSuperPolicy(name).iterator().next();
-        return stringToSet(children);
+        List<String> children = webClient.getChildrenNoSuperPolicy(name);
+        return new HashSet<>(children);
     }
 
     public List<String> getParents(String node) throws PMException {
@@ -293,28 +294,24 @@ public class SingletonClient {
     }
 
     // operation methods
-    public Set<String> getAdminOps() throws PMException {
-        String ops = webClient.getAdminOps().iterator().next();
-        return stringToSet(ops);
+    public List<String> getAdminOps() throws PMException {
+        return webClient.getAdminOps();
     }
 
-    public Set<String> getAdminOpsWithStars() throws PMException {
-        String ops = webClient.getAdminOpsWithStars().iterator().next();
-        return stringToSet(ops);
+    public List<String> getAdminOpsWithStars() throws PMException {
+        return webClient.getAdminOpsWithStars();
     }
 
-    public Set<String> getResourceOps() throws PMException {
-        String ops = webClient.getResourceOps().iterator().next();
-        return stringToSet(ops);
+    public List<String> getResourceOps() throws PMException {
+        return webClient.getResourceOps();
     }
 
-    public Set<String> getResourceOpsWithStars() throws PMException {
-        String ops = webClient.getResourceOpsWithStars().iterator().next();
-        return stringToSet(ops);
+    public List<String> getResourceOpsWithStars() throws PMException {
+        return webClient.getResourceOpsWithStars();
     }
 
-    public Set<String> getAllOpsWithStars() throws PMException {
-        HashSet<String> ops = new HashSet<>();
+    public List<String> getAllOpsWithStars() throws PMException {
+        List<String> ops = new ArrayList<>();
         ops.addAll(getAdminOpsWithStars());
         ops.addAll(getResourceOpsWithStars());
         return ops;
