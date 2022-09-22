@@ -33,9 +33,6 @@ public class SingletonClient {
     private static String superPCId, superUAId, superOAId;
     private static NGACWSWebClient webClient = new NGACWSWebClient(NGACWSWebClient.LOCALHOST_URL);
 
-    public SingletonClient() throws PMException {
-    }
-
     public Boolean getMysql() {
         return webClient.getMySQL();
     }
@@ -81,7 +78,7 @@ public class SingletonClient {
                     case U:
                         if (n.getName().equals("super")) {
                             System.out.println("Super U: " + n.getName());
-                            userContext = new UserContext(n.getName(), rand.toString());
+                            userContext = new UserContext(n.getName(), "1234");
                         }
                         //webClient.getUserCtx(userContext.getUser());
                         break;
@@ -135,7 +132,10 @@ public class SingletonClient {
     }
 
     public void createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
-        webClient.createNode(new Node(name, type, properties), parent);
+        System.out.println("Nodes in c: " + g.getNodes());
+        String node = webClient.createNode(new Node(name, type, properties), parent);
+        Node newPC = g.getNode(node);
+        System.out.println(newPC);
     }
 
     public String getPolicyClassDefault(String pc, NodeType type) throws PMException {
@@ -174,8 +174,8 @@ public class SingletonClient {
         return set;
     }
     public Set<String> getChildren(String name) throws PMException {
-        List<String> children  = webClient.getChildren(name);
-        return new HashSet<>(children);
+        String children  = webClient.getChildren(name).iterator().next();
+        return stringToSet(children);
     }
 
     public Set<String> getChildrenNoSuperPolicy(String name) throws PMException {
@@ -183,8 +183,9 @@ public class SingletonClient {
         return new HashSet<>(children);
     }
 
-    public List<String> getParents(String node) throws PMException {
-        return webClient.getParents(node);
+    public Set<String> getParents(String node) throws PMException {
+        String parents  = webClient.getParents(node).iterator().next();
+        return stringToSet(parents);
     }
 
     public void assign(String child, String parent) throws PMException {

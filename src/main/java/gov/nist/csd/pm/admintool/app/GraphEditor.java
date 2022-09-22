@@ -58,7 +58,7 @@ public class GraphEditor extends VerticalLayout {
 
     public GraphEditor() throws PMException {
         g = SingletonClient.getInstance();
-        System.out.println(g.getNodes());
+        System.out.println("pcs: " + g.getPolicies());
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
@@ -867,6 +867,7 @@ public class GraphEditor extends VerticalLayout {
                             return 0;
                         } else {
                             Optional<Node> node = query.getParentOptional();
+
                             if (node.isPresent()) {
                                 Set<String> children = g.getChildren(node.get().getName());
                                 if (hideSuperPolicy) {
@@ -875,6 +876,7 @@ public class GraphEditor extends VerticalLayout {
                                 for (Predicate<? super String> filter : filters.values()) {
                                     children = children.stream().filter(filter).collect(Collectors.toSet());
                                 }
+
                                 return children.size();
                             } else {
                                 Set<String> temp_all_nodes = new HashSet<>();
@@ -923,6 +925,8 @@ public class GraphEditor extends VerticalLayout {
                         } else {
                             Optional<Node> node = query.getParentOptional();
                             if (node.isPresent()) {
+                                System.out.println("fetchChildrenFromBackEnd: " + node.get());
+
                                 Set<String> childrenNames = g.getChildren(query.getParent().getName());
 
                                 if (hideSuperPolicy) {
@@ -956,7 +960,6 @@ public class GraphEditor extends VerticalLayout {
                     return children.stream();
                 }
             };
-
             grid.setDataProvider(dataProvider);
         }
 
@@ -1003,26 +1006,23 @@ public class GraphEditor extends VerticalLayout {
         }
 
         public void resetGrid() {
-            currNodes = new HashSet<>();
+            //currNodes = new HashSet<>();
+            System.out.println("before reset grid: " + currNodes);
             try {
+                currNodes = new HashSet<>();
                 List<Node> allNodes = g.getNodes();
-                System.out.println("allNodes: " + allNodes);
-//                Set<Node> allNodes = g.getActiveNodes();
+                System.out.println("allNodes in reset: " + allNodes);
                 Set<String> visitedNodes = new HashSet<>();
-
                 for (Node n: allNodes) {
+                    System.out.println("=============================");
+                    System.out.println("=============================");
+
+                    System.out.println("curr Node: " + n);
                     if (!visitedNodes.contains(n.getName())) { // has not already been visited
                         visitedNodes.add(n.getName());
-
                         // if no parents, add to curr nodes
                         if (g.getParents(n.getName()).isEmpty()) {
-                            if (n.getType().equals(NodeType.PC)) {
-//                                if (g.isPCActive(n)) {
-                                    currNodes.add(n);
-//                                }
-                            } else {
-                                currNodes.add(n);
-                            }
+                            currNodes.add(n);
                         }
 
                         // add children to visited
@@ -1083,6 +1083,7 @@ public class GraphEditor extends VerticalLayout {
             Set<Node> policies = new HashSet<>();
             try {
                 List<String> policyNames = g.getPolicies();
+                System.out.println(policyNames);
                 for (String policyName : policyNames) {
                     policies.add(g.getNode(policyName));
                 }
@@ -1403,7 +1404,7 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify("Parent is Required", MainView.NotificationType.DEFAULT);
                 } else {
                     g.createNode(name, type, props, parents.iterator().next().getName());
-                    /*for (Node parent : parents) {
+                    for (Node parent : parents) {
 
                         switch (type) {
                             case UA:
@@ -1431,7 +1432,7 @@ public class GraphEditor extends VerticalLayout {
                                 }
                                 break;
                         }
-                    }*/
+                    }
                     MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
@@ -1601,6 +1602,7 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify("At least one parent is required", MainView.NotificationType.DEFAULT);
                 } else {
                     g.createNode(name, NodeType.O, props, parents.iterator().next().getName());
+                    System.out.println("node just created: " + g.getNode(name));
                     for (Node parent : parents) {
                         if (parent.getType() == NodeType.OA && !g.getParents(name).contains(parent.getName())) {
                             g.assign(name, parent.getName());
@@ -1699,7 +1701,7 @@ public class GraphEditor extends VerticalLayout {
         Button button = new Button("Delete", event -> {
             try {
                 String name = n.getName();
-                List<String> parentStrings = g.getParents(n.getName());
+                Set<String> parentStrings = g.getParents(n.getName());
                 Collection<Node> parents = new HashSet<>();
                 parentStrings.forEach((parentName) -> {
                     try {

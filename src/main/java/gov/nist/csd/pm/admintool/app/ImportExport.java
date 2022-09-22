@@ -186,7 +186,7 @@ public class ImportExport extends VerticalLayout {
         HashSet<JsonAssociation> jsonAssociations = new HashSet<>();
         for (Node node : nodes) {
             try {
-                List<String> parents = graph.getParents(node.getName());
+                Set<String> parents = graph.getParents(node.getName());
 
                 for (String parent : parents) {
                     jsonAssignments.add(new String[]{node.getName(), parent});
@@ -207,7 +207,7 @@ public class ImportExport extends VerticalLayout {
                 System.err.println("To Full Json Error: " + e.getMessage());
             }
         }
-        System.out.println("nodes: " + nodes);
+        System.out.println("nodes I/E: " + nodes);
         return gson.toJson(new JsonGraph(nodes, jsonAssignments, jsonAssociations));
     }
 
