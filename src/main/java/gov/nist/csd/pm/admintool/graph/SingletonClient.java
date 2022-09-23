@@ -61,7 +61,6 @@ public class SingletonClient {
 
     private static void findSuperConfigurationNodes(SingletonClient graph) throws PMException {
         userContext = null;
-        System.out.println(graph.getNodes());
         for (Node n : graph.getNodes()) {
             //if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
                 switch (n.getType()) {
@@ -132,10 +131,7 @@ public class SingletonClient {
     }
 
     public void createNode(String name, NodeType type, Map<String, String> properties, String parent) throws PMException {
-        System.out.println("Nodes in c: " + g.getNodes());
-        String node = webClient.createNode(new Node(name, type, properties), parent);
-        Node newPC = g.getNode(node);
-        System.out.println(newPC);
+        webClient.createNode(new Node(name, type, properties), parent);
     }
 
     public String getPolicyClassDefault(String pc, NodeType type) throws PMException {
@@ -147,6 +143,10 @@ public class SingletonClient {
         node.setName(name);
         node.setProperties(properties);
         webClient.updateNode(name,node);
+    }
+
+    public boolean exists(String name) throws PMException {
+        return webClient.exists(name);
     }
 
     public void deleteNode(String name) throws PMException {
@@ -262,7 +262,7 @@ public class SingletonClient {
             containerConditions.add(new ContainerCondition(c, containers.get(c)));
         }
 
-        Prohibition prohibition = new Prohibition(prohibitionName, subject, ops, intersection, containerConditions);
+        //Prohibition prohibition = new Prohibition(prohibitionName, subject, ops, intersection, containerConditions);
 
         NGACWSWebClient.ProhibitionInfo prohibitionInfo = new NGACWSWebClient.ProhibitionInfo();
         prohibitionInfo.containers = containers;
@@ -299,20 +299,23 @@ public class SingletonClient {
         return webClient.getAdminOps();
     }
 
-    public List<String> getAdminOpsWithStars() throws PMException {
-        return webClient.getAdminOpsWithStars();
+    public Set<String> getAdminOpsWithStars() throws PMException {
+        String ops = webClient.getAdminOpsWithStars().iterator().next();
+        return stringToSet(ops);
     }
 
-    public List<String> getResourceOps() throws PMException {
-        return webClient.getResourceOps();
+    public Set<String> getResourceOps() throws PMException {
+        String ops = webClient.getResourceOps().iterator().next();
+        return stringToSet(ops);
     }
 
-    public List<String> getResourceOpsWithStars() throws PMException {
-        return webClient.getResourceOpsWithStars();
+    public Set<String> getResourceOpsWithStars() throws PMException {
+        String ops = webClient.getResourceOpsWithStars().iterator().next();
+        return stringToSet(ops);
     }
 
-    public List<String> getAllOpsWithStars() throws PMException {
-        List<String> ops = new ArrayList<>();
+    public Set<String> getAllOpsWithStars() throws PMException {
+        Set<String> ops = new HashSet<>();
         ops.addAll(getAdminOpsWithStars());
         ops.addAll(getResourceOpsWithStars());
         return ops;

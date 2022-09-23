@@ -58,7 +58,6 @@ public class GraphEditor extends VerticalLayout {
 
     public GraphEditor() throws PMException {
         g = SingletonClient.getInstance();
-        System.out.println("pcs: " + g.getPolicies());
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
@@ -499,8 +498,11 @@ public class GraphEditor extends VerticalLayout {
                     else selectedParentNode = null;
                 } else {
                     try {
-                        if (isSource) selectedChildNode = g.getNode(node_id);
-                        else selectedParentNode = g.getNode(node_id);
+                        if (isSource) {
+                            selectedChildNode = g.getNode(node_id);
+                        } else  {
+                            selectedParentNode = g.getNode(node_id);
+                        }
                     } catch (PMException e) {
                         e.printStackTrace();
 
@@ -925,7 +927,6 @@ public class GraphEditor extends VerticalLayout {
                         } else {
                             Optional<Node> node = query.getParentOptional();
                             if (node.isPresent()) {
-                                System.out.println("fetchChildrenFromBackEnd: " + node.get());
 
                                 Set<String> childrenNames = g.getChildren(query.getParent().getName());
 
@@ -1007,17 +1008,12 @@ public class GraphEditor extends VerticalLayout {
 
         public void resetGrid() {
             //currNodes = new HashSet<>();
-            System.out.println("before reset grid: " + currNodes);
             try {
                 currNodes = new HashSet<>();
                 List<Node> allNodes = g.getNodes();
-                System.out.println("allNodes in reset: " + allNodes);
                 Set<String> visitedNodes = new HashSet<>();
                 for (Node n: allNodes) {
-                    System.out.println("=============================");
-                    System.out.println("=============================");
 
-                    System.out.println("curr Node: " + n);
                     if (!visitedNodes.contains(n.getName())) { // has not already been visited
                         visitedNodes.add(n.getName());
                         // if no parents, add to curr nodes
@@ -1033,7 +1029,6 @@ public class GraphEditor extends VerticalLayout {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
-            System.out.println("currNodes: "+ currNodes);
             updateGridNodes(currNodes);
 //            expandPolicies();
 
@@ -1083,7 +1078,6 @@ public class GraphEditor extends VerticalLayout {
             Set<Node> policies = new HashSet<>();
             try {
                 List<String> policyNames = g.getPolicies();
-                System.out.println(policyNames);
                 for (String policyName : policyNames) {
                     policies.add(g.getNode(policyName));
                 }
@@ -1123,6 +1117,16 @@ public class GraphEditor extends VerticalLayout {
             add(new Paragraph("\n"));
             add(childNodeText, connectorSymbol, parentNodeText);
             add(new Paragraph("\n"), new Paragraph("\n"));
+
+            childNodeText.getStyle()
+                    .set("text-align", "center")
+                    .set("display", "inline-block")
+                    .set("justify-content", "center");
+
+            parentNodeText.getStyle()
+                    .set("text-align", "center")
+                    .set("display", "inline-block")
+                    .set("justify-content", "center");
 
             createButtons();
         }
@@ -1316,6 +1320,22 @@ public class GraphEditor extends VerticalLayout {
         nameField.setPlaceholder("Enter Name...");
         form.add(nameField);
 
+        MapInput<String, String> propsFieldNewNodesNames = new MapInput<>(
+                TextField.class, null,
+                (valueFieldInstance) -> {
+                    if (valueFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) valueFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }
+        );
+        propsFieldNewNodesNames.setLabel("Enter the name of additional nodes: ");
+        form.add(propsFieldNewNodesNames);
+
         NodeType[] types = new NodeType[4];
         types[0] = NodeType.U;
         types[1] = NodeType.UA;
@@ -1338,7 +1358,6 @@ public class GraphEditor extends VerticalLayout {
             Collection<Node> nodeCollection;
             try {
                 nodeCollection = new HashSet<>(g.getNodes());
-//                nodeCollection = new HashSet<>(g.getActiveNodes());
             } catch (PMException e) {
                 nodeCollection = new HashSet<>();
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -1371,18 +1390,18 @@ public class GraphEditor extends VerticalLayout {
         form.add(parentSelect);
 
         MapInput<String, String> propsField = new MapInput<>(
-            TextField.class, TextField.class,
-            null, null,
-            (keyFieldInstance) -> {
-                if (keyFieldInstance instanceof TextField) {
-                    TextField temp = (TextField) keyFieldInstance;
-                    String value = temp.getValue();
-                    return (value != null && !value.isEmpty()) ? value : null;
-                } else {
-                    MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
-                    return null;
-                }
-            }, null
+                TextField.class, TextField.class,
+                null, null,
+                (keyFieldInstance) -> {
+                    if (keyFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) keyFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }, null
         );
         propsField.setLabel("Properties");
         form.add(propsField);
@@ -1394,6 +1413,10 @@ public class GraphEditor extends VerticalLayout {
             Set<Node> parents = parentSelect.getSelectedItems();
             try {
                 Map<String, String> props = propsField.getValue();
+                HashSet<String> additionalNodes = propsFieldNewNodesNames.getValueCol();
+                Collection<String> additionalNamesCollec = new ArrayList<>(additionalNodes);
+                List<String> additionalNames = additionalNamesCollec.stream().filter(name_ -> (name_ != null && !name_.equals("")))
+                        .collect(Collectors.toList());
                 if (name == null || name.equals("")) {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
@@ -1403,37 +1426,80 @@ public class GraphEditor extends VerticalLayout {
                 } else if (parents.isEmpty()) {
                     MainView.notify("Parent is Required", MainView.NotificationType.DEFAULT);
                 } else {
-                    g.createNode(name, type, props, parents.iterator().next().getName());
-                    for (Node parent : parents) {
+                    if (!g.exists(name)) {
+                        g.createNode(name, type, props, parents.iterator().next().getName());
+                        for (Node parent : parents) {
 
-                        switch (type) {
-                            case UA:
-                                if (!g.getParents(name).contains(parent.getName())) {
-                                    if (parent.getType() == NodeType.UA) {
+                            switch (type) {
+                                case UA:
+                                    if (!g.getParents(name).contains(parent.getName())) {
+                                        if (parent.getType() == NodeType.UA) {
+                                            g.assign(name, parent.getName());
+                                        }
+                                    }
+                                    break;
+                                case O:
+                                    if (parent.getType() == NodeType.OA && !g.getParents(name).contains(parent.getName())) {
                                         g.assign(name, parent.getName());
                                     }
-                                }
-                                break;
-                            case O:
-                                if (parent.getType() == NodeType.OA && !g.getParents(name).contains(parent.getName())) {
-                                    g.assign(name, parent.getName());
-                                }
-                                break;
-                            case U:
-                                if (parent.getType() == NodeType.UA && !g.getParents(name).contains(parent.getName())) {
-                                    g.assign(name, parent.getName());
-                                }
-                                break;
-                            case OA:
-                                if (!g.getParents(name).contains(parent.getName())) {
-                                    if (parent.getType() == NodeType.OA) {
+                                    break;
+                                case U:
+                                    if (parent.getType() == NodeType.UA && !g.getParents(name).contains(parent.getName())) {
                                         g.assign(name, parent.getName());
                                     }
+                                    break;
+                                case OA:
+                                    if (!g.getParents(name).contains(parent.getName())) {
+                                        if (parent.getType() == NodeType.OA) {
+                                            g.assign(name, parent.getName());
+                                        }
+                                    }
+                                    break;
+                            }
+                        }
+                        MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
+                    } else {
+                        MainView.notify("Node with name: " + name + " already exists !", MainView.NotificationType.SUCCESS);
+                    }
+
+                    for (String additionalNode: additionalNames) {
+                        if (!g.exists(additionalNode)) {
+                            g.createNode(additionalNode, type, props, parents.iterator().next().getName());
+                            for (Node parent : parents) {
+                                switch (type) {
+                                    case UA:
+                                        if (!g.getParents(additionalNode).contains(parent.getName())) {
+                                            if (parent.getType() == NodeType.UA) {
+                                                g.assign(additionalNode, parent.getName());
+                                            }
+                                        }
+                                        break;
+                                    case O:
+                                        if (parent.getType() == NodeType.OA && !g.getParents(additionalNode).contains(parent.getName())) {
+                                            g.assign(additionalNode, parent.getName());
+                                        }
+                                        break;
+                                    case U:
+                                        if (parent.getType() == NodeType.UA && !g.getParents(additionalNode).contains(parent.getName())) {
+                                            g.assign(additionalNode, parent.getName());
+                                        }
+                                        break;
+                                    case OA:
+                                        if (!g.getParents(additionalNode).contains(parent.getName())) {
+                                            if (parent.getType() == NodeType.OA) {
+                                                g.assign(additionalNode, parent.getName());
+                                            }
+                                        }
+                                        break;
                                 }
-                                break;
+                            }
+                            MainView.notify("Node with name: " + additionalNode + " created", MainView.NotificationType.SUCCESS);
+                        } else {
+                            MainView.notify("Node with name: " + additionalNode + " exists already !", MainView.NotificationType.SUCCESS);
                         }
                     }
-                    MainView.notify("Node with name: " + name + " created", MainView.NotificationType.SUCCESS);
+
+
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
@@ -1458,6 +1524,22 @@ public class GraphEditor extends VerticalLayout {
         nameField.setRequiredIndicatorVisible(true);
         nameField.setPlaceholder("Enter Name...");
         form.add(nameField);
+
+        MapInput<String, String> propsFieldNewNodesNames = new MapInput<>(
+                TextField.class, null,
+                (valueFieldInstance) -> {
+                    if (valueFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) valueFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }
+        );
+        propsFieldNewNodesNames.setLabel("Enter the name of additional nodes: ");
+        form.add(propsFieldNewNodesNames);
 
         Collection<Node> nodeCollection;
         try {
@@ -1508,19 +1590,40 @@ public class GraphEditor extends VerticalLayout {
             Set<Node> parents = parentSelect.getSelectedItems();
             try {
                 Map<String, String> props = propsField.getValue();
-                if (name == null || name == "") {
+                HashSet<String> additionalNodes = propsFieldNewNodesNames.getValueCol();
+                Collection<String> additionalNamesCollec = new ArrayList<>(additionalNodes);
+                List<String> additionalNames = additionalNamesCollec.stream().filter(name_ -> (name_ != null && !name_.equals("")))
+                        .collect(Collectors.toList());
+                if (name == null || name.equals("")) {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
                 } else if (parents.isEmpty()) {
                     MainView.notify("At least one parent is required", MainView.NotificationType.DEFAULT);
                 } else {
-                    g.createNode(name, NodeType.U, props, parents.iterator().next().getName());
-                    for (Node parent : parents) {
-                        if (parent.getType() == NodeType.UA && !g.getParents(name).contains(parent.getName())) {
-                            g.assign(name, parent.getName());
+                    if (!g.exists(name)) {
+                        g.createNode(name, NodeType.U, props, parents.iterator().next().getName());
+                        for (Node parent : parents) {
+                            if (parent.getType() == NodeType.UA && !g.getParents(name).contains(parent.getName())) {
+                                g.assign(name, parent.getName());
+                            }
+                        }
+                        MainView.notify("User with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
+                    } else {
+                        MainView.notify("User with name: " + name + " already exists !", MainView.NotificationType.SUCCESS);
+                    }
+                    for (String additionalNode: additionalNames) {
+                        if (!g.exists(additionalNode)) {
+                            g.createNode(additionalNode, NodeType.U, props, parents.iterator().next().getName());
+                            for (Node parent : parents) {
+                                if (parent.getType() == NodeType.UA && !g.getParents(additionalNode).contains(parent.getName())) {
+                                    g.assign(additionalNode, parent.getName());
+                                }
+                            }
+                            MainView.notify("User with name: " + additionalNode + " has been created", MainView.NotificationType.SUCCESS);
+                        }  else {
+                            MainView.notify("User with name: " + additionalNode + " exists already !", MainView.NotificationType.SUCCESS);
                         }
                     }
-                    MainView.notify("User with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
 
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
@@ -1549,6 +1652,22 @@ public class GraphEditor extends VerticalLayout {
         nameField.setRequiredIndicatorVisible(true);
         nameField.setPlaceholder("Enter Name...");
         form.add(nameField);
+
+        MapInput<String, String> propsFieldNewNodesNames = new MapInput<>(
+                TextField.class, null,
+                (valueFieldInstance) -> {
+                    if (valueFieldInstance instanceof TextField) {
+                        TextField temp = (TextField) valueFieldInstance;
+                        String value = temp.getValue();
+                        return (value != null && !value.isEmpty()) ? value : null;
+                    } else {
+                        MainView.notify("Not an instance of a TextField", MainView.NotificationType.ERROR);
+                        return null;
+                    }
+                }
+        );
+        propsFieldNewNodesNames.setLabel("Enter the name of additional nodes: ");
+        form.add(propsFieldNewNodesNames);
 
         Collection<Node> nodeCollection;
         try {
@@ -1595,20 +1714,43 @@ public class GraphEditor extends VerticalLayout {
             Set<Node> parents = parentSelect.getSelectedItems();
             try {
                 Map<String, String> props = propsField.getValue();
-                if (name == null || name == "") {
+                HashSet<String> additionalNodes = propsFieldNewNodesNames.getValueCol();
+                Collection<String> additionalNamesCollec = new ArrayList<>(additionalNodes);
+                List<String> additionalNames = additionalNamesCollec.stream().filter(name_ -> (name_ != null && !name_.equals("")))
+                        .collect(Collectors.toList());
+                if (name == null || name.equals("")) {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
                 } else if (parents.isEmpty()) {
                     MainView.notify("At least one parent is required", MainView.NotificationType.DEFAULT);
                 } else {
-                    g.createNode(name, NodeType.O, props, parents.iterator().next().getName());
-                    System.out.println("node just created: " + g.getNode(name));
-                    for (Node parent : parents) {
-                        if (parent.getType() == NodeType.OA && !g.getParents(name).contains(parent.getName())) {
-                            g.assign(name, parent.getName());
+                    if (!g.exists(name)) {
+                        g.createNode(name, NodeType.O, props, parents.iterator().next().getName());
+                        for (Node parent : parents) {
+                            if (parent.getType() == NodeType.OA && !g.getParents(name).contains(parent.getName())) {
+                                g.assign(name, parent.getName());
+                            }
+                        }
+                        MainView.notify("Object with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
+
+                    } else {
+                        MainView.notify("Object with name: " + name + " already exists !", MainView.NotificationType.SUCCESS);
+                    }
+
+                    for (String additionalNode: additionalNames) {
+                        if (!g.exists(additionalNode)) {
+                            g.createNode(additionalNode, NodeType.O, props, parents.iterator().next().getName());
+                            for (Node parent : parents) {
+                                if (parent.getType() == NodeType.OA && !g.getParents(additionalNode).contains(parent.getName())) {
+                                    g.assign(additionalNode, parent.getName());
+                                }
+                            }
+                            MainView.notify("Object with name: " + additionalNode + " created", MainView.NotificationType.SUCCESS);
+                        } else {
+                            MainView.notify("Object with name: " + additionalNode + " exists already !", MainView.NotificationType.SUCCESS);
                         }
                     }
-                    MainView.notify("Object with name: " + name + " has been created", MainView.NotificationType.SUCCESS);
+
                     childNode.refresh(parents.toArray(new Node[0]));
                     parentNode.refresh(parents.toArray(new Node[0]));
                     dialog.close();
@@ -2153,7 +2295,19 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify("Containers are Required", MainView.NotificationType.DEFAULT);
                 } else {
                     //TODO : Check prohibition type
-                    ProhibitionSubject prohibitionSubject = new ProhibitionSubject(selectedChildNode.getName(), ProhibitionSubject.Type.USER_ATTRIBUTE);
+                    ProhibitionSubject prohibitionSubject;
+                    switch (selectedChildNode.getType()) {
+                        case UA:
+                            prohibitionSubject = new ProhibitionSubject(selectedChildNode.getName(), ProhibitionSubject.Type.USER_ATTRIBUTE);
+                            break;
+                        case U:
+                            prohibitionSubject = new ProhibitionSubject(selectedChildNode.getName(), ProhibitionSubject.Type.USER);
+                            break;
+                        default:
+                            prohibitionSubject = new ProhibitionSubject(selectedChildNode.getName(), ProhibitionSubject.Type.PROCESS);
+                            break;
+                    }
+
                     g.addProhibition(nameField.getValue(), prohibitionSubject, containers, ops, intersection);
                     MainView.notify("Prohibition with name: " + nameField.getValue() + " has been created", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
