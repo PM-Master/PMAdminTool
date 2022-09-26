@@ -317,7 +317,7 @@ public class GraphEditor extends VerticalLayout {
                     .set("border-radius", "1px")
                     .set("user-select", "none");
 
-            //grid.removeColumnByKey("properties");
+            grid.removeColumnByKey("properties");
             grid.setColumnReorderingAllowed(true);
             grid.setRowsDraggable(true);
             grid.setDropMode(GridDropMode.ON_TOP);
@@ -766,10 +766,12 @@ public class GraphEditor extends VerticalLayout {
                         outgoingAssociationList.add(new Paragraph("None"));
                     } else {
                         while (outgoingKeySet.hasNext()) {
-                            String name = outgoingKeySet.next().getTarget();
+                            Association association = outgoingKeySet.next();
+                            String name = association.getTarget();
+
                             try {
                                 Node node = g.getNode(name);
-                                outgoingAssociationList.add(new AssociationBlip(node, true, outgoingKeySet.next().getAccessRightSet()));
+                                outgoingAssociationList.add(new AssociationBlip(node, true, association.getAccessRightSet()));
                             } catch (PMException e) {
                                 outgoingAssociationList.add(new Paragraph(name));
                             }
@@ -788,10 +790,12 @@ public class GraphEditor extends VerticalLayout {
                         incomingAssociationList.add(new Paragraph("None"));
                     } else {
                         while (incomingKeySet.hasNext()) {
-                            String name = incomingKeySet.next().getSource();
+                            Association association= incomingKeySet.next();
+                            String name = association.getSource();
+
                             try {
                                 Node node = g.getNode(name);
-                                incomingAssociationList.add(new AssociationBlip(node, false, incomingKeySet.next().getAccessRightSet()));
+                                incomingAssociationList.add(new AssociationBlip(node, false, association.getAccessRightSet()));
                             } catch (PMException e) {
                                 incomingAssociationList.add(new Paragraph(name));
                             }
@@ -1283,6 +1287,7 @@ public class GraphEditor extends VerticalLayout {
                 if ((childType == NodeType.UA) && (parentType == NodeType.UA || parentType == NodeType.OA || parentType == NodeType.O)) {
                     boolean canAssociate = false, canDisassociate = false;
                     try {
+                        System.out.println("check permission association: " + g.checkPermissions(selectedChildNode.getName(), ASSOCIATE));
                         canAssociate = g.checkPermissions(selectedChildNode.getName(), ASSOCIATE) && g.checkPermissions(selectedParentNode.getName(), ASSOCIATE);
                         canDisassociate = g.checkPermissions(selectedChildNode.getName(), DISSOCIATE) && g.checkPermissions(selectedParentNode.getName(), DISSOCIATE);
                     } catch (PMException e) {

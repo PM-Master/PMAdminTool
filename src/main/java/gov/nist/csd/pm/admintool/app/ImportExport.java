@@ -158,7 +158,7 @@ public class ImportExport extends VerticalLayout {
 
             Button exportButton = new Button("Export PAL", click -> {
                 try {
-                    exportJson.setValue(SingletonClient.getInstance().toPal());
+                    exportJson.setValue(g.toPal());
                 } catch (PMException e) {
                     e.printStackTrace();
                 }

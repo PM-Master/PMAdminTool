@@ -31,6 +31,7 @@ public class SingletonClient {
     private static Random rand;
     private static Set<Node> allPCs;
     private static String superPCId, superUAId, superOAId;
+    private static final AccessRightSet RWE = new AccessRightSet("read", "write", "execute");
     private static NGACWSWebClient webClient = new NGACWSWebClient(NGACWSWebClient.LOCALHOST_URL);
 
     public Boolean getMysql() {
@@ -51,6 +52,7 @@ public class SingletonClient {
                 g = new SingletonClient();
                 //userContext = new UserContext("super", "1234");
                 findSuperConfigurationNodes(g);
+
                 return g;
             } catch (PMException e) {
                 e.printStackTrace();
@@ -71,6 +73,10 @@ public class SingletonClient {
                     case UA:
                         if (n.getName().equals("super_ua")) {
                             System.out.println("Super UA: " + n.getName());
+                            System.out.println(g.checkPermissions(n.getName()));
+                            System.out.println(g.getAccessRights(n.getName()));
+                            System.out.println(g.checkPermissions(n.getName()));
+
                             superUAId = n.getName();
                         }
                         break;
@@ -88,6 +94,7 @@ public class SingletonClient {
                 }
             //}
         }
+        graph.setResourceAccessRights(RWE);
     }
 
     public void setUserContext(String username) {
@@ -173,6 +180,7 @@ public class SingletonClient {
         set =  new HashSet<String>(Arrays.asList(str.split(",")));
         return set;
     }
+
     public Set<String> getChildren(String name) throws PMException {
         String children  = webClient.getChildren(name).iterator().next();
         return stringToSet(children);
@@ -205,6 +213,9 @@ public class SingletonClient {
     }
 
     public List<Association> getSourceAssociations(String source) throws PMException {
+        System.out.println("source: " + source);
+        System.out.println("Association: " + webClient.getSourceAssociations(source));
+
         return webClient.getSourceAssociations(source);
     }
 
@@ -295,8 +306,9 @@ public class SingletonClient {
     }
 
     // operation methods
-    public List<String> getAdminOps() throws PMException {
-        return webClient.getAdminOps();
+    public Set<String> getAdminOps() throws PMException {
+        String ops = webClient.getAdminOps().iterator().next();
+        return stringToSet(ops);
     }
 
     public Set<String> getAdminOpsWithStars() throws PMException {
@@ -322,6 +334,7 @@ public class SingletonClient {
     }
 
     public void addResourceOps (String... ops) throws PMException {
+        System.out.println("Ops to add: " + ops);
         webClient.addResourceOps(ops);
     }
 
@@ -338,5 +351,17 @@ public class SingletonClient {
 
     public boolean checkPermissions (String target, String... ops) throws PMException {
         return webClient.checkPermissions(target, ops);
+    }
+
+    public AccessRightSet getResourceAccessRights() throws PMException {
+        return webClient.getResourceAccessRights();
+    }
+
+    public void setResourceAccessRights(AccessRightSet accessRightSet) throws PMException {
+        webClient.setResourceAccessRights(accessRightSet);
+    }
+
+    public AccessRightSet getAccessRights(String target) throws PMException {
+        return webClient.getAccessRights(target);
     }
 }
