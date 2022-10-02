@@ -16,6 +16,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.provider.DataProvider;
 import gov.nist.csd.pm.admintool.app.customElements.MapInput;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.policy.exceptions.PMException;
@@ -27,13 +28,13 @@ import gov.nist.csd.pm.policy.model.prohibition.Prohibition;
 import gov.nist.csd.pm.policy.model.prohibition.ProhibitionSubject;
 import org.vaadin.gatanaso.MultiselectComboBox;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static gov.nist.csd.pm.policy.model.prohibition.ProhibitionSubject.Type.USER_ATTRIBUTE;
 
 @Tag("prohibition-editor")
 public class ProhibitionEditor extends VerticalLayout {
+
     private SingletonClient g;
     private HorizontalLayout layout;
     private ButtonGroup buttonGroup;
@@ -45,7 +46,7 @@ public class ProhibitionEditor extends VerticalLayout {
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
-        //setUpLayout();
+        setUpLayout();
     }
 
     private void setUpLayout() {
@@ -67,7 +68,7 @@ public class ProhibitionEditor extends VerticalLayout {
         private Grid<Prohibition> grid;
 
         public ProhibitionViewer() {
-            grid = new Grid<>(Prohibition.class);
+            grid = new Grid<>();
             setupProhibitionTableSection();
         }
 
@@ -79,7 +80,12 @@ public class ProhibitionEditor extends VerticalLayout {
             grid.getStyle()
                     .set("border-radius", "1px")
                     .set("user-select", "none");
-            grid.setColumns("label", "accessRightSet", "subject", "containers", "intersection");
+            //grid.setColumns("label", "accessRightSet", "subject", "containers", "intersection");
+            grid.addColumn(Prohibition::getLabel).setHeader("label");
+            grid.addColumn(Prohibition::getAccessRightSet).setHeader("accessRightSet");
+            grid.addColumn(Prohibition::getSubjectName).setHeader("subject");
+            grid.addColumn(Prohibition::getContainers_map).setHeader("containers");
+            grid.addColumn(Prohibition::isIntersection).setHeader("intersection");
 
             // Single Click Action: select node
             grid.addItemClickListener(evt -> {
@@ -99,14 +105,49 @@ public class ProhibitionEditor extends VerticalLayout {
         }
 
         public void updateGrid() {
-            List<Prohibition> prohibitions = null;
+            //Remove
+            /*List<Prohibition> prohibitions = null;
             try {
                 prohibitions = g.getAllProhibitions();
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
-            }
-            grid.setItems(prohibitions);
+            }*/
+
+            //Use data provider to edit prohibition
+            DataProvider<Prohibition, Void> dataProvider =
+                    DataProvider.fromCallbacks(
+                            // First callback fetches items based on a query
+                            query -> {
+                                // The index of the first item to load
+                                int offset = query.getOffset();
+
+                                // The number of items to load
+                                int limit = query.getLimit();
+
+                                List<Prohibition> prohibitions = null;
+                                try {
+                                    prohibitions = g.getAllProhibitions();
+                                } catch (PMException e) {
+                                    e.printStackTrace();
+                                    return null;
+                                }
+
+                                return prohibitions.stream();
+                            },
+                            // Second callback fetches the total number of items currently in the Grid.
+                            // The grid can then use it to properly adjust the scrollbars.
+                            query -> {
+                                try {
+                                    return g.getAllProhibitions().size();
+                                } catch (PMException e) {
+                                    e.printStackTrace();
+                                    return 0;
+                                }
+                            });
+
+
+            grid.setItems(dataProvider);
         }
 
         public void refreshGraph() {
@@ -216,7 +257,11 @@ public class ProhibitionEditor extends VerticalLayout {
         HashSet<String> subjects = new HashSet<>();
         HashSet<Node> subjectNodes = new HashSet<>(nodesCol);
         subjectNodes.removeIf(curr -> !(curr.getType() == NodeType.UA || curr.getType() == NodeType.U));
+        //TODO: Remove after super_ua fix
+        subjectNodes.removeIf(n -> n.getName().equals("super_ua"));
+
         subjectNodes.forEach((n) -> subjects.add(n.getName()));
+
 
         // subject selector
         Select<String> subjectSelect = new Select();
@@ -271,7 +316,7 @@ public class ProhibitionEditor extends VerticalLayout {
         targetNodes.forEach((n) -> targets.add(n.getName()));
 
         // targets (+ compliment) selector
-        MapInput<String, Boolean> containerField = new MapInput<>((new Select<String>()).getClass(), Checkbox.class,
+        MapInput<String, Boolean> containerField = new MapInput<>(Select.class, Checkbox.class,
             (keyField) -> {
                 if (keyField instanceof Select) {
                     Select<String> temp = (Select<String>)keyField;
@@ -321,8 +366,15 @@ public class ProhibitionEditor extends VerticalLayout {
                 } else if (containers.isEmpty()) {
                     MainView.notify("Containers are Required");
                 } else {
-                    ProhibitionSubject prohibitionSubject = new ProhibitionSubject(subject, ProhibitionSubject.Type.USER_ATTRIBUTE);
-                    g.addProhibition(name, prohibitionSubject, containers, ops, intersection);
+                    ProhibitionSubject pSubject = new ProhibitionSubject(subject, "USER_ATTRIBUTE");
+                    List<ContainerCondition> conditions = new ArrayList<>();
+                    for (String node_target:containers.keySet()) {
+                        conditions.add(new ContainerCondition(node_target, containers.get(node_target)));
+                    }
+
+                    //Prohibition p = new Prohibition(name,pSubject , ops, intersection, conditions);
+                    g.addProhibition(name, subject, containers, ops, intersection);
+                    //g.addProhibition(p);
                     prohibitionViewer.refreshGraph();
                     dialog.close();
                 }
@@ -362,6 +414,8 @@ public class ProhibitionEditor extends VerticalLayout {
         HashSet<String> subjects = new HashSet<>();
         HashSet<Node> subjectNodes = new HashSet<>(nodesCol);
         subjectNodes.removeIf(curr -> !(curr.getType() == NodeType.UA || curr.getType() == NodeType.U));
+        //TODO: Remove filter when super_ua fixed
+        subjectNodes.removeIf(curr -> curr.getName().equals("super_ua"));
         subjectNodes.forEach((n) -> subjects.add(n.getName()));
 
         // subject selector
@@ -403,7 +457,7 @@ public class ProhibitionEditor extends VerticalLayout {
         targetNodes.removeIf(curr -> !(curr.getType() == NodeType.OA || curr.getType() == NodeType.O));
         targetNodes.forEach((n) -> targets.add(n.getName()));
 
-        // targets (+ compliment) selector
+        // targets (+ complement) selector
         MapInput<String, Boolean> containerField = new MapInput<>((new Select<String>()).getClass(), Checkbox.class,
                 (keyField) -> {
                     if (keyField instanceof Select) {
@@ -430,10 +484,9 @@ public class ProhibitionEditor extends VerticalLayout {
         form.add(containerField);
 
         Map<String, Boolean> prohibitionContainers = new HashMap<>();
-        //TODO : Fix class file for java.lang.Record not found
-        /*for (ContainerCondition containerCondition: prohibition.getContainers()) {
+        for (ContainerCondition containerCondition: prohibition.getContainers()) {
             prohibitionContainers.put(containerCondition.name(), containerCondition.complement());
-        }*/
+        }
 
         containerField.setValue(prohibitionContainers);
         // intersection checkbox
@@ -446,7 +499,8 @@ public class ProhibitionEditor extends VerticalLayout {
         Button submit = new Button("Submit", event -> {
             String name = prohibition.getLabel();
             String subject = subjectSelect.getValue();
-            ProhibitionSubject prohibitionSubject = new ProhibitionSubject(subject, ProhibitionSubject.Type.USER_ATTRIBUTE);
+            //TODO: switch case type for subject
+            ProhibitionSubject prohibitionSubject = new ProhibitionSubject(subject, USER_ATTRIBUTE);
             AccessRightSet ops = new AccessRightSet(opsField.getValue());
             boolean intersection = intersectionField.getValue();
             try {

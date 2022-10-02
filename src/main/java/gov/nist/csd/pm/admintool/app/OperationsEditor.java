@@ -191,7 +191,8 @@ public class OperationsEditor extends VerticalLayout {
         dialog.open();
     }
 
-    private void editOperation(String ops) {
+    //We removed this feature
+   /* private void editOperation(String ops) {
         Dialog dialog = new Dialog();
         dialog.open();
         HorizontalLayout form = new HorizontalLayout();
@@ -225,7 +226,7 @@ public class OperationsEditor extends VerticalLayout {
         });
         form.add(button);
         dialog.add(form);
-    }
+    }*/
 
     private void addOperation() {
         Dialog dialog = new Dialog();
@@ -241,7 +242,11 @@ public class OperationsEditor extends VerticalLayout {
         Button button = new Button("Submit", event -> {
             String operation = nameField.getValue();
             try {
-                g.addResourceOps(operation);
+                if (operation != null && !operation.isEmpty()) {
+                    g.addResourceOps(operation);
+                }else {
+                    MainView.notify("The access right is empty !", MainView.NotificationType.ERROR);
+                }
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();

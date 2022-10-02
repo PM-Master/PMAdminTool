@@ -3,6 +3,7 @@ package gov.nist.csd.pm.admintool.graph;
 import gov.nist.csd.pm.policy.events.PolicyEvent;
 import gov.nist.csd.pm.policy.exceptions.PMException;
 import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.access.AdminAccessRights;
 import gov.nist.csd.pm.policy.model.access.UserContext;
 import gov.nist.csd.pm.policy.model.audit.Explain;
 import gov.nist.csd.pm.policy.model.graph.nodes.Node;
@@ -15,6 +16,9 @@ import gov.nist.csd.pm.policy.model.prohibition.ProhibitionSubject;
 import gov.nist.ngacclient.api.NGACWSWebClient;
 
 import java.util.*;
+
+import static gov.nist.csd.pm.policy.model.access.AdminAccessRights.GET_CONSTANTS;
+import static gov.nist.csd.pm.policy.model.access.AdminAccessRights.GET_CONTEXT;
 
 /**
  * The "In-Memory" graph used throughout the entirety of the admin tool.
@@ -30,16 +34,12 @@ public class SingletonClient {
     private static UserContext userContext;
     private static Random rand;
     private static Set<Node> allPCs;
-    private static String superPCId, superUAId, superOAId;
     private static final AccessRightSet RWE = new AccessRightSet("read", "write", "execute");
     private static NGACWSWebClient webClient = new NGACWSWebClient(NGACWSWebClient.LOCALHOST_URL);
 
     public Boolean getMysql() {
         return webClient.getMySQL();
     }
-    public static String getSuperPCId() {return superPCId;}
-    public static String getSuperUAId() {return superUAId;}
-    public static String getSuperOAId() {return superOAId;}
 
     /**
      * Gets the singleton instance of this class
@@ -68,16 +68,10 @@ public class SingletonClient {
                 switch (n.getType()) {
                     case OA:
                         System.out.println("Super OA: " + n.getName());
-                        superOAId = n.getName();
                         break;
                     case UA:
                         if (n.getName().equals("super_ua")) {
                             System.out.println("Super UA: " + n.getName());
-                            System.out.println(g.checkPermissions(n.getName()));
-                            System.out.println(g.getAccessRights(n.getName()));
-                            System.out.println(g.checkPermissions(n.getName()));
-
-                            superUAId = n.getName();
                         }
                         break;
                     case U:
@@ -85,11 +79,9 @@ public class SingletonClient {
                             System.out.println("Super U: " + n.getName());
                             userContext = new UserContext(n.getName(), "1234");
                         }
-                        //webClient.getUserCtx(userContext.getUser());
                         break;
                     case PC:
                         System.out.println("Super PC: " + n.getName());
-                        superPCId = n.getName();
                         break;
                 }
             //}
@@ -100,6 +92,7 @@ public class SingletonClient {
     public void setUserContext(String username) {
         userContext = new UserContext(username, rand.toString());
     }
+    public UserContext getUserContext() {return userContext;}
 
     public String getCurrentContext() {
         if (userContext != null)
@@ -213,9 +206,6 @@ public class SingletonClient {
     }
 
     public List<Association> getSourceAssociations(String source) throws PMException {
-        System.out.println("source: " + source);
-        System.out.println("Association: " + webClient.getSourceAssociations(source));
-
         return webClient.getSourceAssociations(source);
     }
 
@@ -266,19 +256,20 @@ public class SingletonClient {
         return webClient.getAllProhibitions();
     }
 
-    public void addProhibition(String prohibitionName, ProhibitionSubject subject, Map<String, Boolean> containers, AccessRightSet ops, boolean intersection) throws PMException {
-        List<ContainerCondition> containerConditions = new ArrayList<>(containers.size());
+    public void addProhibition(Prohibition prohibition) throws PMException {
+        System.out.println("label: " + prohibition.getLabel());
+        System.out.println("subject: " + prohibition.getSubject().name());
+        webClient.addProhibition(prohibition);
+    }
 
-        for (String c: containers.keySet()) {
-            containerConditions.add(new ContainerCondition(c, containers.get(c)));
-        }
+    public void addProhibition(String prohibitionName, String subject, Map<String, Boolean> containers, AccessRightSet ops, boolean intersection) throws PMException {
 
-        //Prohibition prohibition = new Prohibition(prohibitionName, subject, ops, intersection, containerConditions);
+        ProhibitionSubject p = new ProhibitionSubject(subject, "USER_ATTRIBUTE");
+        NGACWSWebClient.ProhibitionInfo prohibitionInfo = new NGACWSWebClient.ProhibitionInfo(
+                containers, ops, p, intersection
+        );
 
-        NGACWSWebClient.ProhibitionInfo prohibitionInfo = new NGACWSWebClient.ProhibitionInfo();
-        prohibitionInfo.containers = containers;
-        prohibitionInfo.ops = ops;
-        webClient.addProhibition(prohibitionName,subject,prohibitionInfo,intersection);
+        webClient.addProhibition(prohibitionName, prohibitionInfo);
     }
 
     public List<Prohibition> getProhibitionsFor(String subject) throws PMException {
@@ -286,18 +277,11 @@ public class SingletonClient {
     }
 
     public void updateProhibition(String prohibitionName, ProhibitionSubject subject, Map<String, Boolean> containers, AccessRightSet ops, boolean intersection) throws PMException {
-        List<ContainerCondition> containerConditions = new ArrayList<>(containers.size());
 
-        for (String c: containers.keySet()) {
-            containerConditions.add(new ContainerCondition(c, containers.get(c)));
-        }
-
-        Prohibition prohibition = new Prohibition(prohibitionName, subject, ops, intersection, containerConditions);
-
-        NGACWSWebClient.ProhibitionInfo prohibitionInfo = new NGACWSWebClient.ProhibitionInfo();
-        prohibitionInfo.containers = containers;
-        prohibitionInfo.ops = ops;
-        webClient.updateProhibition(prohibitionName,subject,prohibitionInfo,intersection);
+        NGACWSWebClient.ProhibitionInfo prohibitionInfo = new NGACWSWebClient.ProhibitionInfo(
+                containers, ops, subject, intersection
+        );
+        webClient.updateProhibition(prohibitionName,prohibitionInfo);
     }
 
 
@@ -333,7 +317,7 @@ public class SingletonClient {
         return ops;
     }
 
-    public void addResourceOps (String... ops) throws PMException {
+    public void addResourceOps (String ops) throws PMException {
         System.out.println("Ops to add: " + ops);
         webClient.addResourceOps(ops);
     }
@@ -345,6 +329,7 @@ public class SingletonClient {
     public Explain explain(UserContext userContext, String target) {
         return webClient.explain(userContext, target);
     }
+
     public String getExplanation(String target) {
         return webClient.getExplanation(target);
     }

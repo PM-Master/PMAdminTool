@@ -29,6 +29,7 @@ import gov.nist.csd.pm.admintool.app.customElements.Toggle;
 import gov.nist.csd.pm.admintool.graph.SingletonClient;
 import gov.nist.csd.pm.policy.exceptions.PMException;
 import gov.nist.csd.pm.policy.model.access.AccessRightSet;
+import gov.nist.csd.pm.policy.model.audit.Explain;
 import gov.nist.csd.pm.policy.model.graph.nodes.Node;
 import gov.nist.csd.pm.policy.model.graph.nodes.NodeType;
 import gov.nist.csd.pm.policy.model.graph.relationships.Association;
@@ -2300,7 +2301,7 @@ public class GraphEditor extends VerticalLayout {
                     MainView.notify("Containers are Required", MainView.NotificationType.DEFAULT);
                 } else {
                     //TODO : Check prohibition type
-                    ProhibitionSubject prohibitionSubject;
+                    /*ProhibitionSubject prohibitionSubject;
                     switch (selectedChildNode.getType()) {
                         case UA:
                             prohibitionSubject = new ProhibitionSubject(selectedChildNode.getName(), ProhibitionSubject.Type.USER_ATTRIBUTE);
@@ -2311,9 +2312,9 @@ public class GraphEditor extends VerticalLayout {
                         default:
                             prohibitionSubject = new ProhibitionSubject(selectedChildNode.getName(), ProhibitionSubject.Type.PROCESS);
                             break;
-                    }
+                    }*/
 
-                    g.addProhibition(nameField.getValue(), prohibitionSubject, containers, ops, intersection);
+                    g.addProhibition(nameField.getValue(), selectedChildNode.getName(), containers, ops, intersection);
                     MainView.notify("Prohibition with name: " + nameField.getValue() + " has been created", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();
@@ -2331,11 +2332,10 @@ public class GraphEditor extends VerticalLayout {
         dialog.open();
     }
 
-    private void explain(String node) {
+    private void explain(String node){
         Dialog dialog = new Dialog();
 
         String explanation = g.getExplanation(node);
-
         VerticalLayout auditLayout = new VerticalLayout();
 
         auditLayout.setSizeFull();
@@ -2360,7 +2360,6 @@ public class GraphEditor extends VerticalLayout {
             auditLayout.add(new Span(explanation));
         }
 
-        // ----- Title Section -----
         Button button = new Button("Close", event -> {
             dialog.close();
         });

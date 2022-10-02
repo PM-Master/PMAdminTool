@@ -17,6 +17,8 @@ import gov.nist.csd.pm.policy.model.graph.relationships.Association;
 
 import java.util.*;
 
+import static gov.nist.csd.pm.policy.model.access.AdminAccessRights.*;
+
 
 @Tag("import-export")
 public class ImportExport extends VerticalLayout {
@@ -75,7 +77,14 @@ public class ImportExport extends VerticalLayout {
             add(importTitle);
 
             TextArea inputJson = new TextArea();
-            inputJson.setValue("{\n" +
+            //nodes sample for pal
+            inputJson.setValue("create policy class 'pc1';\n" +
+                    "create user attribute 'ua1' assign to 'pc1';\n" +
+                    "create user attribute 'ua2' assign to 'pc1';\n" +
+                    "create user attribute 'ua3' assign to 'pc1';\n" +
+                    "assign 'ua1' to ['ua2', 'ua3'];\n");
+            //nodes sample for json
+            /*inputJson.setValue("{\n" +
                     "  \"nodes\": [\n" +
                     "    {\n" +
                     "      \"name\": \"Super PC\",\n" +
@@ -122,14 +131,21 @@ public class ImportExport extends VerticalLayout {
                     "    ]\n" +
                     "  ],\n" +
                     "  \"associations\": []\n" +
-                    "}");
+                    "}");*/
             //TODO: Add example From PAL
             inputJson.setHeight("80vh");
             Button importButton = new Button("Import PAL", click -> {
                 try {
-                    g.fromPAL(inputJson.getValue());
+                    boolean canImport = false;
+                    canImport = g.checkPermissions("super_object", GET_CONTEXT) && g.checkPermissions("super_object", GET_CONSTANTS);
+                    if (canImport) {
+                        g.fromPAL(inputJson.getValue());
+                    } else {
+                        MainView.notify("You don't have the access rights to import PAL", MainView.NotificationType.ERROR);
+                    }
                 } catch (PMException e) {
                     e.printStackTrace();
+                    MainView.notify("Error importing the PAL " + e.getMessage(), MainView.NotificationType.ERROR);
                 }
                 MainView.notify("The PAL has been imported", MainView.NotificationType.SUCCESS);
                 UI.getCurrent().getPage().reload();
@@ -164,7 +180,6 @@ public class ImportExport extends VerticalLayout {
                 }
                 //TODO : Replace Json by PAL
                 //exportJson.setValue(g.toJson());
-                //exportJson.setValue(SingletonClient.getInstance().getPAP().getGraphPAP().toJson());
                 MainView.notify("The graph has been exported into a PAL", MainView.NotificationType.SUCCESS);
             });
             exportButton.setHeight("5%");
