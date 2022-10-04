@@ -109,7 +109,7 @@
             <groupId>com.github.PM-Master</groupId>
             <artifactId>policy-machine-core</artifactId>
 <!--            <version>5b1275698502298221223885b96f1ade612cd211</version>-->
-            <version>6fc7b983d2</version>
+            <version>28750b2979</version>
         </dependency>
     </dependencies>
 

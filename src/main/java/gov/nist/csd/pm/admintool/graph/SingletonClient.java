@@ -138,11 +138,9 @@ public class SingletonClient {
         return webClient.getPolicyClassDefault(pc, type);
     }
 
-    public void updateNode(String name, Map<String, String> properties) throws PMException {
-        Node node = new Node();
-        node.setName(name);
-        node.setProperties(properties);
-        webClient.updateNode(name,node);
+    public void updateNode(String name, Map<String, String> properties, Node n) throws PMException {
+        n.setProperties(properties);
+        webClient.updateNode(name,n);
     }
 
     public boolean exists(String name) throws PMException {

@@ -1786,18 +1786,11 @@ public class GraphEditor extends VerticalLayout {
         nameField.setEnabled(false);
         form.add(nameField);
 
-//        TextArea propsFeild = new TextArea("Properties (key=value \\n...)");
-//        propsFeild.setPlaceholder("Enter Properties...");
-//        String pStr = n.getProperties().toString().replaceAll(", ", "\n");
-//        propsFeild.setValue(pStr.substring(1, pStr.length() - 1));
-//        form.add(propsFeild);
-
         MapInput<String, String> propsField = new MapInput<>(
                 TextField.class, TextField.class,
                 null, null,
                 (keyFieldInstance) -> {
-                    if (keyFieldInstance instanceof TextField) {
-                        TextField temp = (TextField) keyFieldInstance;
+                    if (keyFieldInstance instanceof TextField temp) {
                         String value = temp.getValue();
                         return (value != null && !value.isEmpty()) ? value : null;
                     } else {
@@ -1815,11 +1808,11 @@ public class GraphEditor extends VerticalLayout {
             String name = nameField.getValue();
             try {
                 Map<String, String> props = propsField.getValue();
-                if (name == null || name == "") {
+                if (name == null || name.equals("")) {
                     nameField.focus();
                     MainView.notify("Name is Required", MainView.NotificationType.DEFAULT);
                 } else {
-                    g.updateNode(name, props);
+                    g.updateNode(name, props, n);
                     MainView.notify("Node with name: " + name + " has been edited", MainView.NotificationType.SUCCESS);
                     childNode.updateNodeInfo();
                     parentNode.updateNodeInfo();

@@ -137,12 +137,15 @@ public class ImportExport extends VerticalLayout {
             Button importButton = new Button("Import PAL", click -> {
                 try {
                     boolean canImport = false;
+                    g.setResourceAccessRights(new AccessRightSet(GET_CONTEXT, GET_CONSTANTS));
                     canImport = g.checkPermissions("super_object", GET_CONTEXT) && g.checkPermissions("super_object", GET_CONSTANTS);
                     if (canImport) {
+                        System.out.println("Starting import...");
                         g.fromPAL(inputJson.getValue());
                     } else {
                         MainView.notify("You don't have the access rights to import PAL", MainView.NotificationType.ERROR);
                     }
+                    //g.fromPAL(inputJson.getValue());
                 } catch (PMException e) {
                     e.printStackTrace();
                     MainView.notify("Error importing the PAL " + e.getMessage(), MainView.NotificationType.ERROR);
@@ -174,13 +177,20 @@ public class ImportExport extends VerticalLayout {
 
             Button exportButton = new Button("Export PAL", click -> {
                 try {
-                    exportJson.setValue(g.toPal());
+                    boolean canExport = false;
+                    g.setResourceAccessRights(new AccessRightSet(GET_CONTEXT, GET_CONSTANTS, GET_FUNCTIONS));
+                    canExport = g.checkPermissions("super_object", GET_FUNCTIONS, GET_CONSTANTS);
+                    if (canExport) {
+                        System.out.println("Starting export...");
+                        exportJson.setValue(g.toPal());
+                        MainView.notify("The graph has been exported into a PAL", MainView.NotificationType.SUCCESS);
+                    } else {
+                        MainView.notify("You don't have the access rights to import PAL", MainView.NotificationType.ERROR);
+                    }
+                    //exportJson.setValue(g.toPal());
                 } catch (PMException e) {
                     e.printStackTrace();
                 }
-                //TODO : Replace Json by PAL
-                //exportJson.setValue(g.toJson());
-                MainView.notify("The graph has been exported into a PAL", MainView.NotificationType.SUCCESS);
             });
             exportButton.setHeight("5%");
             add(exportJson);
