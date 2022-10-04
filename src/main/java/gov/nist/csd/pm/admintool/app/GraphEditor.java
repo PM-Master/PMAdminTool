@@ -1189,7 +1189,7 @@ public class GraphEditor extends VerticalLayout {
                 parentNode.updateNodeInfo();
             });
             deleteAssignmentButton.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            deleteAssignmentButton.setEnabled(false);
+            deleteAssignmentButton.setEnabled(true);
             deleteAssignmentButton.setWidthFull();
             add(deleteAssignmentButton);
             add(new Paragraph("\n"));
@@ -1288,9 +1288,10 @@ public class GraphEditor extends VerticalLayout {
                 if ((childType == NodeType.UA) && (parentType == NodeType.UA || parentType == NodeType.OA || parentType == NodeType.O)) {
                     boolean canAssociate = false, canDisassociate = false;
                     try {
-                        System.out.println("check permission association: " + g.checkPermissions(selectedChildNode.getName(), ASSOCIATE));
                         canAssociate = g.checkPermissions(selectedChildNode.getName(), ASSOCIATE) && g.checkPermissions(selectedParentNode.getName(), ASSOCIATE);
                         canDisassociate = g.checkPermissions(selectedChildNode.getName(), DISSOCIATE) && g.checkPermissions(selectedParentNode.getName(), DISSOCIATE);
+                        System.out.println("canAssociate: " + canAssociate);
+                        System.out.println("canDisassociate: " + canDisassociate);
                     } catch (PMException e) {
                         MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     }
@@ -1303,7 +1304,6 @@ public class GraphEditor extends VerticalLayout {
                     editAssociationButton.setEnabled(false);
                     deleteAssociationButton.setEnabled(false);
                 }
-
 
                 addProhibitionButton.setEnabled((childType == NodeType.UA || childType == NodeType.U) && (parentType == NodeType.OA || parentType == NodeType.O));
             } else {

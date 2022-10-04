@@ -255,8 +255,6 @@ public class SingletonClient {
     }
 
     public void addProhibition(Prohibition prohibition) throws PMException {
-        System.out.println("label: " + prohibition.getLabel());
-        System.out.println("subject: " + prohibition.getSubject().name());
         webClient.addProhibition(prohibition);
     }
 
@@ -316,7 +314,6 @@ public class SingletonClient {
     }
 
     public void addResourceOps (String ops) throws PMException {
-        System.out.println("Ops to add: " + ops);
         webClient.addResourceOps(ops);
     }
 
