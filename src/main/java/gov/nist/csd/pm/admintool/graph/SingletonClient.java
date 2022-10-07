@@ -33,7 +33,7 @@ public class SingletonClient {
     private static SingletonClient g; // the single instance
     private static UserContext userContext;
     private static Random rand;
-    private static Set<Node> allPCs;
+    private static Set<Node> allPCs = new HashSet<>();
     private static final AccessRightSet RWE = new AccessRightSet("read", "write", "execute");
     private static NGACWSWebClient webClient = new NGACWSWebClient(NGACWSWebClient.LOCALHOST_URL);
 
@@ -67,7 +67,9 @@ public class SingletonClient {
             //if (n.getProperties().get("namespace") != null && n.getProperties().get("namespace").equals("super")) {
                 switch (n.getType()) {
                     case OA:
-                        System.out.println("Super OA: " + n.getName());
+                        if (n.getName().equals("super_pc_base_OA")) {
+                            System.out.println("Super OA: " + n.getName());
+                        }
                         break;
                     case UA:
                         if (n.getName().equals("super_ua")) {
@@ -89,9 +91,7 @@ public class SingletonClient {
         graph.setResourceAccessRights(RWE);
     }
 
-    public void setUserContext(String username) {
-        userContext = new UserContext(username, rand.toString());
-    }
+    public void setUserContext(String username) {userContext = new UserContext(username, rand.toString());}
     public UserContext getUserContext() {return userContext;}
 
     public String getCurrentContext() {
@@ -102,20 +102,16 @@ public class SingletonClient {
     }
 
     public static Set<Node> getAllPCs() {
-        allPCs = webClient.getAllPCs();
-        return allPCs;
+        return webClient.getAllPCs();
     }
 
     public static void resetAllPCs() {
         webClient.resetAllPCs();
-        allPCs = webClient.getAllPCs();
+        allPCs = new HashSet<Node>();
     }
 
-    public String getPCNames() {
-        List<String> pcs = new ArrayList<>();
-        for (Node pc: allPCs) {
-            pcs.add(pc.getName());
-        }
+    public String getPCNames() throws PMException {
+        List<String> pcs = new ArrayList<>(g.getPolicies());
         return "All pcs: " + pcs;
     }
 
@@ -155,8 +151,9 @@ public class SingletonClient {
         return webClient.getNodes();
     }
 
-    public List<String> getPolicies() throws PMException {
-        return webClient.getPolicies();
+    public Set<String> getPolicies() throws PMException {
+        String pcs  =  webClient.getPolicies().iterator().next();
+        return stringToSet(pcs);
     }
 
     // Utility function

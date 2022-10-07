@@ -458,7 +458,7 @@ public class ProhibitionEditor extends VerticalLayout {
         targetNodes.forEach((n) -> targets.add(n.getName()));
 
         // targets (+ complement) selector
-        MapInput<String, Boolean> containerField = new MapInput<>((new Select<String>()).getClass(), Checkbox.class,
+        MapInput<String, Boolean> containerField = new MapInput<>(Select.class, Checkbox.class,
                 (keyField) -> {
                     if (keyField instanceof Select) {
                         Select<String> temp = (Select<String>)keyField;

@@ -1082,7 +1082,7 @@ public class GraphEditor extends VerticalLayout {
         public void expandPolicies() {
             Set<Node> policies = new HashSet<>();
             try {
-                List<String> policyNames = g.getPolicies();
+                Set<String> policyNames = g.getPolicies();
                 for (String policyName : policyNames) {
                     policies.add(g.getNode(policyName));
                 }
@@ -1290,8 +1290,6 @@ public class GraphEditor extends VerticalLayout {
                     try {
                         canAssociate = g.checkPermissions(selectedChildNode.getName(), ASSOCIATE) && g.checkPermissions(selectedParentNode.getName(), ASSOCIATE);
                         canDisassociate = g.checkPermissions(selectedChildNode.getName(), DISSOCIATE) && g.checkPermissions(selectedParentNode.getName(), DISSOCIATE);
-                        System.out.println("canAssociate: " + canAssociate);
-                        System.out.println("canDisassociate: " + canDisassociate);
                     } catch (PMException e) {
                         MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     }
@@ -1842,7 +1840,7 @@ public class GraphEditor extends VerticalLayout {
         Button button = new Button("Delete", event -> {
             try {
                 String name = n.getName();
-                Set<String> parentStrings = g.getParents(n.getName());
+               /* Set<String> parentStrings = g.getParents(n.getName());
                 Collection<Node> parents = new HashSet<>();
                 parentStrings.forEach((parentName) -> {
                     try {
@@ -1851,7 +1849,7 @@ public class GraphEditor extends VerticalLayout {
                         MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                         e.printStackTrace();
                     }
-                });
+                });*/
                 g.deleteNode(name);
                 MainView.notify("Node with name: " + name + " has been deleted", MainView.NotificationType.SUCCESS);
                 childNode.resetGrid();
@@ -2036,7 +2034,7 @@ public class GraphEditor extends VerticalLayout {
                 } else {
                     try {
                         g.associate(source.getName(), target.getName(), ops);
-                        MainView.notify(source.getName() + " assigned to " + target.getName(), MainView.NotificationType.SUCCESS);
+                        MainView.notify(source.getName() + " associated to " + target.getName(), MainView.NotificationType.SUCCESS);
                         childNode.updateNodeInfo();
                         parentNode.updateNodeInfo();
 
@@ -2115,6 +2113,8 @@ public class GraphEditor extends VerticalLayout {
                     });
                     opsSelectRessource.setValue(existingResourcesOp);
                     opsSelectAdmin.setValue(existingAdminsOp);
+                    System.out.println("opsSelectRessource: " + existingResourcesOp);
+                    System.out.println("opsSelectAdmin: " + existingAdminsOp);
                 }
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -2371,8 +2371,8 @@ public class GraphEditor extends VerticalLayout {
 
         Button button = new Button("Reset", event -> {
             try {
-                //SingletonClient.resetAllPCs();
                 g.reset();
+                SingletonClient.resetAllPCs();
                 MainView.notify("Graph has been reset", MainView.NotificationType.SUCCESS);
                 childNode.resetGrid();
                 childNode.expandPolicies();

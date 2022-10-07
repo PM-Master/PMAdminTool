@@ -30,11 +30,8 @@ public class ImportExport extends VerticalLayout {
     public ImportExport() throws PMException {
         g = SingletonClient.getInstance();
 
-        // check permission
-        //TODO: Replace Json with PAL grammar
- /*       if (!g.checkPermissions("super_pc_rep", TO_JSON, FROM_JSON))
-            throw new PMException("Current user ('" + g.getCurrentContext() + "') does not have adequate permissions to use import export");
-*/
+        //Give proper access right to graph for import/export
+        g.setResourceAccessRights(new AccessRightSet(GET_CONTEXT, GET_CONSTANTS, GET_FUNCTIONS));
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
         add(layout);
@@ -55,18 +52,6 @@ public class ImportExport extends VerticalLayout {
         exportLayout.getStyle().set("height","100vh");
         layout.add(exportLayout);
     }
-    //            add(new Paragraph(g.getGraphService().getNode(userCtx,-1).getName()));
-    // todo: make sure this works
-//    public void updateGraph (String json) {
-//        System.out.println("Importing following JSON now ........................... ");
-//        System.out.println(json);
-//
-///*        try {
-//            //g = g.updateGraph(GraphSerializer.fromJson(g.getPAP().getGraphPAP(), json));
-//        } catch (PMException e) {
-//            e.printStackTrace();
-//        }*/
-//    }
 
     private class ImportLayout extends VerticalLayout {
         public ImportLayout () {
@@ -83,62 +68,15 @@ public class ImportExport extends VerticalLayout {
                     "create user attribute 'ua2' assign to 'pc1';\n" +
                     "create user attribute 'ua3' assign to 'pc1';\n" +
                     "assign 'ua1' to ['ua2', 'ua3'];\n");
-            //nodes sample for json
-            /*inputJson.setValue("{\n" +
-                    "  \"nodes\": [\n" +
-                    "    {\n" +
-                    "      \"name\": \"Super PC\",\n" +
-                    "      \"type\": \"PC\",\n" +
-                    "      \"properties\": {}\n" +
-                    "    },\n" +
-                    "    {\n" +
-                    "      \"name\": \"Bob Home\",\n" +
-                    "      \"type\": \"OA\",\n" +
-                    "      \"properties\": {}\n" +
-                    "    },\n" +
-                    "    {\n" +
-                    "      \"name\": \"Bob Attr\",\n" +
-                    "      \"type\": \"UA\",\n" +
-                    "      \"properties\": {}\n" +
-                    "    },\n" +
-                    "    {\n" +
-                    "      \"name\": \"Bob\",\n" +
-                    "      \"type\": \"U\",\n" +
-                    "      \"properties\": {}\n" +
-                    "    },\n" +
-                    "    {\n" +
-                    "      \"name\": \"Doc\",\n" +
-                    "      \"type\": \"O\",\n" +
-                    "      \"properties\": {}\n" +
-                    "    }\n" +
-                    "  ],\n" +
-                    "  \"assignments\": [\n" +
-                    "    [\n" +
-                    "      \"Bob Home\",\n" +
-                    "      \"Super PC\"\n" +
-                    "    ],\n" +
-                    "    [\n" +
-                    "      \"Bob\",\n" +
-                    "      \"Bob Attr\"\n" +
-                    "    ]\n," +
-                    "    [\n" +
-                    "      \"Doc\",\n" +
-                    "      \"Bob Home\"\n" +
-                    "    ],\n" +
-                    "    [\n" +
-                    "      \"Bob Attr\",\n" +
-                    "      \"Super PC\"\n" +
-                    "    ]\n" +
-                    "  ],\n" +
-                    "  \"associations\": []\n" +
-                    "}");*/
+
             //TODO: Add example From PAL
             inputJson.setHeight("80vh");
             Button importButton = new Button("Import PAL", click -> {
                 try {
-                    boolean canImport = false;
-                    g.setResourceAccessRights(new AccessRightSet(GET_CONTEXT, GET_CONSTANTS));
-                    canImport = g.checkPermissions("super_object", GET_CONTEXT) && g.checkPermissions("super_object", GET_CONSTANTS);
+                    boolean canImport;
+                    //TODO: Validate acessRights
+                    //g.setResourceAccessRights(new AccessRightSet(GET_CONTEXT, GET_CONSTANTS));
+                    canImport = g.checkPermissions("super_object", GET_CONTEXT, GET_CONSTANTS) ;
                     if (canImport) {
                         System.out.println("Starting import...");
                         g.fromPAL(inputJson.getValue());
@@ -177,8 +115,7 @@ public class ImportExport extends VerticalLayout {
 
             Button exportButton = new Button("Export PAL", click -> {
                 try {
-                    boolean canExport = false;
-                    g.setResourceAccessRights(new AccessRightSet(GET_CONTEXT, GET_CONSTANTS, GET_FUNCTIONS));
+                    boolean canExport;
                     canExport = g.checkPermissions("super_object", GET_FUNCTIONS, GET_CONSTANTS);
                     if (canExport) {
                         System.out.println("Starting export...");
@@ -345,3 +282,53 @@ public class ImportExport extends VerticalLayout {
 //      }
 //   ]
 //}
+
+//nodes sample for json
+            /*inputJson.setValue("{\n" +
+                    "  \"nodes\": [\n" +
+                    "    {\n" +
+                    "      \"name\": \"Super PC\",\n" +
+                    "      \"type\": \"PC\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"name\": \"Bob Home\",\n" +
+                    "      \"type\": \"OA\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"name\": \"Bob Attr\",\n" +
+                    "      \"type\": \"UA\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"name\": \"Bob\",\n" +
+                    "      \"type\": \"U\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    },\n" +
+                    "    {\n" +
+                    "      \"name\": \"Doc\",\n" +
+                    "      \"type\": \"O\",\n" +
+                    "      \"properties\": {}\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"assignments\": [\n" +
+                    "    [\n" +
+                    "      \"Bob Home\",\n" +
+                    "      \"Super PC\"\n" +
+                    "    ],\n" +
+                    "    [\n" +
+                    "      \"Bob\",\n" +
+                    "      \"Bob Attr\"\n" +
+                    "    ]\n," +
+                    "    [\n" +
+                    "      \"Doc\",\n" +
+                    "      \"Bob Home\"\n" +
+                    "    ],\n" +
+                    "    [\n" +
+                    "      \"Bob Attr\",\n" +
+                    "      \"Super PC\"\n" +
+                    "    ]\n" +
+                    "  ],\n" +
+                    "  \"associations\": []\n" +
+                    "}");*/
