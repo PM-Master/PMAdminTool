@@ -1,5 +1,6 @@
 package gov.nist.csd.pm.admintool.app;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -127,12 +128,14 @@ public class PolicyClassEditor extends VerticalLayout {
                         MainView.notify("Policy Class with name: " + name + " has been created.", MainView.NotificationType.SUCCESS);
                         refreshGrid();
                         dialog.close();
+                        UI.getCurrent().getPage().reload();
                     }
                 } catch (Exception e) {
                     MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                     e.printStackTrace();
                 }
             });
+
             HorizontalLayout titleLayout = TitleFactory.generate(
                     "Add Policy Class",
                     "Make's a new PC with Default UA and OA",

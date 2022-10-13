@@ -463,12 +463,22 @@ public class GraphEditor extends VerticalLayout {
             contextMenu.addItem("Edit Node", event -> {
                 event.getItem().ifPresent(node -> {
                     try {
-                        if (g.checkPermissions(node.getName(), SET_NODE_PROPERTIES))
-                            editNode(node);
-                        else
-                            MainView.notify("Current User ('" + g.getCurrentContext() +
-                                    "') does not have permission to edit node ('" + node.getName() +
-                                    "')", MainView.NotificationType.ERROR);
+                        if (node.getType() == NodeType.PC) {
+                            Node node_rep = g.getNode(node.getName() + "_pc_rep");
+                            if (g.checkPermissions(node_rep.getName(), SET_NODE_PROPERTIES))
+                                editNode(node);
+                            else
+                                MainView.notify("Current User ('" + g.getCurrentContext() +
+                                        "') does not have permission to edit node ('" + node.getName() +
+                                        "')", MainView.NotificationType.ERROR);
+                        } else {
+                            if (g.checkPermissions(node.getName(), SET_NODE_PROPERTIES))
+                                editNode(node);
+                            else
+                                MainView.notify("Current User ('" + g.getCurrentContext() +
+                                        "') does not have permission to edit node ('" + node.getName() +
+                                        "')", MainView.NotificationType.ERROR);
+                        }
                     } catch (PMException e) {
                         MainView.notify("Error on Edit Node: " + e.getMessage(), MainView.NotificationType.ERROR);
                         e.printStackTrace();
@@ -1969,19 +1979,6 @@ public class GraphEditor extends VerticalLayout {
             Dialog dialog = new Dialog();
             dialog.setWidth("75vh");
 
-//        Paragraph opsParagraph = new Paragraph("[]");
-//        HorizontalLayout name =
-//            new HorizontalLayout(
-//                new NodeDataBlip(source, false),
-//                new Icon(VaadinIcon.ARROW_RIGHT),
-//                opsParagraph,
-//                new Icon(VaadinIcon.ARROW_RIGHT),
-//                new NodeDataBlip(target, true)
-//            );
-//        name.setAlignItems(Alignment.CENTER);
-//        name.setJustifyContentMode(JustifyContentMode.CENTER);
-//        dialog.add(name);
-
             HorizontalLayout form = new HorizontalLayout();
             form.setAlignItems(Alignment.BASELINE);
 
@@ -1990,7 +1987,8 @@ public class GraphEditor extends VerticalLayout {
             opsSelectRessource.setLabel("Resource Access Rights");
             opsSelectRessource.setPlaceholder("Choose Access Rights");
             try {
-                opsSelectRessource.setItems(g.getResourceOpsWithStars());
+                Set<String> resourceOps = g.getResourceOpsWithStars();
+                opsSelectRessource.setItems(resourceOps);
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
@@ -2002,24 +2000,13 @@ public class GraphEditor extends VerticalLayout {
             opsSelectAdmin.setLabel("Admin Access Rights");
             opsSelectAdmin.setPlaceholder("Choose Access Rights");
             try {
-                opsSelectAdmin.setItems(g.getAdminOpsWithStars());
+                Set<String> adminOps = g.getAdminOpsWithStars();
+                opsSelectAdmin.setItems(adminOps);
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
                 e.printStackTrace();
             }
             opsSelectAdmin.setWidth("100%");
-
-//        opsSelectRessource.addValueChangeListener((evt) -> {
-//            Set<String> tempOps = evt.getValue();
-//            tempOps.addAll(opsSelectAdmin.getValue());
-//            opsParagraph.setText(tempOps.toString());
-//        });
-//        opsSelectAdmin.addValueChangeListener((evt) -> {
-//            Set<String> tempOps = evt.getValue();
-//            tempOps.addAll(opsSelectRessource.getValue());
-//            opsParagraph.setText(tempOps.toString());
-//        });
-
             form.add(opsSelectRessource);
             form.add(opsSelectAdmin);
 
@@ -2029,7 +2016,7 @@ public class GraphEditor extends VerticalLayout {
                 opString.addAll(opsSelectRessource.getValue());
                 opString.addAll(opsSelectAdmin.getValue());
                 AccessRightSet ops = new AccessRightSet(opString);
-                if (opString == null) {
+                if (ops.isEmpty()) {
                     MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
                 } else {
                     try {
@@ -2093,7 +2080,7 @@ public class GraphEditor extends VerticalLayout {
                     List<Association> sourceOps = g.getSourceAssociations(source.getName());
                     Set<String> sourceToTargetOps = new HashSet<>();
                     sourceOps.forEach((targetAssoc) -> {
-                        if (targetAssoc.getSource().equalsIgnoreCase(target.getName())) {
+                        if (targetAssoc.getTarget().equalsIgnoreCase(target.getName())) {
                             sourceToTargetOps.addAll(targetAssoc.getAccessRightSet());
                         }
                     });
@@ -2113,8 +2100,6 @@ public class GraphEditor extends VerticalLayout {
                     });
                     opsSelectRessource.setValue(existingResourcesOp);
                     opsSelectAdmin.setValue(existingAdminsOp);
-                    System.out.println("opsSelectRessource: " + existingResourcesOp);
-                    System.out.println("opsSelectAdmin: " + existingAdminsOp);
                 }
             } catch (PMException e) {
                 MainView.notify(e.getMessage(), MainView.NotificationType.ERROR);
@@ -2127,7 +2112,7 @@ public class GraphEditor extends VerticalLayout {
                 opString.addAll(opsSelectRessource.getValue());
                 opString.addAll(opsSelectAdmin.getValue());
                 AccessRightSet ops = new AccessRightSet(opString);
-                if (opString == null) {
+                if (ops.isEmpty()) {
                     MainView.notify("Access Rights are Required", MainView.NotificationType.DEFAULT);
                 } else {
                     try {

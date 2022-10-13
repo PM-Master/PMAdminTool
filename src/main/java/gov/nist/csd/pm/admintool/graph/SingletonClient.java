@@ -88,6 +88,7 @@ public class SingletonClient {
                 }
             //}
         }
+        //TODO: Add RWE access rights ?
         graph.setResourceAccessRights(RWE);
     }
 

@@ -31,6 +31,7 @@ public class ImportExport extends VerticalLayout {
         g = SingletonClient.getInstance();
 
         //Give proper access right to graph for import/export
+        //TODO: Check access rights for import/export
         g.setResourceAccessRights(new AccessRightSet(GET_CONTEXT, GET_CONSTANTS, GET_FUNCTIONS));
         layout = new HorizontalLayout();
         layout.setFlexGrow(1.0);
