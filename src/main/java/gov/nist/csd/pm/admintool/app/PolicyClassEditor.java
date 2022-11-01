@@ -74,7 +74,9 @@ public class PolicyClassEditor extends VerticalLayout {
             Set<Node> pcs = new HashSet<>();
             try {
                 for (String pc: g.getPolicies()) {
-                    pcs.add(g.getNode(pc));
+                    if (g.exists(pc)) {
+                        pcs.add(g.getNode(pc));
+                    }
                 }
             } catch (PMException e) {
                 e.printStackTrace();

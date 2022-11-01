@@ -965,7 +965,9 @@ public class GraphEditor extends VerticalLayout {
                                     temp_all_nodes = temp_all_nodes.stream().filter(filter).collect(Collectors.toSet());
                                 }
                                 for (String name : temp_all_nodes) { // TODO: make function for nodes/strings
-                                    children.add(g.getNode(name));
+                                    if (g.exists(name)) {
+                                        children.add(g.getNode(name));
+                                    }
                                 }
                             }
                         }
@@ -1281,6 +1283,37 @@ public class GraphEditor extends VerticalLayout {
 
                     boolean canAssign = false, canDeassign = false;
                     try {
+
+                        String[] ASSIGN;
+                        ArrayList<String> a = new ArrayList<>();
+                        a.add(ASSIGN_OBJECT);
+                        a.add(ASSIGN_OBJECT_ATTRIBUTE);
+                        a.add(ASSIGN_USER_ATTRIBUTE);
+                        a.add(ASSIGN_USER);
+                        ASSIGN = a.toArray(new String[0]);
+
+                        String[] ASSIGN_TO;
+                        ArrayList<String> b = new ArrayList<>();
+                        b.add(ASSIGN_TO_OBJECT_ATTRIBUTE);
+                        b.add(ASSIGN_TO_POLICY_CLASS);
+                        b.add(ASSIGN_TO_USER_ATTRIBUTE);
+                        ASSIGN_TO = b.toArray(new String[0]);
+
+                        String[] DEASSIGN;
+                        ArrayList<String> c = new ArrayList<>();
+                        c.add(DEASSIGN_OBJECT);
+                        c.add(DEASSIGN_OBJECT_ATTRIBUTE);
+                        c.add(DEASSIGN_USER);
+                        c.add(DEASSIGN_USER_ATTRIBUTE);
+                        DEASSIGN = c.toArray(new String[0]);
+
+                        String[] DEASSIGN_FROM;
+                        ArrayList<String> d = new ArrayList<>();
+                        d.add(DEASSIGN_FROM_OBJECT_ATTRIBUTE);
+                        d.add(DEASSIGN_FROM_USER_ATTRIBUTE);
+                        d.add(DEASSIGN_FROM_POLICY_CLASS);
+                        DEASSIGN_FROM = d.toArray(new String[0]);
+
                         canAssign = g.checkPermissions(selectedChildNode.getName(), ASSIGN) && g.checkPermissions(selectedParentNode.getName(), ASSIGN_TO);
                         canDeassign = g.checkPermissions(selectedChildNode.getName(), DEASSIGN) && g.checkPermissions(selectedParentNode.getName(), DEASSIGN_FROM);
                     } catch (PMException e) {
@@ -1298,6 +1331,18 @@ public class GraphEditor extends VerticalLayout {
                 if ((childType == NodeType.UA) && (parentType == NodeType.UA || parentType == NodeType.OA || parentType == NodeType.O)) {
                     boolean canAssociate = false, canDisassociate = false;
                     try {
+                        String[] ASSOCIATE;
+                        ArrayList<String> a = new ArrayList<>();
+                        a.add(ASSOCIATE_OBJECT_ATTRIBUTE);
+                        a.add(ASSOCIATE_USER_ATTRIBUTE);
+                        ASSOCIATE = a.toArray(new String[0]);
+
+                        String[] DISSOCIATE;
+                        ArrayList<String> b =new ArrayList<>();
+                        b.add(DISSOCIATE_OBJECT_ATTRIBUTE);
+                        b.add(DISSOCIATE_USER_ATTRIBUTE);
+                        DISSOCIATE = b.toArray(new String[0]);
+
                         canAssociate = g.checkPermissions(selectedChildNode.getName(), ASSOCIATE) && g.checkPermissions(selectedParentNode.getName(), ASSOCIATE);
                         canDisassociate = g.checkPermissions(selectedChildNode.getName(), DISSOCIATE) && g.checkPermissions(selectedParentNode.getName(), DISSOCIATE);
                     } catch (PMException e) {

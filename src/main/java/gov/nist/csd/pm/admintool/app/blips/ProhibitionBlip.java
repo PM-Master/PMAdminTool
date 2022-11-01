@@ -50,11 +50,10 @@ public class ProhibitionBlip extends Blip {
         addContent(containersText);
 
         UnorderedList containersUL = new UnorderedList();
-        //TODO: Fix class file for java.lang.Record not found
-        /*prohibition.getContainers().forEach((containerCondition) -> {
+        prohibition.getContainers().forEach((containerCondition) -> {
             ListItem propertyItem = new ListItem(containerCondition.name() + " [" + containerCondition.complement() + "]");
             containersUL.add(propertyItem);
-        });*/
+        });
         addContent(containersUL);
 
         // intersection

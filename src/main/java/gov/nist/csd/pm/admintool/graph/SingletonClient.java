@@ -89,7 +89,7 @@ public class SingletonClient {
             //}
         }
         //TODO: Add RWE access rights ?
-        graph.setResourceAccessRights(RWE);
+        //graph.setResourceAccessRights(RWE);
     }
 
     public void setUserContext(String username) {userContext = new UserContext(username, rand.toString());}
@@ -158,7 +158,6 @@ public class SingletonClient {
     }
 
     // Utility function
-
     private Set<String> stringToSet(String str) {
         Set<String> set = new HashSet<>();
         str = str
@@ -176,8 +175,8 @@ public class SingletonClient {
     }
 
     public Set<String> getChildrenNoSuperPolicy(String name) throws PMException {
-        List<String> children = webClient.getChildrenNoSuperPolicy(name);
-        return new HashSet<>(children);
+        String children = webClient.getChildrenNoSuperPolicy(name).iterator().next();
+        return stringToSet(children);
     }
 
     public Set<String> getParents(String node) throws PMException {

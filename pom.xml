@@ -70,7 +70,7 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>vaadin-bom</artifactId>
-            <version>20.0.6</version>
+            <version>23.2.0</version>
             <type>pom</type>
         <!--    <scope>import</scope> -->
         </dependency>
@@ -108,7 +108,7 @@
         <dependency>
             <groupId>com.github.PM-Master</groupId>
             <artifactId>policy-machine-core</artifactId>
-            <version>c9d8c6c111</version>
+            <version>41f9932bfc</version>
         </dependency>
     </dependencies>
 
