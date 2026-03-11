@@ -105,7 +105,7 @@
         <dependency>
             <groupId>com.vaadin</groupId>
             <artifactId>flow-server</artifactId>
-            <version>23.0.5</version>
+            <version>23.6.7</version>
         </dependency>
         <dependency>
             <groupId>com.vaadin</groupId>
